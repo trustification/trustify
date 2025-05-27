@@ -2941,7 +2941,6 @@ INSERT INTO public.relationship VALUES (15, 'Undefined');
 
 INSERT INTO public.status VALUES ('85b912db-fc1b-4e75-8b27-68b68c0ed828', 'affected', 'Affected', 'Vulnerabililty affects');
 INSERT INTO public.status VALUES ('619aba21-abba-4220-9e3e-110cf87e5393', 'not_affected', 'Not Affected', 'Vulnerabililty does not affect');
-INSERT INTO public.status VALUES ('c0273e43-2b0c-4dae-a3b3-c4f9733fbfa7', 'fixed', 'Fixed', 'Vulnerabililty is fixed');
 INSERT INTO public.status VALUES ('23613500-86a4-4cdb-bc92-8c74e18764da', 'under_investigation', 'Under Investigation', 'Vulnerabililty is under investigation');
 INSERT INTO public.status VALUES ('2bb0325b-0948-44ea-bab7-46af9fc834eb', 'fixed', 'Fixed', 'Vulnerabililty is fixed');
 INSERT INTO public.status VALUES ('858a3f17-d864-4be8-932e-4a634de47b8b', 'recommended', 'Recommended', 'Vulnerabililty is fixed & recommended');
