@@ -22,14 +22,17 @@ use tokio_util::{bytes::Bytes, io::ReaderStream};
 use tracing::instrument;
 use trustify_common::{self as common, db, decompress::decompress_async, hashing::Digests};
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::Cache;
 use trustify_module_ingestor::{
     graph::Graph,
     model::IngestResult,
-    service::{Format, IngestorService},
+    service::{Cache, Format, IngestorService},
 };
 use trustify_module_storage::service::fs::FileSystemBackend;
 
+/// A common test content.
+///
+/// **NOTE:** Dropping it will tear down the embedded database. So it must be kept until the end
+/// of the test.
 #[allow(dead_code)]
 pub struct TrustifyContext {
     pub db: db::Database,
