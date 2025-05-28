@@ -93,6 +93,14 @@ pub struct Run {
     )]
     pub dataset_entry_limit: BinaryByteSize,
 
+    /// The size limit of documents for a scan, uncompressed.
+    #[arg(
+        long,
+        env = "TRUSTD_SCAN_LIMIT",
+        default_value_t = default::scan_limit()
+    )]
+    pub scan_limit: BinaryByteSize,
+
     // flattened commands must go last
     //
     /// Analysis configuration
@@ -136,6 +144,10 @@ mod default {
     }
 
     pub const fn dataset_entry_limit() -> BinaryByteSize {
+        BinaryByteSize(ByteSize::gib(1))
+    }
+
+    pub const fn scan_limit() -> BinaryByteSize {
         BinaryByteSize(ByteSize::gib(1))
     }
 }
@@ -182,6 +194,7 @@ struct InitData {
 pub(crate) struct ModuleConfig {
     fundamental: trustify_module_fundamental::endpoints::Config,
     ingestor: trustify_module_ingestor::endpoints::Config,
+    ui: trustify_module_ui::endpoints::Config,
 }
 
 impl Run {
@@ -292,6 +305,9 @@ impl InitData {
             ingestor: trustify_module_ingestor::endpoints::Config {
                 dataset_entry_limit: run.dataset_entry_limit.into(),
             },
+            ui: trustify_module_ui::endpoints::Config {
+                scan_limit: run.scan_limit.into(),
+            },
         };
 
         Ok(InitData {
@@ -316,6 +332,7 @@ impl InitData {
         let ui = Arc::new(UiResources::new(&self.ui)?);
         let db = self.db.clone();
         let storage = self.storage.clone();
+        let ui_config = self.config.ui.clone();
 
         let http = {
             HttpServerBuilder::try_from(self.http)?
@@ -386,10 +403,12 @@ pub(crate) struct Config {
 
 pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, config: Config) {
     let Config {
-        config: ModuleConfig {
-            ingestor,
-            fundamental,
-        },
+        config:
+            ModuleConfig {
+                ingestor,
+                fundamental,
+                ui,
+            },
         db,
         storage,
         auth,
@@ -450,6 +469,7 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
                     );
                     trustify_module_analysis::endpoints::configure(svc, db.clone(), analysis);
                     trustify_module_user::endpoints::configure(svc, db.clone());
+                    trustify_module_ui::endpoints::configure(svc, ui)
                 }),
         );
 }
@@ -466,7 +486,7 @@ fn post_configure(svc: &mut web::ServiceConfig, config: PostConfig) {
     svc.configure(|svc| {
         // I think the UI must come last due to
         // its use of `resolve_not_found_to`
-        trustify_module_ui::endpoints::configure(svc, &ui);
+        trustify_module_ui::endpoints::post_configure(svc, &ui);
     });
 }
 
