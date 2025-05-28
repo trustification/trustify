@@ -5,6 +5,7 @@ mod csaf;
 mod cve;
 mod cwe;
 mod osv;
+mod quay;
 mod sbom;
 
 use crate::runner::{common::heartbeat::Heart, report::Report};
@@ -14,6 +15,7 @@ pub use csaf::*;
 pub use cve::*;
 pub use cwe::*;
 pub use osv::*;
+pub use quay::*;
 pub use sbom::*;
 
 use num_traits::cast::ToPrimitive;
@@ -180,6 +182,7 @@ pub enum ImporterConfiguration {
     ClearlyDefined(ClearlyDefinedImporter),
     ClearlyDefinedCuration(ClearlyDefinedCurationImporter),
     Cwe(CweImporter),
+    Quay(QuayImporter),
 }
 
 impl Deref for ImporterConfiguration {
@@ -194,6 +197,7 @@ impl Deref for ImporterConfiguration {
             Self::ClearlyDefined(importer) => &importer.common,
             Self::ClearlyDefinedCuration(importer) => &importer.common,
             Self::Cwe(importer) => &importer.common,
+            Self::Quay(importer) => &importer.common,
         }
     }
 }
@@ -208,6 +212,7 @@ impl DerefMut for ImporterConfiguration {
             Self::ClearlyDefined(importer) => &mut importer.common,
             Self::ClearlyDefinedCuration(importer) => &mut importer.common,
             Self::Cwe(importer) => &mut importer.common,
+            Self::Quay(importer) => &mut importer.common,
         }
     }
 }
@@ -215,6 +220,7 @@ impl DerefMut for ImporterConfiguration {
 #[derive(
     Clone,
     Debug,
+    Default,
     PartialEq,
     Eq,
     serde::Serialize,

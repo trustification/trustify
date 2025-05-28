@@ -1,8 +1,10 @@
+use bytesize::ByteSize;
 use std::{collections::HashSet, time::Duration};
 use trustify_common::config::Database;
 use trustify_module_importer::model::{
     ClearlyDefinedImporter, ClearlyDefinedPackageType, CveImporter, CweImporter,
     DEFAULT_SOURCE_CLEARLY_DEFINED_CURATION, DEFAULT_SOURCE_CVEPROJECT, DEFAULT_SOURCE_CWE_CATALOG,
+    DEFAULT_SOURCE_QUAY, QuayImporter,
 };
 use trustify_module_importer::{
     model::{
@@ -144,6 +146,30 @@ async fn add_cwe(importer: &ImporterService, name: &str, description: &str) -> a
     .await
 }
 
+async fn add_quay(
+    importer: &ImporterService,
+    name: &str,
+    description: &str,
+    namespace: &str,
+) -> anyhow::Result<()> {
+    add(
+        importer,
+        name,
+        ImporterConfiguration::Quay(QuayImporter {
+            common: CommonImporter {
+                disabled: true,
+                period: Duration::from_secs(60 * 10),
+                description: Some(description.into()),
+                labels: Default::default(),
+            },
+            source: DEFAULT_SOURCE_QUAY.into(),
+            namespace: Some(namespace.into()),
+            size_limit: Some(ByteSize::mib(1).into()),
+        }),
+    )
+    .await
+}
+
 pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()> {
     let importer = ImporterService::new(db);
 
@@ -204,6 +230,14 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
     .await?;
 
     add_cwe(&importer, "cwe", "Common Weakness Enumeration").await?;
+
+    add_quay(
+        &importer,
+        "quay",
+        "Quay SBOM Attachments",
+        "redhat-user-workloads",
+    )
+    .await?;
 
     add_cve(&importer, "cve", None, "CVE List V5").await?;
     add_cve(

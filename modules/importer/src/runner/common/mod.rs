@@ -28,9 +28,13 @@ pub enum Error {
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error(transparent)]
+    Oci(#[from] oci_client::errors::OciDistributionError),
+    #[error(transparent)]
     Http(#[from] reqwest::Error),
     #[error(transparent)]
     HttpHeader(#[from] reqwest::header::ToStrError),
+    #[error(transparent)]
+    HttpHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
     #[error(transparent)]
     Utf8(#[from] std::str::Utf8Error),
     #[error(transparent)]
