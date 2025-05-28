@@ -53,6 +53,7 @@ walker-common = { workspace = true }
 zip = { workspace = true }
 
 [dev-dependencies]
+actix-http = { workspace = true }
 bytesize = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 test-context = { workspace = true }

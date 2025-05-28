@@ -9239,6 +9239,7 @@ dependencies = [
 name = "trustify-module-importer"
 version = "0.2.19"
 dependencies = [
+ "actix-http",
  "actix-web",
  "anyhow",
  "bytesize",
