@@ -58,7 +58,7 @@ jobs:
           cargo binstall cargo-tarpaulin -y --force
 
       - name: Test
-        run: cargo tarpaulin --timeout 300 --out xml --skip-clean
+        run: cargo tarpaulin --timeout 300 --out xml --skip-clean --features _test-s3
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" # for embedded postgresql
 
@@ -66,4 +66,3 @@ jobs:
         if: github.repository_owner == 'trustification'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: ctron/trustify
