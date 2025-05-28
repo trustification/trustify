@@ -16,14 +16,24 @@ use csaf::Csaf;
 use cve::Cve;
 use jsn::{Format as JsnFormat, TokenReader, mask::*};
 use quick_xml::{Reader, events::Event};
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use std::{io::Cursor, str::FromStr};
 use tracing::instrument;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
 
-#[derive(Clone, Copy, Debug, strum::EnumString, utoipa::ToSchema, PartialEq, Eq)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    strum::EnumString,
+    strum::IntoStaticStr,
+    strum::Display,
+    utoipa::ToSchema,
+    PartialEq,
+    Eq,
+)]
 #[strum(serialize_all = "camelCase")]
 #[schema(rename_all = "camelCase")]
 pub enum Format {
@@ -31,9 +41,13 @@ pub enum Format {
     CSAF,
     CVE,
     SPDX,
+    #[strum(ascii_case_insensitive)]
     CycloneDX,
+    #[strum(ascii_case_insensitive)]
     ClearlyDefinedCuration,
+    #[strum(ascii_case_insensitive)]
     ClearlyDefined,
+    #[strum(ascii_case_insensitive)]
     CweCatalog,
     // These should be resolved to one of the above before loading
     Advisory,
@@ -245,6 +259,20 @@ impl Format {
             }
         }
     }
+
+    /// Resolve one of the "vague" formats (like "SBOM") by inspecting the payload.
+    ///
+    /// If the format is one of the vague formats, it will try to detect the format
+    /// (in that context) by inspecting the payload. Any concrete format will be returned without
+    /// checking.
+    pub fn resolve(self, data: &[u8]) -> Result<Format, Error> {
+        match self {
+            Self::Unknown => Self::from_bytes(data),
+            Self::Advisory => Self::advisory_from_bytes(data),
+            Self::SBOM => Self::sbom_from_bytes(data),
+            other => Ok(other),
+        }
+    }
 }
 
 fn masked<N: Mask>(mask: N, bytes: &[u8]) -> Result<Option<String>, Error> {
@@ -268,6 +296,15 @@ impl<'de> Deserialize<'de> for Format {
     {
         let s = String::deserialize(deserializer)?;
         FromStr::from_str(&s).map_err(serde::de::Error::custom)
+    }
+}
+
+impl Serialize for Format {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.into())
     }
 }
 
@@ -320,5 +357,11 @@ mod test {
         assert!(matches!(Format::from_bytes(&xml), Ok(Format::CweCatalog)));
 
         Ok(())
+    }
+
+    #[test]
+    fn from_str() {
+        assert_eq!(Format::from_str("cycloneDx"), Ok(Format::CycloneDX));
+        assert_eq!(Format::from_str("cyclonedx"), Ok(Format::CycloneDX));
     }
 }

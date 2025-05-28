@@ -9382,8 +9382,19 @@ dependencies = [
  "actix-web",
  "actix-web-static-files",
  "anyhow",
+ "serde",
+ "serde-cyclonedx",
+ "serde_json",
+ "spdx-rs",
+ "test-log",
+ "thiserror 2.0.12",
+ "tokio",
+ "trustify-common",
+ "trustify-module-ingestor",
+ "trustify-test-context",
  "trustify-ui",
  "utoipa",
+ "utoipa-actix-web",
 ]
 
 [[package]]
