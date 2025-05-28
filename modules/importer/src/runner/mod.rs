@@ -8,6 +8,7 @@ pub mod cve;
 pub mod cwe;
 pub mod osv;
 pub mod progress;
+pub mod quay;
 pub mod report;
 pub mod sbom;
 
@@ -61,6 +62,9 @@ impl ImportRunner {
             }
             ImporterConfiguration::Cwe(cwe) => {
                 self.run_once_cwe_catalog(context, cwe, continuation).await
+            }
+            ImporterConfiguration::Quay(quay) => {
+                self.run_once_quay(context, quay, continuation).await
             }
         }
     }
