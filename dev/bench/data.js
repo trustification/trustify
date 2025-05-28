@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748417938087,
+  "lastUpdate": 1748418389739,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10294,6 +10294,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "3d7a2ad6a6bf77eb98e3f7682d38ba7f0e0e3a5f",
+          "message": "ci(codecov): force installation",
+          "timestamp": "2025-05-28T09:35:08+02:00",
+          "tree_id": "7bfbeb1dc1d74d9f943b0e1068f6a4e43a0f75b2",
+          "url": "https://github.com/trustification/trustify/commit/3d7a2ad6a6bf77eb98e3f7682d38ba7f0e0e3a5f"
+        },
+        "date": 1748418388670,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
