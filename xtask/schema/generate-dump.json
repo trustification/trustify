@@ -99,6 +99,18 @@
             "cwe"
           ],
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "quay": {
+              "$ref": "#/$defs/QuayImporter"
+            }
+          },
+          "required": [
+            "quay"
+          ],
+          "additionalProperties": false
         }
       ]
     },
@@ -477,6 +489,57 @@
         "source": {
           "type": "string",
           "default": "https://cwe.mitre.org/data/xml/cwec_latest.xml.zip"
+        }
+      },
+      "required": [
+        "period"
+      ]
+    },
+    "QuayImporter": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "A flag to disable the importer, without deleting it.",
+          "type": "boolean",
+          "default": false
+        },
+        "period": {
+          "description": "The period the importer should be run.",
+          "$ref": "#/$defs/HumantimeSerde"
+        },
+        "labels": {
+          "description": "Labels which will be applied to the ingested documents.",
+          "$ref": "#/$defs/Labels"
+        },
+        "source": {
+          "description": "The name of the quay registry, e.g. quay.io",
+          "type": "string",
+          "default": "quay.io"
+        },
+        "namespace": {
+          "description": "The namespace of the registry to \"walk\"",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sizeLimit": {
+          "description": "The max size of the ingested SBOM's (None is unlimited)",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BinaryByteSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [

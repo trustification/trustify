@@ -19,17 +19,19 @@ chrono = { workspace = true }
 csaf = { workspace = true }
 csaf-walker = { workspace = true, features = ["crypto-openssl", "csaf"] }
 cve = { workspace = true }
+futures = { workspace = true }
 git2 = { workspace = true }
 humantime = { workspace = true }
 humantime-serde = { workspace = true }
 json-merge-patch = { workspace = true }
 log = { workspace = true }
 num-traits = { workspace = true }
+oci-client = { workspace = true }
 opentelemetry = { workspace = true, features = ["metrics"] }
 osv = { workspace = true, features = ["schema"] }
 parking_lot = { workspace = true }
 regex = { workspace = true }
-reqwest = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
 sbom-walker = { workspace = true }
 schemars = { workspace = true, features = ["url2"] }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print"] }
