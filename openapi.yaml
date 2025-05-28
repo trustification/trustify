@@ -181,7 +181,7 @@ paths:
           - clearlyDefined
           - cweCatalog
           - advisory
-          - sBOM
+          - sbom
           - unknown
       requestBody:
         content:
@@ -2132,16 +2132,16 @@ paths:
         schema:
           type: string
           enum:
-          - oSV
-          - cSAF
-          - cVE
-          - sPDX
-          - cycloneDX
-          - clearlyDefinedCuration
-          - clearlyDefined
-          - cweCatalog
+          - osv
+          - csaf
+          - cve
+          - spdx
+          - cyclonedx
+          - clearlydefinedcuration
+          - clearlydefined
+          - cwecatalog
           - advisory
-          - sBOM
+          - sbom
           - unknown
       - name: cache
         in: query
@@ -2761,6 +2761,39 @@ paths:
                 format: binary
         '404':
           description: The document could not be found
+  /api/v2/ui/extract-sbom-purls:
+    post:
+      tags:
+      - ui
+      summary: Extract PURLs from an SBOM provided in the request
+      operationId: extractSbomPurls
+      parameters:
+      - name: format
+        in: query
+        description: An SBOM format to expect, or [`Format::SBOM`] and [`Format::Unknown`] to auto-detect.
+        required: false
+        schema:
+          $ref: '#/components/schemas/Format'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        '200':
+          description: Information extracted from the SBOM
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractResult'
+        '400':
+          description: Bad request data, like an unsupported format or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
   /api/v2/userPreference/{key}:
     get:
       tags:
@@ -3514,6 +3547,22 @@ components:
         properties:
           source:
             type: string
+    ErrorInformation:
+      type: object
+      required:
+      - error
+      properties:
+        details:
+          type:
+          - string
+          - 'null'
+          description: Human-readable error details
+        error:
+          type: string
+          description: A machine-readable error type
+        message:
+          type: string
+          description: A human-readable error message
     ExternalReferenceQuery:
       type: object
       properties:
@@ -3527,6 +3576,48 @@ components:
           - type: 'null'
           - $ref: '#/components/schemas/Purl'
             description: Find by PURL
+    ExtractPackage:
+      type: object
+      description: Information extracted from a package
+      required:
+      - purls
+      properties:
+        purls:
+          type: array
+          items:
+            type: string
+          description: PURLs found as alias for this package
+    ExtractResult:
+      type: object
+      description: Information extracted from an SBOM
+      required:
+      - format
+      - packages
+      properties:
+        format:
+          $ref: '#/components/schemas/Format'
+          description: the actual, concrete format
+        packages:
+          type: object
+          description: packages of the SBOM
+          additionalProperties:
+            $ref: '#/components/schemas/ExtractPackage'
+          propertyNames:
+            type: string
+    Format:
+      type: string
+      enum:
+      - osv
+      - csaf
+      - cve
+      - spdx
+      - cyclonedx
+      - clearlydefinedcuration
+      - clearlydefined
+      - cwecatalog
+      - advisory
+      - sbom
+      - unknown
     Id:
       type: string
       description: |-
