@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748421690251,
+  "lastUpdate": 1748422965738,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10347,6 +10347,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/5ba0b81948485a4ccaf74ff85571c00e9fb42b4c"
         },
         "date": 1748421689403,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "392653c218d671ca9ee4fd5d6ac3e5ba234f3348",
+          "message": "docs(adr): Proposal for a \"PURL report\"",
+          "timestamp": "2025-05-28T08:41:25Z",
+          "tree_id": "a1a65d076bfca0dc6986363cbfd786dbb756ff5b",
+          "url": "https://github.com/trustification/trustify/commit/392653c218d671ca9ee4fd5d6ac3e5ba234f3348"
+        },
+        "date": 1748422965133,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
