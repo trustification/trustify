@@ -3589,6 +3589,12 @@ components:
         properties:
           cwe:
             $ref: '#/components/schemas/CweImporter'
+      - type: object
+        required:
+        - quay
+        properties:
+          quay:
+            $ref: '#/components/schemas/QuayImporter'
     ImporterData:
       type: object
       required:
@@ -4421,6 +4427,17 @@ components:
             deprecated: true
           version:
             $ref: '#/components/schemas/VersionedPurlHead'
+    QuayImporter:
+      allOf:
+      - $ref: '#/components/schemas/CommonImporter'
+      - type: object
+        properties:
+          namespace:
+            type:
+            - string
+            - 'null'
+          source:
+            type: string
     Relationship:
       type: string
       enum:
