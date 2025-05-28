@@ -66,3 +66,4 @@ jobs:
         if: github.repository_owner == 'trustification'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: trustification/trustify
