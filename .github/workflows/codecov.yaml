@@ -55,7 +55,7 @@ jobs:
 
       - name: Install cargo-tarpaulin
         run:
-          cargo binstall cargo-tarpaulin -y
+          cargo binstall cargo-tarpaulin -y --force
 
       - name: Test
         run: cargo tarpaulin --timeout 300 --out xml --skip-clean
