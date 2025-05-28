@@ -42,3 +42,14 @@ pub trait RunContext: Debug + Send {
 
     fn progress(&self, #[allow(unused)] message: String) -> impl Progress + Send + 'static {}
 }
+
+// Handy for testing
+impl RunContext for () {
+    fn name(&self) -> &str {
+        ""
+    }
+    async fn is_canceled(&self) -> bool {
+        false
+    }
+    fn progress(&self, _message: String) -> impl Progress + Send + 'static {}
+}

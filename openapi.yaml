@@ -3757,6 +3757,12 @@ components:
         properties:
           cwe:
             $ref: '#/components/schemas/CweImporter'
+      - type: object
+        required:
+        - quay
+        properties:
+          quay:
+            $ref: '#/components/schemas/QuayImporter'
     ImporterData:
       type: object
       required:
@@ -4610,6 +4616,24 @@ components:
             deprecated: true
           version:
             $ref: '#/components/schemas/VersionedPurlHead'
+    QuayImporter:
+      allOf:
+      - $ref: '#/components/schemas/CommonImporter'
+      - type: object
+        properties:
+          namespace:
+            type:
+            - string
+            - 'null'
+            description: The namespace of the registry to "walk"
+          sizeLimit:
+            oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/BinaryByteSize'
+              description: The max size of the ingested SBOM's (None is unlimited)
+          source:
+            type: string
+            description: The name of the quay registry, e.g. quay.io
     Relationship:
       type: string
       enum:

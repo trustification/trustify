@@ -15,7 +15,6 @@ pub struct ClearlyDefinedWalker<P: Progress + Send + 'static> {
     source: String,
     ingestor: IngestorService,
     progress: P,
-    progress_instance: Option<P::Instance>,
     report: Arc<Mutex<ReportBuilder>>,
     coordinates_seen_this_run: HashSet<String>,
     client: reqwest::Client,
@@ -33,7 +32,6 @@ impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
             source: source.into(),
             ingestor,
             progress,
-            progress_instance: None,
             report,
             coordinates_seen_this_run: Default::default(),
             client: Default::default(),
@@ -46,10 +44,7 @@ impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
     }
 
     pub async fn run(mut self) -> Result<ClearlyDefinedItemContinuation, Error> {
-        let changes = self
-            .client
-            .execute(self.client.get(self.changes_index_url()).build()?)
-            .await?;
+        let changes = self.client.get(self.changes_index_url()).send().await?;
 
         let changes = changes.bytes().await?;
 
@@ -61,8 +56,7 @@ impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
 
         let filtered_notices = self.continuation.filter(&change_notices);
 
-        self.progress_instance
-            .replace(self.progress.start(filtered_notices.len()));
+        let mut progress = self.progress.start(filtered_notices.len());
 
         let mut high = None;
 
@@ -70,9 +64,7 @@ impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
             if self.load_changes(&date).await.is_ok() {
                 high.replace(date);
             }
-            if let Some(progress) = self.progress_instance.as_mut() {
-                progress.tick().await;
-            }
+            progress.tick().await;
         }
 
         Ok(ClearlyDefinedItemContinuation { high })
