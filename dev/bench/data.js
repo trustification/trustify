@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748418389739,
+  "lastUpdate": 1748421690251,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10318,6 +10318,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/3d7a2ad6a6bf77eb98e3f7682d38ba7f0e0e3a5f"
         },
         "date": 1748418388670,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "5ba0b81948485a4ccaf74ff85571c00e9fb42b4c",
+          "message": "ci(codecov): try without slug again, and enable s3 tests",
+          "timestamp": "2025-05-28T10:33:58+02:00",
+          "tree_id": "c6ed38ff6552e4a0ec049382d583dbb551ff5459",
+          "url": "https://github.com/trustification/trustify/commit/5ba0b81948485a4ccaf74ff85571c00e9fb42b4c"
+        },
+        "date": 1748421689403,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
