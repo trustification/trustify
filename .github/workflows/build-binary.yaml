@@ -49,8 +49,10 @@ jobs:
 
           - target: x86_64-apple-darwin
             os: macos-13
+            args: --features vendored
           - target: aarch64-apple-darwin
             os: macos-14
+            args: --features vendored
 
           - target: x86_64-pc-windows-msvc
             os: windows-2022
