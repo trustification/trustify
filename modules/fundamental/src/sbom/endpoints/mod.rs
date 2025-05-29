@@ -70,6 +70,7 @@ pub fn configure(
         .service(download)
         .service(label::set)
         .service(label::update)
+        .service(label::all)
         .service(get_license_export);
 }
 

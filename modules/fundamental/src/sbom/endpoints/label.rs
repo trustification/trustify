@@ -1,8 +1,52 @@
 use crate::sbom::service::SbomService;
-use actix_web::{HttpResponse, Responder, patch, put, web};
-use trustify_auth::{UpdateSbom, authorizer::Require};
+use actix_web::{HttpResponse, Responder, get, patch, put, web};
+
+use serde::Deserialize;
+use trustify_auth::{
+    Permission, UpdateSbom,
+    authenticator::user::UserInformation,
+    authorizer::{Authorizer, Require},
+};
 use trustify_common::{db::Database, id::Id};
 use trustify_entity::labels::{Labels, Update};
+use utoipa::IntoParams;
+
+#[derive(Deserialize, IntoParams)]
+struct LabelQuery {
+    #[serde(default)]
+    filter_text: String,
+
+    #[serde(default)]
+    limit: u64,
+}
+
+#[utoipa::path(
+    tag = "sbom",
+    operation_id = "listSbomLabels",
+    params(
+        LabelQuery,
+    ),
+    responses(
+        (status = 200, description = "List all unique key/value labels from all SBOMs", body = Vec<Value>),
+    ),
+)]
+#[get("/v2/sbom-labels")]
+/// List all unique key/value labels from all SBOMs
+pub async fn all(
+    fetch: web::Data<SbomService>,
+    db: web::Data<Database>,
+    web::Query(query): web::Query<LabelQuery>,
+    authorizer: web::Data<Authorizer>,
+    user: UserInformation,
+) -> actix_web::Result<impl Responder> {
+    authorizer.require(&user, Permission::ReadSbom)?;
+
+    let result = fetch
+        .fetch_labels(&query.filter_text, query.limit, db.as_ref())
+        .await?;
+
+    Ok(HttpResponse::Ok().json(result))
+}
 
 /// Modify existing labels of an SBOM
 #[utoipa::path(
