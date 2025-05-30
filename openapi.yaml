@@ -195,6 +195,33 @@ paths:
           description: Upload a file
         '400':
           description: The file could not be parsed as an advisory
+  /api/v2/advisory-labels:
+    get:
+      tags:
+      - advisory
+      summary: List all unique key/value labels from all Advisories
+      operationId: listAdvisoryLabels
+      parameters:
+      - name: filter_text
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      responses:
+        '200':
+          description: List all unique key/value labels from all Advisories
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
   /api/v2/advisory/{id}/label:
     put:
       tags:
@@ -2172,6 +2199,33 @@ paths:
                 $ref: '#/components/schemas/IngestResult'
         '400':
           description: The file could not be parsed as an SBOM
+  /api/v2/sbom-labels:
+    get:
+      tags:
+      - sbom
+      summary: List all unique key/value labels from all SBOMs
+      operationId: listSbomLabels
+      parameters:
+      - name: filter_text
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      responses:
+        '200':
+          description: List all unique key/value labels from all SBOMs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
   /api/v2/sbom/by-package:
     get:
       tags:

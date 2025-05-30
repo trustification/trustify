@@ -48,7 +48,8 @@ pub fn configure(
         .service(upload)
         .service(download)
         .service(label::set)
-        .service(label::update);
+        .service(label::update)
+        .service(label::all);
 }
 
 #[utoipa::path(
