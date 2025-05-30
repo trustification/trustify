@@ -3,6 +3,7 @@ use super::*;
 #[derive(
     Clone,
     Debug,
+    Default,
     PartialEq,
     Eq,
     serde::Serialize,
@@ -47,15 +48,17 @@ impl DerefMut for QuayImporter {
 }
 
 impl QuayImporter {
-    pub fn repository_url(&self, page: Option<String>) -> String {
+    pub fn repositories_url(&self, page: &str) -> String {
         let filter = match &self.namespace {
             None => "public=true".to_string(),
             Some(v) => format!("namespace={v}"),
         };
-        let page = page.unwrap_or_default();
         format!(
             "{}/api/v1/repository?{filter}&last_modified=true&next_page={page}",
             self.source
         )
+    }
+    pub fn repository_url(&self, namespace: &str, name: &str) -> String {
+        format!("{}/api/v1/repository/{namespace}/{name}", self.source)
     }
 }

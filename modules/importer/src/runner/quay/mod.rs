@@ -30,7 +30,8 @@ impl super::ImportRunner {
         let continuation = serde_json::from_value(continuation).unwrap_or_default();
         let progress = context.progress(format!("Import SBOM attachments from: {}", quay.source));
 
-        let walker = QuayWalker::new(quay.source.clone(), ingestor, report.clone(), progress)
+        let walker = QuayWalker::new(quay.clone(), ingestor, report.clone(), progress)
+            .map_err(|e| ScannerError::Critical(e.into()))?
             .continuation(continuation);
 
         match walker.run().await {

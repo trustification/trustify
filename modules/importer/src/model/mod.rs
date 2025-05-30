@@ -220,6 +220,7 @@ impl DerefMut for ImporterConfiguration {
 #[derive(
     Clone,
     Debug,
+    Default,
     PartialEq,
     Eq,
     serde::Serialize,

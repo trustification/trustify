@@ -29,7 +29,7 @@ opentelemetry = { workspace = true, features = ["metrics"] }
 osv = { workspace = true, features = ["schema"] }
 parking_lot = { workspace = true }
 regex = { workspace = true }
-reqwest = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
 sbom-walker = { workspace = true }
 schemars = { workspace = true, features = ["url"] }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print"] }
