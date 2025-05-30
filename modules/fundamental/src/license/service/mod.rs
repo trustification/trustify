@@ -7,8 +7,12 @@ use crate::{
         },
     },
 };
-use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
+use sea_orm::{
+    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, QueryFilter, QuerySelect, RelationTrait,
+    Statement,
+};
 use sea_query::{Condition, JoinType};
+use std::collections::HashSet;
 use trustify_common::{
     db::query::Query,
     id::{Id, TrySelectForId},
@@ -18,6 +22,7 @@ use trustify_entity::{
     license, licensing_infos, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
     sbom_package_license, sbom_package_purl_ref,
 };
+use uuid::Uuid;
 
 pub mod license_export;
 
@@ -205,5 +210,40 @@ impl LicenseService {
             }
         }
         Ok(None)
+    }
+
+    pub async fn get_all_license_info<C: ConnectionTrait>(
+        &self,
+        sbom_id: Uuid,
+        connection: &C,
+    ) -> Result<HashSet<String>, Error> {
+        let stmt = Statement::from_sql_and_values(
+            connection.get_database_backend(),
+            r#"
+        (
+            SELECT DISTINCT unnest(l.spdx_licenses) as license_id
+            FROM sbom_package_license spl
+            JOIN license l ON spl.license_id = l.id
+            WHERE spl.sbom_id = $1
+            AND l.spdx_licenses IS NOT NULL
+        )
+        UNION
+        (
+            SELECT DISTINCT license_id
+            FROM licensing_infos
+            WHERE sbom_id = $1
+        )
+        "#,
+            [sbom_id.into()],
+        );
+
+        let result: Vec<String> = connection
+            .query_all(stmt)
+            .await?
+            .into_iter()
+            .map(|row| row.try_get_by_index::<String>(0))
+            .collect::<Result<Vec<String>, DbErr>>()?;
+
+        Ok(result.into_iter().collect())
     }
 }
