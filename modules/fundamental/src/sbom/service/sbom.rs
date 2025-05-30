@@ -31,12 +31,12 @@ use trustify_entity::{
     advisory, advisory_vulnerability, base_purl,
     cpe::{self, CpeDto},
     labels::Labels,
-    organization, package_relates_to_package,
+    license, organization, package_relates_to_package,
     qualified_purl::{self, CanonicalPurl},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document, status,
-    versioned_purl, vulnerability,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_license, sbom_package_purl_ref,
+    source_document, status, versioned_purl, vulnerability,
 };
 
 impl SbomService {
@@ -177,8 +177,27 @@ impl SbomService {
             .group_by(sbom_package::Column::Version)
             .column_as(sbom_node::Column::Name, "name")
             .group_by(sbom_node::Column::Name)
+            .select_column_as(
+                Expr::cust_with_exprs(
+                    "coalesce(to_json(array_agg(distinct jsonb_build_object('expression', $1, 'type', $2)) filter (where $3))::text, '{}')",
+                    [
+                        license::Column::Text.into_simple_expr(),
+                        sbom_package_license::Column::LicenseType.into_simple_expr(),
+                        license::Column::Text.is_not_null().into_simple_expr(),
+                    ],
+                ),
+                "licenses",
+            )
+            .join(
+                JoinType::LeftJoin,
+                sbom_package::Relation::PackageLicense.def(),
+            )
             .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
-            .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def());
+            .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+            .join(
+                JoinType::LeftJoin,
+                sbom_package_license::Relation::License.def(),
+            );
 
         query = join_purls_and_cpes(query)
             .filtering_with(
@@ -188,6 +207,8 @@ impl SbomService {
                     .add_columns(sbom_node::Entity)
                     .add_columns(base_purl::Entity)
                     .add_columns(sbom_package_cpe_ref::Entity)
+                    .add_columns(sbom_package_license::Entity)
+                    .add_columns(license::Entity)
                     .add_columns(sbom_package_purl_ref::Entity),
             )?
             // default order
@@ -569,6 +590,7 @@ struct PackageCatcher {
     purls: Vec<Value>,
     cpes: Value,
     relationship: Option<Relationship>,
+    licenses: Option<String>,
 }
 
 /// Convert values from a "package row" into an SBOM package
@@ -616,6 +638,7 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
         version: row.version,
         purl,
         cpe,
+        licenses: row.licenses,
     }
 }
 

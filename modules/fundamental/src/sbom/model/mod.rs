@@ -117,6 +117,8 @@ pub struct SbomPackage {
     pub purl: Vec<PurlSummary>,
     /// CPEs identifying the package
     pub cpe: Vec<String>,
+    /// License info
+    pub licenses: Option<String>,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
