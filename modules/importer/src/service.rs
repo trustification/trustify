@@ -36,26 +36,6 @@ pub enum Error {
     Query(#[from] trustify_common::db::query::Error),
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum PatchError<T>
-where
-    T: Debug + Display,
-{
-    #[error("failed to apply changes")]
-    Transform(T),
-    #[error(transparent)]
-    Common(Error),
-}
-
-impl<T> From<Error> for PatchError<T>
-where
-    T: Debug + Display,
-{
-    fn from(value: Error) -> Self {
-        Self::Common(value)
-    }
-}
-
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         match self {
@@ -80,6 +60,26 @@ impl ResponseError for Error {
                 details: None,
             }),
         }
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum PatchError<T>
+where
+    T: Debug + Display,
+{
+    #[error("failed to apply changes")]
+    Transform(T),
+    #[error(transparent)]
+    Common(Error),
+}
+
+impl<T> From<Error> for PatchError<T>
+where
+    T: Debug + Display,
+{
+    fn from(value: Error) -> Self {
+        Self::Common(value)
     }
 }
 

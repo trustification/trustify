@@ -8,7 +8,7 @@ use crate::{
     },
     model::IngestResult,
     service::{
-        Error, Warnings,
+        Error, Metadata, Warnings,
         advisory::csaf::{StatusCreator, util::gen_identifier},
     },
 };
@@ -20,12 +20,11 @@ use hex::ToHex;
 use sbom_walker::report::ReportSink;
 use sea_orm::{ConnectionTrait, TransactionTrait};
 use semver::Version;
-use std::{fmt::Debug, str::FromStr};
+use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::{hashing::Digests, id::Id};
+use trustify_common::id::Id;
 use trustify_cvss::cvss3::Cvss3Base;
-use trustify_entity::labels::Labels;
 
 struct Information<'a>(&'a Csaf);
 
@@ -83,18 +82,20 @@ impl<'g> CsafLoader<'g> {
     }
 
     #[instrument(skip(self, csaf), err(level=tracing::Level::INFO))]
-    pub async fn load(
-        &self,
-        labels: impl Into<Labels> + Debug,
-        csaf: Csaf,
-        digests: &Digests,
-    ) -> Result<IngestResult, Error> {
+    pub async fn load(&self, metadata: Metadata, csaf: Csaf) -> Result<IngestResult, Error> {
+        let Metadata {
+            labels,
+            issuer: _,
+            digests,
+            signatures,
+        } = metadata;
+
         let warnings = Warnings::new();
 
         let tx = self.graph.db.begin().await?;
 
         let advisory_id = gen_identifier(&csaf);
-        let labels = labels.into().add("type", "csaf");
+        let labels = labels.add("type", "csaf");
 
         let sha256 = digests.sha256.encode_hex::<String>();
         if let Some(found) = self.graph.get_advisory_by_digest(&sha256, &tx).await? {
@@ -108,13 +109,17 @@ impl<'g> CsafLoader<'g> {
 
         let advisory = self
             .graph
-            .ingest_advisory(&advisory_id, labels, digests, Information(&csaf), &tx)
+            .ingest_advisory(&advisory_id, labels, &digests, Information(&csaf), &tx)
             .await?;
 
         for vuln in csaf.vulnerabilities.iter().flatten() {
             self.ingest_vulnerability(&csaf, &advisory, vuln, &warnings, &tx)
                 .await?;
         }
+
+        self.graph
+            .attach_signatures(advisory.advisory.source_document_id, signatures, &tx)
+            .await?;
 
         tx.commit().await?;
 
@@ -238,7 +243,15 @@ mod test {
         let (csaf, digests): (Csaf, _) = document("csaf/CVE-2023-20862.json").await?;
         let loader = CsafLoader::new(&graph);
         loader
-            .load(("file", "CVE-2023-20862.json"), csaf, &digests)
+            .load(
+                Metadata {
+                    labels: ("file", "CVE-2023-20862.json").into(),
+                    digests,
+                    issuer: None,
+                    signatures: vec![],
+                },
+                csaf,
+            )
             .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2023-20862", &ctx.db).await?;
@@ -312,7 +325,17 @@ mod test {
         let loader = CsafLoader::new(&graph);
 
         let (csaf, digests): (Csaf, _) = document("csaf/rhsa-2024_3666.json").await?;
-        loader.load(("source", "test"), csaf, &digests).await?;
+        loader
+            .load(
+                Metadata {
+                    labels: ("source", "test").into(),
+                    digests,
+                    issuer: None,
+                    signatures: vec![],
+                },
+                csaf,
+            )
+            .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-23672", &ctx.db).await?;
         assert!(loaded_vulnerability.is_some());
@@ -353,7 +376,17 @@ mod test {
         let loader = CsafLoader::new(&graph);
 
         let (csaf, digests): (Csaf, _) = document("csaf/cve-2023-0044.json").await?;
-        loader.load(("source", "test"), csaf, &digests).await?;
+        loader
+            .load(
+                Metadata {
+                    labels: ("source", "test").into(),
+                    digests,
+                    issuer: None,
+                    signatures: vec![],
+                },
+                csaf,
+            )
+            .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2023-0044", &ctx.db).await?;
         assert!(loaded_vulnerability.is_some());

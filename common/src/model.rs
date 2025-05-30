@@ -71,12 +71,25 @@ mod default {
     }
 }
 
-// NOTE: This struct must be aligned with the struct in the [`paginated`] macro below.
+/// Paginated results
+///
+/// This carries the requested page, plus the total number of items matching the request.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PaginatedResults<R> {
+    /// The page of items
     pub items: Vec<R>,
+    /// The total number of items
     pub total: u64,
+}
+
+impl<R> Default for PaginatedResults<R> {
+    fn default() -> Self {
+        Self {
+            items: vec![],
+            total: 0,
+        }
+    }
 }
 
 impl<R> PaginatedResults<R> {
