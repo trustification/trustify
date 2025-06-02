@@ -30,24 +30,21 @@ use trustify_entity::labels::Labels;
     strum::EnumString,
     strum::IntoStaticStr,
     strum::Display,
+    strum::VariantNames,
     utoipa::ToSchema,
     PartialEq,
     Eq,
 )]
-#[strum(serialize_all = "camelCase")]
-#[schema(rename_all = "camelCase")]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
+#[schema(rename_all = "lowercase")]
 pub enum Format {
     OSV,
     CSAF,
     CVE,
     SPDX,
-    #[strum(ascii_case_insensitive)]
     CycloneDX,
-    #[strum(ascii_case_insensitive)]
     ClearlyDefinedCuration,
-    #[strum(ascii_case_insensitive)]
     ClearlyDefined,
-    #[strum(ascii_case_insensitive)]
     CweCatalog,
     // These should be resolved to one of the above before loading
     Advisory,
@@ -311,10 +308,15 @@ impl Serialize for Format {
 #[cfg(test)]
 mod test {
     use super::*;
+    use serde_json::json;
     use std::io::Read;
+    use strum::VariantNames;
     use test_log::test;
-    use trustify_test_context::document_bytes;
-    use trustify_test_context::document_read;
+    use trustify_test_context::{document_bytes, document_read};
+    use utoipa::{
+        PartialSchema,
+        openapi::{RefOr, Schema},
+    };
     use zip::ZipArchive;
 
     #[test(tokio::test)]
@@ -361,7 +363,27 @@ mod test {
 
     #[test]
     fn from_str() {
-        assert_eq!(Format::from_str("cycloneDx"), Ok(Format::CycloneDX));
+        // the new variant value
         assert_eq!(Format::from_str("cyclonedx"), Ok(Format::CycloneDX));
+        // the old variant value
+        assert_eq!(Format::from_str("cycloneDx"), Ok(Format::CycloneDX));
+    }
+
+    #[test]
+    fn to_string() {
+        assert_eq!(Format::CycloneDX.to_string(), "cyclonedx");
+        assert_eq!(Format::OSV.to_string(), "osv");
+    }
+
+    /// ensure the variants from strum are the same as the ones in the schema
+    #[test]
+    fn schema_variants() {
+        let RefOr::T(Schema::Object(o)) = Format::schema() else {
+            panic!("must be an object")
+        };
+
+        let variants = Format::VARIANTS.iter().map(|name| json!(name)).collect();
+
+        assert_eq!(o.enum_values, Some(variants));
     }
 }

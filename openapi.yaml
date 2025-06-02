@@ -172,14 +172,14 @@ paths:
         schema:
           type: string
           enum:
-          - oSV
-          - cSAF
-          - cVE
-          - sPDX
-          - cycloneDX
-          - clearlyDefinedCuration
-          - clearlyDefined
-          - cweCatalog
+          - osv
+          - csaf
+          - cve
+          - spdx
+          - cyclonedx
+          - clearlydefinedcuration
+          - clearlydefined
+          - cwecatalog
           - advisory
           - sbom
           - unknown
