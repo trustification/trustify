@@ -161,12 +161,10 @@ impl Cpe {
         let result = Uuid::new_v5(&result, self.update().as_ref().as_bytes());
         let result = Uuid::new_v5(&result, self.edition().as_ref().as_bytes());
 
-        let result = match self.language() {
+        match self.language() {
             Language::Any => Uuid::new_v5(&result, b"*"),
             Language::Language(value) => Uuid::new_v5(&result, value.as_bytes()),
-        };
-
-        result
+        }
     }
 }
 

@@ -16,6 +16,7 @@ pub struct Filter<T> {
 }
 
 impl<T> Filter<T> {
+    #[allow(clippy::result_large_err)]
     pub fn from_config(next: T, only_patterns: Vec<String>) -> Result<Self, ScannerError> {
         Ok(Self {
             only_patterns: only_patterns

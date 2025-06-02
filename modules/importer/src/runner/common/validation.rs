@@ -3,6 +3,7 @@ use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
 use walker_common::validate::ValidationOptions;
 
+#[allow(clippy::result_large_err)]
 pub fn options(v3_signatures: bool) -> Result<ValidationOptions, ScannerError> {
     let mut options = ValidationOptions::new();
 
