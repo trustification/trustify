@@ -168,9 +168,7 @@ fn gather_content(node: &Node) -> String {
         gather_content_inner(&child, &mut dest);
     }
 
-    let dest = dest.trim().to_string();
-
-    dest
+    dest.trim().to_string()
 }
 
 fn gather_content_inner(node: &Node, dest: &mut String) {
