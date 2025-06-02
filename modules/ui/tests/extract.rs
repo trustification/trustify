@@ -193,7 +193,7 @@ async fn extract_cdx_default() -> anyhow::Result<()> {
         None,
         "cyclonedx/simple.json",
         simple_cdx_json(),
-        "cycloneDx",
+        "cyclonedx",
     )
     .await
 }
@@ -205,7 +205,7 @@ async fn extract_cdx_sbom() -> anyhow::Result<()> {
         "sbom",
         "cyclonedx/simple.json",
         simple_cdx_json(),
-        "cycloneDx",
+        "cyclonedx",
     )
     .await
 }
@@ -217,7 +217,7 @@ async fn extract_cdx_cdx() -> anyhow::Result<()> {
         "cyclonedx",
         "cyclonedx/simple.json",
         simple_cdx_json(),
-        "cycloneDx",
+        "cyclonedx",
     )
     .await
 }
