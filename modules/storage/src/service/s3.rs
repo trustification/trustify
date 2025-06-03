@@ -55,21 +55,28 @@ pub struct S3Backend {
 
 impl S3Backend {
     pub async fn new(s3: S3Config, compression: Compression) -> Result<Self, anyhow::Error> {
-        log::info!(
-            "Using S3 bucket '{:?}' in '{:?}' for doc storage",
-            s3.bucket,
-            s3.region
-        );
+        let S3Config {
+            bucket,
+            region,
+            access_key,
+            secret_key,
+            trust_anchors,
+            path_style,
+        } = s3;
+
+        log::info!("Using S3 bucket '{bucket:?}' in '{region:?}' for doc storage",);
 
         let name = format!("{}#{}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
         // basics
 
-        let config = config::Builder::new().app_name(AppName::new(name)?);
+        let config = config::Builder::new()
+            .app_name(AppName::new(name)?)
+            .force_path_style(path_style);
 
         // region
 
-        let region = s3.region.ok_or_else(|| anyhow!("region not provided"))?;
+        let region = region.ok_or_else(|| anyhow!("region not provided"))?;
         let mut config = if region.starts_with("http://") || region.starts_with("https://") {
             config
                 .endpoint_resolver(StringResolver::from(region))
@@ -81,7 +88,7 @@ impl S3Backend {
 
         // credentials
 
-        if let Some((key_id, access_key)) = s3.access_key.zip(s3.secret_key) {
+        if let Some((key_id, access_key)) = access_key.zip(secret_key) {
             let credentials = Credentials::new(key_id, access_key, None, None, "config");
             config = config.credentials_provider(credentials);
         }
@@ -90,7 +97,7 @@ impl S3Backend {
 
         let mut trust_store = TrustStore::empty().with_native_roots(true);
 
-        for ta in &s3.trust_anchors {
+        for ta in &trust_anchors {
             let content = fs::read(&ta)
                 .await
                 .with_context(|| format!("failed reading trust anchor: {ta}"))?;
@@ -115,7 +122,7 @@ impl S3Backend {
 
         Ok(Self {
             client,
-            bucket: s3.bucket.unwrap_or_default(),
+            bucket: bucket.unwrap_or_default(),
             compression,
         })
     }
@@ -229,6 +236,7 @@ mod test {
                         .unwrap_or_else(|_| "minioadmin".to_string()),
                 ),
                 trust_anchors: vec![],
+                path_style: false,
             },
             compression,
         )
