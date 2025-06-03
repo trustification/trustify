@@ -8,11 +8,12 @@ use crate::{
 };
 use futures_util::{StreamExt, TryStreamExt, stream};
 use sea_orm::{
-    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
-    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns, Statement,
-    StreamTrait, prelude::Uuid,
+    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromJsonQueryResult, FromQueryResult,
+    IntoSimpleExpr, QueryFilter, QueryOrder, QueryResult, QuerySelect, RelationTrait, Select,
+    SelectColumns, Statement, StreamTrait, prelude::Uuid,
 };
 use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, fmt::Debug};
 use tracing::instrument;
@@ -179,7 +180,7 @@ impl SbomService {
             .group_by(sbom_node::Column::Name)
             .select_column_as(
                 Expr::cust_with_exprs(
-                    "coalesce(to_json(array_agg(distinct jsonb_build_object('expression', $1, 'type', $2)) filter (where $3))::text, '{}')",
+                    "coalesce(json_agg(distinct jsonb_build_object('license_name', $1, 'license_type', $2)) filter (where $3), '{}')",
                     [
                         license::Column::Text.into_simple_expr(),
                         sbom_package_license::Column::LicenseType.into_simple_expr(),
@@ -590,7 +591,13 @@ struct PackageCatcher {
     purls: Vec<Value>,
     cpes: Value,
     relationship: Option<Relationship>,
-    licenses: Option<String>,
+    licenses: Vec<LicenseBasicInfo>,
+}
+
+#[derive(Serialize, Deserialize, FromJsonQueryResult)]
+pub struct LicenseBasicInfo {
+    pub license_name: String,
+    pub license_type: i32,
 }
 
 /// Convert values from a "package row" into an SBOM package
@@ -631,6 +638,12 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
         .map(|cpe| cpe.to_string())
         .collect();
 
+    let licenses = row
+        .licenses
+        .into_iter()
+        .map(|license| license.into())
+        .collect();
+
     SbomPackage {
         id: row.id,
         name: row.name,
@@ -638,7 +651,7 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
         version: row.version,
         purl,
         cpe,
-        licenses: row.licenses,
+        licenses,
     }
 }
 

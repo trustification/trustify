@@ -33,7 +33,7 @@ async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow:
     }
 
     let result: Value = query_value(&app, &id, "name~logback-core").await;
-    let except_result = json!({
+    let expected_result = json!({
         "items": [
             {
                 "id": "pkg:maven/ch.qos.logback/logback-core@1.2.13?type=jar",
@@ -59,15 +59,18 @@ async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow:
                     }
                 ],
                 "cpe": [],
-                "licenses": "[{\"type\": 0, \"expression\": \"EPL-1.0\"},{\"type\": 0, \"expression\": \"GNU Lesser General Public License\"}]"
+                "licenses": [
+                    {"license_type": "Declared", "license_name": "EPL-1.0"},
+                    {"license_type": "Declared", "license_name": "GNU Lesser General Public License"}
+                ]
             }
         ],
         "total": 1
     });
 
-    assert!(result.contains_subset(except_result));
+    assert!(result.contains_subset(expected_result));
     let result: Value = query_value(&app, &id, "name~logback-cor&Text~EPL").await;
-    let except_result = json!({
+    let expected_result = json!({
         "items": [
             {
                 "id": "pkg:maven/ch.qos.logback/logback-core@1.2.13?type=jar",
@@ -93,12 +96,14 @@ async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow:
                     }
                 ],
                 "cpe": [],
-                "licenses": "[{\"type\": 0, \"expression\": \"EPL-1.0\"}]"
+                "licenses": [
+                    {"license_type": "Declared", "license_name": "EPL-1.0"}
+                ]
             }
         ],
         "total": 1
     });
-    assert!(result.contains_subset(except_result));
+    assert!(result.contains_subset(expected_result));
 
     let id = ctx
         .ingest_document("spdx/SATELLITE-6.15-RHEL-8.json")
@@ -107,7 +112,7 @@ async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow:
         .to_string();
 
     let result = query_value(&app, &id, "name=rubygem-coffee-script").await;
-    let except_result = json!({
+    let expected_result = json!({
         "items": [
             {
                 "id": "SPDXRef-02be9b35-a6ca-47b5-9c9e-9098c00ae212",
@@ -133,7 +138,10 @@ async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow:
                     }
                 ],
                 "cpe": [],
-                "licenses": "[{\"type\": 0, \"expression\": \"MIT\"},{\"type\": 1, \"expression\": \"MIT\"}]"
+                "licenses": [
+                    {"license_type": "Declared", "license_name": "MIT"},
+                    {"license_type": "Concluded", "license_name": "MIT"}
+                ]
             },
             {
                 "id": "SPDXRef-9fe51d0d-aec8-4a70-9bf0-70b60606632d",
@@ -165,12 +173,15 @@ async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow:
                     "cpe:/a:redhat:satellite:6.12:*:el8:*",
                     "cpe:/a:redhat:satellite:6.13:*:el8:*"
                 ],
-                "licenses": "[{\"type\": 0, \"expression\": \"MIT\"},{\"type\": 1, \"expression\": \"MIT\"}]"
+                "licenses": [
+                    {"license_type": "Declared", "license_name": "MIT"},
+                    {"license_type": "Concluded", "license_name": "MIT"}
+                ]
             }
         ],
         "total": 2
     });
-    assert!(result.contains_subset(except_result));
+    assert!(result.contains_subset(expected_result));
     Ok(())
 }
 

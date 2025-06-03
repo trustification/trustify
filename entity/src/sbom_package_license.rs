@@ -1,4 +1,6 @@
 use sea_orm::entity::prelude::*;
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "sbom_package_license")]
@@ -27,7 +29,19 @@ pub enum Relation {
     License,
 }
 
-#[derive(Copy, Clone, Debug, strum::Display, Eq, PartialEq, EnumIter, DeriveActiveEnum)]
+#[derive(
+    Copy,
+    Clone,
+    Debug,
+    strum::Display,
+    Eq,
+    PartialEq,
+    EnumIter,
+    DeriveActiveEnum,
+    Serialize,
+    Deserialize,
+    ToSchema,
+)]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
 pub enum LicenseCategory {
     Declared = 0,
