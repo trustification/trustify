@@ -1,5 +1,4 @@
 mod details;
-pub mod raw_sql;
 mod summary;
 
 pub use details::advisory_vulnerability::*;

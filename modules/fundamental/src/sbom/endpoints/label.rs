@@ -1,6 +1,8 @@
-use crate::sbom::service::SbomService;
+use crate::{
+    common::service::{DocumentType, fetch_labels},
+    sbom::service::SbomService,
+};
 use actix_web::{HttpResponse, Responder, get, patch, put, web};
-
 use serde::Deserialize;
 use trustify_auth::{
     Permission, UpdateSbom,
@@ -16,8 +18,14 @@ struct LabelQuery {
     #[serde(default)]
     filter_text: String,
 
-    #[serde(default)]
+    #[serde(default = "default::limit")]
     limit: u64,
+}
+
+mod default {
+    pub const fn limit() -> u64 {
+        10
+    }
 }
 
 #[utoipa::path(
@@ -33,7 +41,6 @@ struct LabelQuery {
 #[get("/v2/sbom-labels")]
 /// List all unique key/value labels from all SBOMs
 pub async fn all(
-    fetch: web::Data<SbomService>,
     db: web::Data<Database>,
     web::Query(query): web::Query<LabelQuery>,
     authorizer: web::Data<Authorizer>,
@@ -41,9 +48,13 @@ pub async fn all(
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
 
-    let result = fetch
-        .fetch_labels(&query.filter_text, query.limit, db.as_ref())
-        .await?;
+    let result = fetch_labels(
+        DocumentType::Sbom,
+        query.filter_text,
+        query.limit,
+        db.as_ref(),
+    )
+    .await?;
 
     Ok(HttpResponse::Ok().json(result))
 }
