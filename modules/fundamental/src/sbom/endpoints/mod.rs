@@ -81,7 +81,7 @@ const CONTENT_TYPE_GZIP: &str = "application/gzip";
     tag = "sbom",
     operation_id = "getUniqueLicenses",
     params(
-    ("id" = Id, Path),
+    ("id", Path, description = "ID of the SBOM to get the license IDs for"),
     ),
     responses(
     (status = 200, description = "fetch all unique license id and license info id", body = Vec<String>),
