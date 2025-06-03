@@ -1,4 +1,3 @@
-use async_graphql::scalar;
 use std::{
     borrow::Cow,
     collections::HashMap,
@@ -39,7 +38,8 @@ impl PartialSchema for Labels {
     }
 }
 
-scalar!(Labels);
+#[cfg(feature = "async-graphql")]
+async_graphql::scalar!(Labels);
 
 impl Labels {
     pub fn new() -> Self {

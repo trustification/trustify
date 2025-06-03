@@ -1,9 +1,12 @@
 use crate::{advisory, product};
-use async_graphql::*;
 use sea_orm::entity::prelude::*;
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
-#[graphql(concrete(name = "Organization", params()))]
+#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::SimpleObject))]
+#[cfg_attr(
+    feature = "async-graphql",
+    graphql(concrete(name = "Organization", params()))
+)]
 #[sea_orm(table_name = "organization")]
 pub struct Model {
     #[sea_orm(primary_key)]

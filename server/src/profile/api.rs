@@ -36,7 +36,6 @@ use trustify_infrastructure::{
     otel::{Metrics as OtelMetrics, Tracing},
 };
 use trustify_module_analysis::{config::AnalysisConfig, service::AnalysisService};
-use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::{
@@ -60,6 +59,7 @@ pub struct Run {
     #[arg(long, env)]
     pub sample_data: bool,
 
+    #[cfg(feature = "graphql")]
     /// Allows enabling the GraphQL endpoint
     #[arg(long, env = "TRUSTD_WITH_GRAPHQL", default_value_t = false)]
     pub with_graphql: bool,
@@ -184,6 +184,7 @@ struct InitData {
     #[cfg(feature = "garage-door")]
     embedded_oidc: Option<embedded_oidc::EmbeddedOidc>,
     ui: UI,
+    #[cfg(feature = "graphql")]
     with_graphql: bool,
     config: ModuleConfig,
     analysis: AnalysisService,
@@ -324,6 +325,7 @@ impl InitData {
             #[cfg(feature = "garage-door")]
             embedded_oidc,
             ui,
+            #[cfg(feature = "graphql")]
             with_graphql: run.with_graphql,
         })
     }
@@ -350,7 +352,7 @@ impl InitData {
                             storage: self.storage.clone(),
                             auth: self.authenticator.clone(),
                             analysis: self.analysis.clone(),
-
+                            #[cfg(feature = "graphql")]
                             with_graphql: self.with_graphql,
                         },
                     );
@@ -398,6 +400,7 @@ pub(crate) struct Config {
     pub(crate) storage: DispatchBackend,
     pub(crate) analysis: AnalysisService,
     pub(crate) auth: Option<Arc<Authenticator>>,
+    #[cfg(feature = "graphql")]
     pub(crate) with_graphql: bool,
 }
 
@@ -414,6 +417,7 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
         auth,
         analysis,
 
+        #[cfg(feature = "graphql")]
         with_graphql,
     } = config;
 
@@ -426,6 +430,7 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
 
     // register GraphQL API and UI
 
+    #[cfg(feature = "graphql")]
     if with_graphql {
         svc.service(
             utoipa_actix_web::scope("/graphql")
@@ -541,6 +546,7 @@ mod test {
                             storage: DispatchBackend::Filesystem(storage),
                             auth: None,
                             analysis,
+                            #[cfg(feature = "graphql")]
                             with_graphql: true,
                         },
                     );
@@ -585,11 +591,13 @@ mod test {
         assert!(text.contains("<title>Swagger UI</title>"));
 
         // GraphQL UI
-
-        let req = TestRequest::get().uri("/graphql").to_request();
-        let body = call_and_read_body(&app, req).await;
-        let text = std::str::from_utf8(&body)?;
-        assert!(text.contains("<title>GraphiQL IDE</title>"));
+        #[cfg(feature = "graphql")]
+        {
+            let req = TestRequest::get().uri("/graphql").to_request();
+            let body = call_and_read_body(&app, req).await;
+            let text = std::str::from_utf8(&body)?;
+            assert!(text.contains("<title>GraphiQL IDE</title>"));
+        }
 
         // API
 

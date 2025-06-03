@@ -5,7 +5,6 @@ use super::service::SbomService;
 use crate::{
     Error, purl::model::summary::purl::PurlSummary, source_document::model::SourceDocument,
 };
-use async_graphql::SimpleObject;
 use sea_orm::{ConnectionTrait, ModelTrait, PaginatorTrait, prelude::Uuid};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -101,8 +100,12 @@ impl SbomSummary {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, SimpleObject, Default)]
-#[graphql(concrete(name = "SbomPackage", params()))]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, Default)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::SimpleObject))]
+#[cfg_attr(
+    feature = "async-graphql",
+    graphql(concrete(name = "SbomPackage", params()))
+)]
 pub struct SbomPackage {
     /// The SBOM internal ID of a package
     pub id: String,
@@ -113,7 +116,7 @@ pub struct SbomPackage {
     /// An optional version for an SBOM package
     pub version: Option<String>,
     /// PURLs identifying the package
-    #[graphql(skip)]
+    #[cfg_attr(feature = "async-graphql", graphql(skip))]
     pub purl: Vec<PurlSummary>,
     /// CPEs identifying the package
     pub cpe: Vec<String>,

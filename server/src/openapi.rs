@@ -1,8 +1,7 @@
 use crate::profile::api::{Config, ModuleConfig, configure, default_openapi_info};
 use actix_web::App;
 use trustify_common::{config::Database, db};
-use trustify_module_analysis::config::AnalysisConfig;
-use trustify_module_analysis::service::AnalysisService;
+use trustify_module_analysis::{config::AnalysisConfig, service::AnalysisService};
 use trustify_module_storage::service::{dispatch::DispatchBackend, fs::FileSystemBackend};
 use utoipa::{
     Modify, OpenApi,
@@ -26,6 +25,7 @@ pub async fn create_openapi() -> anyhow::Result<utoipa::openapi::OpenApi> {
                     storage: storage.into(),
                     auth: None,
                     analysis,
+                    #[cfg(feature = "graphql")]
                     with_graphql: true,
                 },
             );
