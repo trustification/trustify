@@ -212,7 +212,7 @@ impl SbomAdvisory {
                 version: each.sbom_package.version,
                 purl: vec![PurlSummary::from_entity(&each.qualified_purl)],
                 cpe: vec![],
-                licenses: None,
+                licenses: vec![],
             });
         }
 
