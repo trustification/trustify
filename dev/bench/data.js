@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748957736049,
+  "lastUpdate": 1748959213560,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10550,6 +10550,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/fe86928a9eaef50d388302dda79ac59defb33c35"
         },
         "date": 1748957734453,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "7d02bcff9357182d7cc3cafc61e2a7247e0a0ca1",
+          "message": "refactor: generate lowercase enum variants, accept all cases\n\nCurrently, the enums variants supported as string are camelCase, which\nresults in lowercase for acronyms when using strum. However, when using\nserde, which is used for generating the schema, it results in weird\ncases like `oSV`.\n\nThis change aligns this, so that both strum as well as the schema use\nthe same, lowercase variants.",
+          "timestamp": "2025-06-03T13:36:52Z",
+          "tree_id": "bfabe6e72153316cfd37b5eb933be7eba221c744",
+          "url": "https://github.com/trustification/trustify/commit/7d02bcff9357182d7cc3cafc61e2a7247e0a0ca1"
+        },
+        "date": 1748959212467,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
