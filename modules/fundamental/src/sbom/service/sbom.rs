@@ -180,7 +180,7 @@ impl SbomService {
             .group_by(sbom_node::Column::Name)
             .select_column_as(
                 Expr::cust_with_exprs(
-                    "coalesce(json_agg(distinct jsonb_build_object('license_name', $1, 'license_type', $2)) filter (where $3), '{}')",
+                    "coalesce(json_agg(distinct jsonb_build_object('license_name', $1, 'license_type', $2)) filter (where $3), '[]'::json)",
                     [
                         license::Column::Text.into_simple_expr(),
                         sbom_package_license::Column::LicenseType.into_simple_expr(),
@@ -591,7 +591,7 @@ struct PackageCatcher {
     purls: Vec<Value>,
     cpes: Value,
     relationship: Option<Relationship>,
-    licenses: Vec<LicenseBasicInfo>,
+    licenses: Option<Vec<LicenseBasicInfo>>,
 }
 
 #[derive(Serialize, Deserialize, FromJsonQueryResult)]
@@ -640,6 +640,7 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
 
     let licenses = row
         .licenses
+        .unwrap_or_default()
         .into_iter()
         .map(|license| license.into())
         .collect();
