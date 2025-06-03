@@ -32,7 +32,6 @@ use trustify_infrastructure::{
     health::checks::{Local, Probe},
     otel::Tracing,
 };
-use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::{

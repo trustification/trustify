@@ -7,6 +7,7 @@ license.workspace = true
 
 [features]
 ai = ["trustify-module-fundamental/ai"]
+graphql = ["trustify-module-graphql"]
 
 [dependencies]
 trustify-auth = { workspace = true }
@@ -14,7 +15,7 @@ trustify-common = { workspace = true }
 trustify-infrastructure = { workspace = true }
 trustify-module-analysis = { workspace = true }
 trustify-module-fundamental = { workspace = true }
-trustify-module-graphql = { workspace = true }
+trustify-module-graphql = { workspace = true, optional = true }
 trustify-module-importer = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }

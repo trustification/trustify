@@ -1,5 +1,4 @@
 use crate::{advisory_vulnerability, cvss3, labels::Labels, organization, vulnerability};
-use async_graphql::*;
 use sea_orm::{Condition, entity::prelude::*, sea_query::IntoCondition};
 use std::sync::Arc;
 use time::OffsetDateTime;
@@ -8,16 +7,19 @@ use trustify_common::{
     id::{Id, IdError, TryFilterForId},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
-#[graphql(complex)]
-#[graphql(concrete(name = "Advisory", params()))]
+#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::SimpleObject))]
+#[cfg_attr(
+    feature = "async-graphql",
+    graphql(complex, concrete(name = "Advisory", params()))
+)]
 #[sea_orm(table_name = "advisory")]
 pub struct Model {
     /// The database internal ID
     #[sea_orm(primary_key)]
     pub id: Uuid,
     /// A unique document identifier
-    #[graphql(name = "name")]
+    #[cfg_attr(feature = "async-graphql", graphql(name = "name"))]
     pub identifier: String,
     pub version: Option<String>,
     /// An ID as claimed by the document
@@ -32,9 +34,13 @@ pub struct Model {
     pub source_document_id: Option<Uuid>,
 }
 
-#[ComplexObject]
+#[cfg(feature = "async-graphql")]
+#[async_graphql::ComplexObject]
 impl Model {
-    async fn organization(&self, ctx: &Context<'_>) -> Result<organization::Model> {
+    async fn organization(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+    ) -> async_graphql::Result<organization::Model> {
         let db = ctx.data::<Arc<db::Database>>()?;
         if let Some(found) = self
             .find_related(organization::Entity)
@@ -43,11 +49,14 @@ impl Model {
         {
             Ok(found)
         } else {
-            Err(Error::new("Organization not found"))
+            Err(async_graphql::Error::new("Organization not found"))
         }
     }
 
-    async fn vulnerabilities(&self, ctx: &Context<'_>) -> Result<Vec<vulnerability::Model>> {
+    async fn vulnerabilities(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+    ) -> async_graphql::Result<Vec<vulnerability::Model>> {
         let db = ctx.data::<Arc<db::Database>>()?;
         Ok(self
             .find_related(vulnerability::Entity)
