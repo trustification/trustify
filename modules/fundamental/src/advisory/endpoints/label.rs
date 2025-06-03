@@ -1,4 +1,7 @@
-use crate::advisory::service::AdvisoryService;
+use crate::{
+    advisory::service::AdvisoryService,
+    common::{service::DocumentType, service::fetch_labels},
+};
 use actix_web::{HttpResponse, Responder, get, patch, put, web};
 use trustify_auth::{
     Permission, UpdateAdvisory,
@@ -14,8 +17,14 @@ struct LabelQuery {
     #[serde(default)]
     filter_text: String,
 
-    #[serde(default)]
+    #[serde(default = "default::limit")]
     limit: u64,
+}
+
+mod default {
+    pub const fn limit() -> u64 {
+        10
+    }
 }
 
 #[utoipa::path(
@@ -31,7 +40,6 @@ struct LabelQuery {
 #[get("/v2/advisory-labels")]
 /// List all unique key/value labels from all Advisories
 pub async fn all(
-    fetch: web::Data<AdvisoryService>,
     db: web::Data<Database>,
     web::Query(query): web::Query<LabelQuery>,
     authorizer: web::Data<Authorizer>,
@@ -39,9 +47,13 @@ pub async fn all(
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadAdvisory)?;
 
-    let result = fetch
-        .fetch_labels(&query.filter_text, query.limit, db.as_ref())
-        .await?;
+    let result = fetch_labels(
+        DocumentType::Advisory,
+        query.filter_text,
+        query.limit,
+        db.as_ref(),
+    )
+    .await?;
 
     Ok(HttpResponse::Ok().json(result))
 }

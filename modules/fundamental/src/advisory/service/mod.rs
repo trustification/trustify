@@ -1,5 +1,3 @@
-pub mod label;
-
 use crate::{
     Error,
     advisory::model::{AdvisoryDetails, AdvisorySummary},
