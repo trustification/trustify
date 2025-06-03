@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748959213560,
+  "lastUpdate": 1748959958758,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10579,6 +10579,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/7d02bcff9357182d7cc3cafc61e2a7247e0a0ca1"
         },
         "date": 1748959212467,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "a2365881e0cd87a68f16c14d8dadbe90a975f0bb",
+          "message": "build: add feature flag for graphql\n\nThis adds a feature for graphql logic and dependencies. Reducing the\nnumber of dependencies when not using graphql, which is the default\nat the moment.",
+          "timestamp": "2025-06-03T13:47:43Z",
+          "tree_id": "9596bdb37673be1c60d2a914a0addd56705fe1fe",
+          "url": "https://github.com/trustification/trustify/commit/a2365881e0cd87a68f16c14d8dadbe90a975f0bb"
+        },
+        "date": 1748959957748,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
