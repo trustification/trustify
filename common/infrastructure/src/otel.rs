@@ -157,7 +157,7 @@ fn init_otlp_metrics(name: &str) {
         .with_resource(resource)
         .build();
 
-    println!("Using OTEL Collector with Prometheus as the back-end.");
+    println!("Exporting metrics to OTEL Collector.");
     println!("{:#?}", provider);
 
     set_meter_provider(provider);
@@ -182,7 +182,7 @@ fn init_otlp_tracing(name: &str) {
         .with_sampler(ParentBased(Box::new(sampler())))
         .build();
 
-    println!("Using OTEL Collector with Jaeger as the back-end.");
+    println!("Exporting traces to OTEL Collector.");
     println!("{:#?}", provider);
 
     let formatting_layer = tracing_subscriber::fmt::Layer::default();
