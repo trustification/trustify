@@ -3768,6 +3768,21 @@ components:
       type: object
       additionalProperties:
         type: string
+    LicenseCategory:
+      type: string
+      enum:
+      - Declared
+      - Concluded
+    LicenseInfo:
+      type: object
+      required:
+      - license_name
+      - license_type
+      properties:
+        license_name:
+          type: string
+        license_type:
+          $ref: '#/components/schemas/LicenseCategory'
     LicenseSummary:
       type: object
       required:
@@ -4148,6 +4163,7 @@ components:
             - name
             - purl
             - cpe
+            - licenses
             properties:
               cpe:
                 type: array
@@ -4163,9 +4179,9 @@ components:
                 type: string
                 description: The SBOM internal ID of a package
               licenses:
-                type:
-                - string
-                - 'null'
+                type: array
+                items:
+                  $ref: '#/components/schemas/LicenseInfo'
                 description: License info
               name:
                 type: string
@@ -4693,6 +4709,7 @@ components:
       - name
       - purl
       - cpe
+      - licenses
       properties:
         cpe:
           type: array
@@ -4708,9 +4725,9 @@ components:
           type: string
           description: The SBOM internal ID of a package
         licenses:
-          type:
-          - string
-          - 'null'
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseInfo'
           description: License info
         name:
           type: string

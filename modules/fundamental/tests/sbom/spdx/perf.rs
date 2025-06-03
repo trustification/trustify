@@ -29,7 +29,7 @@ async fn ingest_spdx_medium(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
                     version: Some("4.8.z".to_string()),
                     purl: vec![],
                     cpe: vec!["cpe:/a:redhat:openshift_container_storage:4.8:*:el8:*".into()],
-                    licenses: None,
+                    licenses: vec![],
                 }
             );
 
@@ -101,7 +101,7 @@ async fn ingest_spdx_medium_cpes(ctx: &TrustifyContext) -> Result<(), anyhow::Er
                     version: Some("9.2.0".to_string()),
                     purl: vec![],
                     cpe: vec![],
-                    licenses: None,
+                    licenses: vec![],
                 }
             );
 
