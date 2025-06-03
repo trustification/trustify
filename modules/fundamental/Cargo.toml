@@ -8,6 +8,7 @@ license.workspace = true
 [features]
 default = []
 ai = [ "trustify-common/ai" ]
+graphql = [ "async-graphql" ]
 
 [dependencies]
 trustify-auth = { workspace = true }
@@ -21,7 +22,6 @@ trustify-module-storage = { workspace = true }
 actix-http = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
-async-graphql = { workspace = true, features = ["uuid", "time"] }
 async-trait = { workspace = true }
 base64 = { workspace = true }
 cpe = { workspace = true }
@@ -49,6 +49,8 @@ tracing-futures = { workspace = true, features = ["futures-03"] }
 utoipa = { workspace = true, features = ["actix_extras", "uuid", "time"] }
 utoipa-actix-web = { workspace = true }
 uuid = { workspace = true }
+
+async-graphql = { workspace = true, features = ["uuid", "time"], optional = true }
 
 [dev-dependencies]
 actix-http = { workspace = true }
