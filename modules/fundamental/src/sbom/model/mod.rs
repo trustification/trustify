@@ -124,7 +124,7 @@ pub struct SbomPackage {
     /// CPEs identifying the package
     pub cpe: Vec<String>,
     /// License info
-    #[graphql(skip)]
+    #[cfg_attr(feature = "async-graphql", graphql(skip))]
     pub licenses: Vec<LicenseInfo>,
 }
 
