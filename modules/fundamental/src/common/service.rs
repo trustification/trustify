@@ -7,7 +7,7 @@ pub enum DocumentType {
     Sbom,
 }
 
-/// Fetch all unique key/value labels of all Advisories
+/// Fetch all unique key/value labels matching the `filter_text` for all the `r#type` entities, i.e. `DocumentType::Advisory` or `DocumentType::Sbom`
 ///
 /// If limit=0 then all data will be fetched
 pub async fn fetch_labels<C: ConnectionTrait>(
