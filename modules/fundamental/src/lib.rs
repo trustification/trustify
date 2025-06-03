@@ -1,6 +1,7 @@
 pub mod advisory;
 #[cfg(feature = "ai")]
 pub mod ai;
+pub mod common;
 pub mod endpoints;
 pub mod error;
 pub mod license;
