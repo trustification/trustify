@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748957124128,
+  "lastUpdate": 1748957736049,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10526,6 +10526,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "fe86928a9eaef50d388302dda79ac59defb33c35",
+          "message": "refactor: Removing Jaeger from dev environment\n\nNote:\n\n* This is using a basic convention of config-subsystem\n  * Example: config-prometheus.yaml, config-tempo.yaml,\n    config-collector.yaml, etc.\n* This is using fixed version for each subsystem instead of `latest`\n  * This is to avoid spending time with configuration when approving\n    a PR or quick checking something during development time.\n* Grafana datasources for tempo and prometheus added to configuration\n* Grafana basic dashboard will be added later in other PR\n* Prometheus is not scraping the collector, it is using the otlp-receiver over HTTP\n* The collector is exporting to prometheus",
+          "timestamp": "2025-06-03T13:13:34Z",
+          "tree_id": "a0034a48412636c10f740da0e7adfc7b5212d97b",
+          "url": "https://github.com/trustification/trustify/commit/fe86928a9eaef50d388302dda79ac59defb33c35"
+        },
+        "date": 1748957734453,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
