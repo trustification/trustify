@@ -27,7 +27,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_AUTH_ANONYMOUS_ENABLED=false
       - GF_AUTH_DISABLE_LOGIN_FORM=false
-      - GF_LOG_LEVEL=info
+      - GF_LOG_LEVEL=error
     restart: unless-stopped
 
   collector:
@@ -38,3 +38,35 @@ services:
     ports:
       - "4317:4317"
     depends_on: [tempo]
+
+  # NOTE: Database part to avoid opening two more terminals for extra commands.
+  # Doesn't need to be in the diagrams, it's just for convenience.
+  migration:
+    image: ghcr.io/trustification/trustd:latest
+    command: "db --db-url=postgres://postgres:trustify@postgres:5432/trustify migrate"
+    environment:
+      - RUST_LOG=none
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: docker.io/library/postgres:17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "trustify"
+      POSTGRES_DB: "trustify"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d trustify"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: "1GB"
+
