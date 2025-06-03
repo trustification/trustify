@@ -3,7 +3,8 @@ use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
 use trustify_common::model::Paginated;
-use trustify_module_fundamental::sbom::model::SbomPackage;
+use trustify_entity::sbom_package_license::LicenseCategory;
+use trustify_module_fundamental::sbom::model::{LicenseInfo, SbomPackage};
 use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext)]
@@ -29,7 +30,16 @@ async fn ingest_spdx_medium(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
                     version: Some("4.8.z".to_string()),
                     purl: vec![],
                     cpe: vec!["cpe:/a:redhat:openshift_container_storage:4.8:*:el8:*".into()],
-                    licenses: vec![],
+                    licenses: vec![
+                        LicenseInfo {
+                            license_name: "NOASSERTION".to_string(),
+                            license_type: LicenseCategory::Declared
+                        },
+                        LicenseInfo {
+                            license_name: "NOASSERTION".to_string(),
+                            license_type: LicenseCategory::Concluded
+                        }
+                    ],
                 }
             );
 
@@ -101,7 +111,16 @@ async fn ingest_spdx_medium_cpes(ctx: &TrustifyContext) -> Result<(), anyhow::Er
                     version: Some("9.2.0".to_string()),
                     purl: vec![],
                     cpe: vec![],
-                    licenses: vec![],
+                    licenses: vec![
+                        LicenseInfo {
+                            license_name: "NOASSERTION".to_string(),
+                            license_type: LicenseCategory::Declared
+                        },
+                        LicenseInfo {
+                            license_name: "NOASSERTION".to_string(),
+                            license_type: LicenseCategory::Concluded
+                        }
+                    ],
                 }
             );
 
