@@ -15,12 +15,13 @@ use cve::{
     common::{Description, Product, Status, VersionRange},
 };
 use sea_orm::TransactionTrait;
+use serde_json::Value;
 use std::fmt::Debug;
 use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
-use trustify_cvss::cvss3::{Cvss3Base, severity::Severity};
+use trustify_cvss::cvss3::{Cvss3Base, score::Score, severity::Severity};
 use trustify_entity::{labels::Labels, version_scheme::VersionScheme};
 
 /// Loader capable of parsing a CVE Record JSON file
@@ -287,6 +288,19 @@ impl<'g> CveLoader<'g> {
             );
 
             for metric in all_metrics {
+                // Set base_score and base_severity to the first found
+                // value (where CNA value have a precedence). ADP values are used as fallback.
+                //
+                // For the vulnerability score we are using the value of the highest CVSS version
+                // available.
+                //
+                // TODO: With https://github.com/trustification/trustify/issues/1656 we will start
+                // saving the type of the score (CNA or ADP) to be able to distinguish between them.
+
+                if let Some(cvss) = metric.cvss_v4_0.as_ref() {
+                    (base_score, base_severity) = get_score(cvss);
+                }
+
                 if let Some(cvss) = metric.cvss_v3_1.as_ref().or(metric.cvss_v3_0.as_ref()) {
                     if let Some(vector) = cvss.get("vectorString").and_then(|v| v.as_str()) {
                         if let Ok(cvss3) = Cvss3Base::from_str(vector) {
@@ -294,20 +308,14 @@ impl<'g> CveLoader<'g> {
                         }
                     }
 
-                    // Set base_score and base_severity to the first found
-                    // value (where CNA value have a precedence). ADP values are used as fallback.
-                    // TODO: With https://github.com/trustification/trustify/issues/1656 we will start
-                    // saving the type of the score (CNA or ADP) to be able to distinguish between them.
                     if base_score.is_none() {
-                        base_score = cvss.get("baseScore").and_then(|v| v.as_f64());
+                        (base_score, base_severity) = get_score(cvss);
                     }
+                }
 
-                    if base_severity.is_none() {
-                        base_severity = cvss
-                            .get("baseSeverity")
-                            .and_then(|v| v.as_str())
-                            .and_then(|s| Severity::from_str(s).ok())
-                            .map(trustify_entity::cvss3::Severity::from);
+                if let Some(cvss) = metric.cvss_v2_0.as_ref() {
+                    if base_score.is_none() {
+                        (base_score, base_severity) = get_score(cvss);
                     }
                 }
             }
@@ -331,6 +339,26 @@ impl<'g> CveLoader<'g> {
             scores,
         }
     }
+}
+
+/// Extracts the base score and severity from a CVSS JSON object.
+/// For more information on the CVSS schema, see:
+/// https://github.com/CVEProject/cve-schema/tree/main/schema/imports/cvss
+fn get_score(cvss: &Value) -> (Option<f64>, Option<trustify_entity::cvss3::Severity>) {
+    let base_score = cvss.get("baseScore").and_then(|v| v.as_f64());
+
+    let mut base_severity = cvss
+        .get("baseSeverity")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Severity::from_str(s).ok())
+        .map(trustify_entity::cvss3::Severity::from);
+
+    // CVSS v2.0 does not have a baseSeverity field, so we need to calculate it from the score.
+    if base_score.is_some() && base_severity.is_none() {
+        base_severity = base_score.map(|score| Severity::from(Score::from(score)).into());
+    }
+
+    (base_score, base_severity)
 }
 
 struct VulnerabilityDetails<'a> {
