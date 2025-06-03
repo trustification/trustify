@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748945158516,
+  "lastUpdate": 1748957124128,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10497,6 +10497,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "d84a29d38a09564005a3ac90829f67010c16e9a2",
+          "message": "feat: Setting compression to None will remove the header\n\nCloses: #1682",
+          "timestamp": "2025-06-03T12:54:12Z",
+          "tree_id": "232c5d79a16630b95b3cfacaf437a964bd01af7b",
+          "url": "https://github.com/trustification/trustify/commit/d84a29d38a09564005a3ac90829f67010c16e9a2"
+        },
+        "date": 1748957123247,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
