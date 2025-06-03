@@ -401,3 +401,91 @@ async fn query_sboms_by_array_values(ctx: &TrustifyContext) -> Result<(), anyhow
 
     Ok(())
 }
+
+async fn test_label(
+    ctx: &TrustifyContext,
+    query: &str,
+    limit: impl Into<Option<u64>>,
+    result: Value,
+) -> anyhow::Result<()> {
+    let app = caller(ctx).await.unwrap();
+
+    let _id = ctx
+        .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
+        .await?
+        .id
+        .to_string();
+
+    let mut uri = format!("/api/v2/sbom-labels?filter_text={}", encode(query));
+
+    if let Some(limit) = limit.into() {
+        uri.push_str(&format!("&limit={limit}"));
+    }
+
+    let req = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(req).await;
+    tracing::debug!(test = "", "{response:#?}");
+
+    assert_eq!(response, result,);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn all_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    test_label(
+        ctx,
+        "",
+        None,
+        json!([
+            { "key": "source", "value": "TrustifyContext"},
+            { "key": "type", "value": "spdx"}
+        ]),
+    )
+    .await?;
+
+    test_label(
+        ctx,
+        "spdx",
+        None,
+        json!([
+            { "key": "type", "value": "spdx"}
+        ]),
+    )
+    .await?;
+
+    test_label(
+        ctx,
+        "pd",
+        None,
+        json!([
+            { "key": "type", "value": "spdx"}
+        ]),
+    )
+    .await?;
+
+    test_label(
+        ctx,
+        "yp",
+        None,
+        json!([
+            { "key": "type", "value": "spdx"}
+        ]),
+    )
+    .await?;
+
+    test_label(ctx, "%", None, json!([])).await?;
+
+    test_label(
+        ctx,
+        "",
+        1u64,
+        json!([
+            { "key": "source", "value": "TrustifyContext"},
+        ]),
+    )
+    .await?;
+
+    Ok(())
+}
