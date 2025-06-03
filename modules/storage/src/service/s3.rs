@@ -142,7 +142,11 @@ impl StorageBackend for S3Backend {
         self.client
             .put_object()
             .bucket(&self.bucket)
-            .content_encoding(self.compression)
+            .set_content_encoding(match self.compression {
+                // `None` is the way to remove the header, for NooBaa, which has problems with this header
+                Compression::None => None,
+                other => Some(other.to_string()),
+            })
             .key(result.key())
             .body(
                 FsBuilder::new()
