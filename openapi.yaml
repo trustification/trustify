@@ -2542,9 +2542,11 @@ paths:
       parameters:
       - name: id
         in: path
+        description: ID of the SBOM to get the license IDs for
         required: true
         schema:
-          $ref: '#/components/schemas/Id'
+          type: string
+          format: uuid
       responses:
         '200':
           description: fetch all unique license id and license info id
