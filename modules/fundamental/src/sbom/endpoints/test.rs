@@ -16,7 +16,6 @@ use trustify_test_context::{
 };
 use urlencoding::encode;
 
-
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {

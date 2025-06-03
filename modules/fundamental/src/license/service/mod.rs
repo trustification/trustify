@@ -221,17 +221,11 @@ impl LicenseService {
             connection.get_database_backend(),
             r#"
         (
-            SELECT DISTINCT unnest(l.spdx_licenses) as license_id
+            SELECT DISTINCT unnest(l.spdx_licenses) as license
             FROM sbom_package_license spl
             JOIN license l ON spl.license_id = l.id
             WHERE spl.sbom_id = $1
             AND l.spdx_licenses IS NOT NULL
-        )
-        UNION
-        (
-            SELECT DISTINCT license_id
-            FROM licensing_infos
-            WHERE sbom_id = $1
         )
         "#,
             [sbom_id.into()],
