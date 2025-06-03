@@ -78,4 +78,12 @@ pub struct S3Config {
         value_delimiter = ','
     )]
     pub trust_anchors: Vec<String>,
+
+    /// Use path style instead of virtual host style
+    #[arg(
+        env = "TRUSTD_S3_PATH_STYLE",
+        long = "s3-path-style",
+        default_value_t = false
+    )]
+    pub path_style: bool,
 }
