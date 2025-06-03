@@ -10,11 +10,11 @@ use actix_web::{
     dev::{ServiceFactory, ServiceRequest},
     web::{self, JsonConfig},
 };
-use actix_web_opentelemetry::{RequestMetrics, RequestTracing};
 use anyhow::{Context, anyhow};
 use bytesize::ByteSize;
 use clap::{Arg, ArgMatches, Args, Command, Error, FromArgMatches, value_parser};
 use openssl::ssl::SslFiletype;
+use opentelemetry_instrumentation_actix_web::{RequestMetrics, RequestTracing};
 use std::{
     fmt::Debug,
     marker::PhantomData,
