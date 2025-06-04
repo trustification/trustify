@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749025862872,
+  "lastUpdate": 1749027044989,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10642,6 +10642,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "carlosthe19916@gmail.com",
+            "name": "Carlos Feria",
+            "username": "carlosthe19916"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "e637f8de8c70a66313ed6348c7acb1f07af2218a",
+          "message": "Update modules/fundamental/src/common/service.rs\n\nCo-authored-by: Marco Rizzi <mrizzi@users.noreply.github.com>",
+          "timestamp": "2025-06-04T08:27:45Z",
+          "tree_id": "76a48057156a5ed3777c8215f45de32fbb91a421",
+          "url": "https://github.com/trustification/trustify/commit/e637f8de8c70a66313ed6348c7acb1f07af2218a"
+        },
+        "date": 1749027044137,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
