@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749039446616,
+  "lastUpdate": 1749056682760,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10753,6 +10753,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/09dbb96342b88edaabed74b73cedc7ccd7bec37e"
         },
         "date": 1749039445436,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2582866+carlosthe19916@users.noreply.github.com",
+            "name": "Carlos Feria",
+            "username": "carlosthe19916"
+          },
+          "committer": {
+            "email": "carlosthe19916@gmail.com",
+            "name": "Carlos Feria",
+            "username": "carlosthe19916"
+          },
+          "distinct": false,
+          "id": "6ed67fb81448101623c7172b800dad70cd80a25b",
+          "message": "task: align UI removal of Analytics prop\n\nSigned-off-by: Carlos Feria <2582866+carlosthe19916@users.noreply.github.com>",
+          "timestamp": "2025-06-04T16:22:15Z",
+          "tree_id": "51816ebe3da23dd28a0f60f4578f4e9fe593a4d4",
+          "url": "https://github.com/trustification/trustify/commit/6ed67fb81448101623c7172b800dad70cd80a25b"
+        },
+        "date": 1749056681816,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
