@@ -6,7 +6,9 @@ use tracing::{Instrument, info_span};
 
 /// Create common default settings for the embedded database
 fn default_settings() -> anyhow::Result<Settings> {
-    let version = VersionReq::parse("=17.2.0").context("valid psql version")?;
+    // **NOTE:** Changing the default version here, one should also change the env-var in the CI job
+    let version = VersionReq::parse(option_env!("POSTGRES_VERSION").unwrap_or("=17.2.0"))
+        .context("valid psql version")?;
     Ok(Settings {
         version,
         username: "postgres".to_string(),
@@ -35,6 +37,8 @@ pub async fn create_in(base: impl AsRef<Path>) -> anyhow::Result<(Database, Post
 
 /// Create a new, embedded database instance, using the provided settings
 async fn create_for(settings: Settings) -> anyhow::Result<(Database, PostgreSQL)> {
+    log::info!("creating embedded database - version: {}", settings.version);
+
     let postgresql = async {
         let mut postgresql = PostgreSQL::new(settings);
         postgresql
