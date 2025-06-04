@@ -1,11 +1,11 @@
 use crate::{advisory_vulnerability, cvss3, labels::Labels, organization, vulnerability};
 use sea_orm::{Condition, entity::prelude::*, sea_query::IntoCondition};
+#[cfg(feature = "async-graphql")]
 use std::sync::Arc;
 use time::OffsetDateTime;
-use trustify_common::{
-    db,
-    id::{Id, IdError, TryFilterForId},
-};
+#[cfg(feature = "async-graphql")]
+use trustify_common::db;
+use trustify_common::id::{Id, IdError, TryFilterForId};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[cfg_attr(feature = "async-graphql", derive(async_graphql::SimpleObject))]
