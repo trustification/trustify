@@ -29,9 +29,34 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
     let uri = format!("/api/v2/sbom/{id}/licenseIds");
     let req = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(req).await;
+    let expected_result = &vec![
+        "Apache-2.0".to_string(),
+        "BSD-2-Clause".to_string(),
+        "BSD-2-Clause-Views".to_string(),
+        "BSD-3-Clause".to_string(),
+        "BSD-3-Clause-Clear".to_string(),
+        "CC-BY-SA-4.0".to_string(),
+        "CC0-1.0".to_string(),
+        "CDDL-1.0".to_string(),
+        "CDDL-1.1".to_string(),
+        "EPL-1.0".to_string(),
+        "GPL-2.0-only".to_string(),
+        "ISC".to_string(),
+        "JSON".to_string(),
+        "LGPL-3.0-or-later".to_string(),
+        "MIT".to_string(),
+        "MPL-1.0".to_string(),
+        "MPL-2.0".to_string(),
+        "NOASSERTION".to_string(),
+        "Python-2.0".to_string(),
+        "Sendmail".to_string(),
+        "Unlicense".to_string(),
+        "WTFPL".to_string(),
+        "Zlib".to_string(),
+    ];
     match response {
         Value::Array(ref list) => {
-            assert_eq!(23, list.len());
+            assert_eq!(expected_result, list);
         }
         _ => panic!("Incorrect response"),
     }
@@ -46,9 +71,22 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
     let uri = format!("/api/v2/sbom/{id}/licenseIds");
     let req = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(req).await;
+    let expected_result = &vec![
+        "Apache-2.0".to_string(),
+        "BSD-2-Clause".to_string(),
+        "BSD-3-Clause".to_string(),
+        "CC0-1.0".to_string(),
+        "EPL-1.0".to_string(),
+        "EPL-2.0".to_string(),
+        "GPL-2.0-with-classpath-exception".to_string(),
+        "LGPL-2.1-only".to_string(),
+        "MIT".to_string(),
+        "MPL-2.0".to_string(),
+        "Openfont-1.1".to_string(),
+    ];
     match response {
         Value::Array(ref list) => {
-            assert_eq!(11, list.len());
+            assert_eq!(expected_result, list);
         }
         _ => panic!("Incorrect response"),
     }
