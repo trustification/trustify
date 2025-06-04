@@ -12,7 +12,7 @@ use sea_orm::{
     Statement,
 };
 use sea_query::{Condition, JoinType};
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use trustify_common::{
     db::query::Query,
     id::{Id, TrySelectForId},
@@ -216,7 +216,7 @@ impl LicenseService {
         &self,
         sbom_id: Uuid,
         connection: &C,
-    ) -> Result<HashSet<String>, Error> {
+    ) -> Result<BTreeSet<String>, Error> {
         let stmt = Statement::from_sql_and_values(
             connection.get_database_backend(),
             r#"
