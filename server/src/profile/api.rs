@@ -165,9 +165,6 @@ pub struct UiConfig {
     /// Scopes to request
     #[arg(id = "ui-scope", long, env = "UI_SCOPE", default_value = "openid")]
     pub scope: String,
-    /// The write-key for the analytics system.
-    #[arg(id = "analytics-write-key", long, env = "UI_ANALYTICS_WRITE_KEY")]
-    pub analytics_write_key: Option<String>,
 }
 
 const SERVICE_ID: &str = "trustify";
@@ -294,8 +291,6 @@ impl InitData {
             oidc_server_url: run.ui.issuer_url,
             oidc_client_id: run.ui.client_id,
             oidc_scope: run.ui.scope,
-            analytics_enabled: run.ui.analytics_write_key.is_some().to_string(),
-            analytics_write_key: run.ui.analytics_write_key.unwrap_or_default(),
         };
 
         let config = ModuleConfig {
