@@ -17,7 +17,6 @@ use config::Config;
 use futures_util::TryStreamExt;
 use sea_orm::TransactionTrait;
 use std::str::FromStr;
-use tokio_util::io::StreamReader;
 use trustify_auth::{CreateAdvisory, DeleteAdvisory, ReadAdvisory, authorizer::Require};
 use trustify_common::{
     db::{Database, query::Query},
@@ -266,7 +265,7 @@ pub async fn download(
     }
 }
 
-/// Get signatures of an SBOM
+/// Get signatures of an advisory
 #[utoipa::path(
     tag = "advisory",
     operation_id = "listAdvisorySignatures",
@@ -295,7 +294,7 @@ pub async fn list_signatures(
     Ok(HttpResponse::Ok().json(result))
 }
 
-/// Get signatures of an SBOM
+/// Get signatures of an advisory
 #[utoipa::path(
     tag = "advisory",
     operation_id = "verifyAdvisorySignatures",
@@ -314,56 +313,22 @@ pub async fn verify_signatures(
     signature_service: web::Data<SignatureService>,
     trust_anchor_service: web::Data<TrustAnchorService>,
     ingestor: web::Data<IngestorService>,
-    advisory: web::Data<AdvisoryService>,
     key: web::Path<String>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadAdvisory>,
 ) -> Result<impl Responder, Error> {
     let id = Id::from_str(&key).map_err(Error::IdKey)?;
 
-    // fetch signatures of the document
     let result = signature_service
-        .list_signatures(DocumentType::Advisory, id.clone(), paginated, db.get_ref())
+        .verify(
+            DocumentType::Advisory,
+            id,
+            paginated,
+            &trust_anchor_service,
+            db.as_ref(),
+            ingestor.storage(),
+        )
         .await?;
-
-    if result.items.is_empty() {
-        // early exit, so we don't need to fetch content or trust anchors.
-        return Ok(HttpResponse::Ok().json(PaginatedResults::<VerificationResult>::default()));
-    }
-
-    // look up document by id
-    let Some(advisory) = advisory
-        .fetch_advisory(id.clone(), db.as_ref())
-        .await?
-        .and_then(|advisory| advisory.source_document)
-    else {
-        return Ok(HttpResponse::NotFound().finish());
-    };
-
-    let stream = ingestor
-        .get_ref()
-        .storage()
-        .clone()
-        .retrieve(advisory.try_into()?)
-        .await
-        .map_err(Error::Storage)?;
-
-    let Some(stream) = stream else {
-        return Ok(HttpResponse::NotFound().finish());
-    };
-
-    let content = tempfile::tempfile()?;
-    tokio::io::copy(
-        &mut StreamReader::new(stream.map_err(|err| std::io::Error::other(err.to_string()))),
-        &mut tokio::fs::File::from_std(content.try_clone().map_err(|err| Error::Any(err.into()))?),
-    )
-    .await
-    .map_err(|err| Error::Any(err.into()))?;
-
-    let result = PaginatedResults {
-        items: trust_anchor_service.verify(result.items, content).await?,
-        total: result.total,
-    };
 
     Ok(HttpResponse::Ok().json(result))
 }

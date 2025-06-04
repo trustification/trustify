@@ -19,6 +19,10 @@ pub enum Error {
     NotFound(String),
     #[error("mid air collision")]
     MidAirCollision,
+    #[error("storage error: {0}")]
+    Storage(anyhow::Error),
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
 }
 
 impl From<DbErr> for Error {

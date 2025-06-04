@@ -2,10 +2,9 @@ pub mod dispatch;
 pub mod fs;
 pub mod s3;
 
-mod test;
-
 mod compression;
 mod temp;
+mod test;
 
 pub use compression::Compression;
 
@@ -13,11 +12,13 @@ use crate::service::fs::FileSystemBackend;
 use bytes::Bytes;
 use futures::Stream;
 use hex::ToHex;
-use std::fmt::{Debug, Display, Formatter};
-use std::future::Future;
+use std::{
+    fmt::{Debug, Display, Formatter},
+    future::Future,
+};
 use tokio::io::AsyncRead;
-use trustify_common::hashing::Digests;
-use trustify_common::id::Id;
+use trustify_common::{hashing::Digests, id::Id};
+use trustify_entity::source_document;
 
 #[derive(Debug, thiserror::Error)]
 pub enum StoreError<B: Debug> {
@@ -56,6 +57,12 @@ impl TryFrom<Id> for StorageKey {
             Id::Sha256(digest) => Ok(StorageKey(digest)),
             _ => Err(StorageKeyError::WrongType),
         }
+    }
+}
+
+impl From<source_document::Model> for StorageKey {
+    fn from(value: source_document::Model) -> Self {
+        StorageKey(value.sha256)
     }
 }
 
