@@ -3771,8 +3771,8 @@ components:
     LicenseCategory:
       type: string
       enum:
-      - Declared
-      - Concluded
+      - declared
+      - concluded
     LicenseInfo:
       type: object
       required:
