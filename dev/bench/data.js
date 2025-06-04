@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749038511904,
+  "lastUpdate": 1749039446616,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10729,6 +10729,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "09dbb96342b88edaabed74b73cedc7ccd7bec37e",
+          "message": "chore: update otel doc with diagrams",
+          "timestamp": "2025-06-04T11:55:58Z",
+          "tree_id": "1205d0f4fd572169de6d78796d7a5e6003ba68cd",
+          "url": "https://github.com/trustification/trustify/commit/09dbb96342b88edaabed74b73cedc7ccd7bec37e"
+        },
+        "date": 1749039445436,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
