@@ -332,6 +332,48 @@ paths:
                 format: binary
         '404':
           description: The document could not be found
+  /api/v2/advisory/{key}/signature:
+    get:
+      tags:
+      - advisory
+      summary: Get signatures of an advisory
+      operationId: listAdvisorySignatures
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+      responses:
+        '200':
+          description: Signatures of an advisory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_Signature'
+        '404':
+          description: The document could not be found
+  /api/v2/advisory/{key}/verify:
+    get:
+      tags:
+      - advisory
+      summary: '[BETA] Validate signatures of an advisory'
+      operationId: verifyAdvisorySignatures
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+      responses:
+        '200':
+          description: Signatures of an advisory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_VerificationResult'
+        '404':
+          description: The document could not be found
   /api/v2/analysis/component:
     get:
       tags:
@@ -2836,7 +2878,7 @@ paths:
           $ref: '#/components/schemas/Id'
       responses:
         '200':
-          description: Download a an SBOM
+          description: Download an SBOM
           content:
             application/json:
               schema:
@@ -2844,6 +2886,235 @@ paths:
                 format: binary
         '404':
           description: The document could not be found
+  /api/v2/sbom/{key}/signature:
+    get:
+      tags:
+      - sbom
+      summary: Get signatures of an SBOM
+      operationId: listSbomSignatures
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+      responses:
+        '200':
+          description: Signatures of an SBOM
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_Signature'
+        '404':
+          description: The document could not be found
+  /api/v2/sbom/{key}/verify:
+    get:
+      tags:
+      - sbom
+      summary: '[BETA] Validate signatures of an SBOM'
+      operationId: verifySbomSignatures
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+      responses:
+        '200':
+          description: Signatures of an SBOM
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_VerificationResult'
+        '404':
+          description: The document could not be found
+  /api/v2/trust-anchor:
+    get:
+      tags:
+      - trustAnchor
+      summary: List trust anchors
+      operationId: listTrustAnchors
+      responses:
+        '200':
+          description: List trust anchors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaginatedResults_TrustAnchor'
+  /api/v2/trust-anchor/{id}:
+    get:
+      tags:
+      - trustAnchor
+      summary: Get a trust anchor configuration
+      operationId: getTrustAnchor
+      parameters:
+      - name: id
+        in: path
+        description: The name of the trust anchor
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Retrieved trust anchor configuration
+          headers:
+            etag:
+              schema:
+                type: string
+              description: Revision ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Revisioned_TrustAnchor'
+        '404':
+          description: A trust anchor with that name could not be found
+    put:
+      tags:
+      - trustAnchor
+      summary: Update an existing trust anchor configuration
+      operationId: updateTrustAnchor
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the trust anchor
+        required: true
+        schema:
+          type: string
+      - name: if-match
+        in: header
+        description: The revision to update
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrustAnchor'
+        required: true
+      responses:
+        '201':
+          description: Updated the trust anchor
+        '409':
+          description: A trust anchor with that name does not exist
+        '412':
+          description: The provided if-match header did not match the stored revision
+    post:
+      tags:
+      - trustAnchors
+      summary: Create a new trust anchor configuration
+      operationId: createTrustAnchors
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the trust anchor to create
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrustAnchor'
+        required: true
+      responses:
+        '201':
+          description: Created a new trust anchor
+        '409':
+          description: A trust anchor with this name already exists
+    delete:
+      tags:
+      - trustAnchor
+      summary: Delete a trust anchor
+      operationId: deleteTrustAnchor
+      parameters:
+      - name: id
+        in: path
+        description: The name of the trust anchor
+        required: true
+        schema:
+          type: string
+      - name: if-match
+        in: header
+        description: The revision to delete
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      responses:
+        '201':
+          description: Delete the trust anchor
+    patch:
+      tags:
+      - trustAnchor
+      summary: Update an existing trust anchor
+      operationId: patchTrustAnchor
+      parameters:
+      - name: id
+        in: path
+        description: The name of the trust anchor
+        required: true
+        schema:
+          type: string
+      - name: if-match
+        in: header
+        description: The revision to update
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      requestBody:
+        content:
+          application/merge-patch+json:
+            schema: {}
+        required: true
+      responses:
+        '201':
+          description: Created a new trust anchor configuration
+        '409':
+          description: A trust anchor with that name does not exist
+        '412':
+          description: The provided if-match header did not match the stored revision
+  /api/v2/trust-anchor/{id}/enabled:
+    put:
+      tags:
+      - trustAnchor
+      summary: Set the active state of a trust anchor
+      operationId: enableTrustAnchor
+      parameters:
+      - name: id
+        in: path
+        description: The name of the trust anchor
+        required: true
+        schema:
+          type: string
+      - name: if-match
+        in: header
+        description: The revision to update
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: boolean
+        required: true
+      responses:
+        '201':
+          description: Updated the active state
+        '404':
+          description: A trust anchor with that name does not exist
+        '412':
+          description: The provided if-match header did not match the stored revision
   /api/v2/ui/extract-sbom-purls:
     post:
       tags:
@@ -4114,6 +4385,10 @@ components:
             uniqueItems: true
     PaginatedResults_AdvisorySummary:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4151,12 +4426,18 @@ components:
                   items:
                     $ref: '#/components/schemas/AdvisoryVulnerabilityHead'
                   description: Vulnerabilities addressed within this advisory.
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_BasePurlSummary:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4166,12 +4447,18 @@ components:
           items:
             allOf:
             - $ref: '#/components/schemas/BasePurlHead'
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_ImporterReport:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4205,12 +4492,18 @@ components:
                 - type: 'null'
                 - $ref: '#/components/schemas/Report'
                   description: Detailed report information
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_LicenseSummary:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4242,12 +4535,18 @@ components:
                 type: array
                 items:
                   type: string
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_Node:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4278,12 +4577,18 @@ components:
                   - type: 'null'
                   - $ref: '#/components/schemas/Relationship'
                     description: The relationship the node has to it's containing node, if any.
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_ProductSummary:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4306,12 +4611,18 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/ProductVersionHead'
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_PurlSummary:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4338,12 +4649,18 @@ components:
                   deprecated: true
                 version:
                   $ref: '#/components/schemas/VersionedPurlHead'
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_SbomPackage:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4396,12 +4713,18 @@ components:
                 - string
                 - 'null'
                 description: An optional version for an SBOM package
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_SbomPackageRelation:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4418,12 +4741,18 @@ components:
                 $ref: '#/components/schemas/SbomPackage'
               relationship:
                 $ref: '#/components/schemas/Relationship'
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_SbomSummary:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4444,12 +4773,56 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/SbomPackage'
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
+          minimum: 0
+    PaginatedResults_Signature:
+      type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - type
+            - payload
+            properties:
+              id:
+                type: string
+                description: The internal ID of the signature entry
+              payload:
+                type: array
+                items:
+                  type: integer
+                  format: int32
+                  minimum: 0
+                description: The signature payload
+              type:
+                $ref: '#/components/schemas/SignatureType'
+                description: The signature type
+          description: The page of items
+        total:
+          type: integer
+          format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_SpdxLicenseSummary:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4466,12 +4839,76 @@ components:
                 type: string
               name:
                 type: string
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
+          minimum: 0
+    PaginatedResults_TrustAnchor:
+      type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/TrustAnchorData'
+            - type: object
+              required:
+              - id
+              properties:
+                id:
+                  type: string
+                  description: The internal ID
+          description: The page of items
+        total:
+          type: integer
+          format: int64
+          description: The total number of items
+          minimum: 0
+    PaginatedResults_VerificationResult:
+      type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required:
+            - signature
+            - trustAnchors
+            properties:
+              signature:
+                $ref: '#/components/schemas/Signature'
+              trustAnchors:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrustAnchor'
+          description: The page of items
+        total:
+          type: integer
+          format: int64
+          description: The total number of items
           minimum: 0
     PaginatedResults_VulnerabilitySummary:
       type: object
+      description: |-
+        Paginated results
+
+        This carries the requested page, plus the total number of items matching the request.
       required:
       - items
       - total
@@ -4502,9 +4939,11 @@ components:
                   - type: 'null'
                   - $ref: '#/components/schemas/Severity'
                     description: Average (arithmetic mean) severity of the vulnerability aggregated from *all* related advisories.
+          description: The page of items
         total:
           type: integer
           format: int64
+          description: The total number of items
           minimum: 0
     ProductDetails:
       allOf:
@@ -4837,6 +5276,33 @@ components:
             properties:
               name:
                 type: string
+    Revisioned_TrustAnchor:
+      type: object
+      description: |-
+        A struct wrapping an item with a revision.
+
+        If the revision should not be part of the payload, but e.g. an HTTP header (like `ETag`), this
+        struct can help carrying both pieces.
+      required:
+      - value
+      - revision
+      properties:
+        revision:
+          type: string
+          description: |-
+            The revision.
+
+            An opaque string that should have no meaning to the user, only to the backend.
+        value:
+          allOf:
+          - $ref: '#/components/schemas/TrustAnchorData'
+          - type: object
+            required:
+            - id
+            properties:
+              id:
+                type: string
+                description: The internal ID
     SbomAdvisory:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
@@ -5036,6 +5502,30 @@ components:
       - medium
       - high
       - critical
+    Signature:
+      type: object
+      required:
+      - id
+      - type
+      - payload
+      properties:
+        id:
+          type: string
+          description: The internal ID of the signature entry
+        payload:
+          type: array
+          items:
+            type: integer
+            format: int32
+            minimum: 0
+          description: The signature payload
+        type:
+          $ref: '#/components/schemas/SignatureType'
+          description: The signature type
+    SignatureType:
+      type: string
+      enum:
+      - pgp
     SourceDocument:
       type: object
       required:
@@ -5097,6 +5587,41 @@ components:
         properties:
           cpe:
             type: string
+    TrustAnchor:
+      allOf:
+      - $ref: '#/components/schemas/TrustAnchorData'
+      - type: object
+        required:
+        - id
+        properties:
+          id:
+            type: string
+            description: The internal ID
+    TrustAnchorData:
+      type: object
+      required:
+      - type
+      - payload
+      properties:
+        description:
+          type: string
+          description: A human-readable description
+        disabled:
+          type: boolean
+          description: A flag if this entry should be considered when finding a trust anchor for validating signatures
+        payload:
+          type: array
+          items:
+            type: integer
+            format: int32
+            minimum: 0
+          description: |-
+            The actual payload
+
+            This is most likely a root certificate, depending on the signature type.
+        type:
+          $ref: '#/components/schemas/SignatureType'
+          description: The type of signatures this trust anchor is used for
     Update:
       type: object
       description: |
@@ -5107,6 +5632,18 @@ components:
         oneOf:
         - type: 'null'
         - type: string
+    VerificationResult:
+      type: object
+      required:
+      - signature
+      - trustAnchors
+      properties:
+        signature:
+          $ref: '#/components/schemas/Signature'
+        trustAnchors:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrustAnchor'
     VersionedPurlHead:
       type: object
       required:
