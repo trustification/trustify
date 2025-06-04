@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748959958758,
+  "lastUpdate": 1749025862872,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10613,6 +10613,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "dac3703dfb89b4f82f1960fb6629b2700f59ef4c",
+          "message": "TC-1902 LicenseCategory lowercase in response\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-06-04T08:07:20Z",
+          "tree_id": "42bc08fcc98688d722ed3fa8bb2a0d029e36280f",
+          "url": "https://github.com/trustification/trustify/commit/dac3703dfb89b4f82f1960fb6629b2700f59ef4c"
+        },
+        "date": 1749025861219,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
