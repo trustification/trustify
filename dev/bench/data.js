@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749028200592,
+  "lastUpdate": 1749038511904,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10700,6 +10700,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "50e731d7993c9fd5e81fa0b052b569e4516f90dc",
+          "message": "fix: align the embedded postgres version with the CI\n\nIn PM mode, the postgresql binary will be embedded. This requires the\nbuild to know which version to download. However, this didn't align\nwith the code requesting a database.\n\nThis change prefers the use of the CI version, but falls back to the\nlocally (code) provided value. This ensures that if the CI builds with\na provided version, it will be used during runtime.\n\nCloses: #1674",
+          "timestamp": "2025-06-04T11:41:12Z",
+          "tree_id": "375b73080bbd517046d1da5ec1742236c5c9630b",
+          "url": "https://github.com/trustification/trustify/commit/50e731d7993c9fd5e81fa0b052b569e4516f90dc"
+        },
+        "date": 1749038510887,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
