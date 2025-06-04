@@ -11,10 +11,10 @@ use sea_orm::{
 };
 use sea_query::{Expr, Order, SimpleExpr};
 use sequoia_openpgp::{Cert, cert::CertParser, parse::Parse};
-use std::time::SystemTime;
 use std::{
     fmt::{Debug, Display},
     fs::File,
+    time::SystemTime,
 };
 use tracing::instrument;
 use trustify_common::{
