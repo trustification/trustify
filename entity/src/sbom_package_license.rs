@@ -43,6 +43,7 @@ pub enum Relation {
     ToSchema,
 )]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
+#[serde(rename_all = "lowercase")]
 pub enum LicenseCategory {
     Declared = 0,
     Concluded = 1,
