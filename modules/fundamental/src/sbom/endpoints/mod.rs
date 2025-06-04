@@ -58,12 +58,14 @@ pub fn configure(
     let sbom_service = SbomService::new(db.clone());
     let purl_service = PurlService::new();
     let signature_service = SignatureService::new();
+    let trust_anchor_service = TrustAnchorService::new(db.clone());
 
     config
         .app_data(web::Data::new(db))
         .app_data(web::Data::new(sbom_service))
         .app_data(web::Data::new(purl_service))
         .app_data(web::Data::new(signature_service))
+        .app_data(web::Data::new(trust_anchor_service))
         .app_data(web::Data::new(Config { upload_limit }))
         .service(all)
         .service(all_related)

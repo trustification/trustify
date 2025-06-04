@@ -23,6 +23,7 @@ async fn caller_with(
             analysis.clone(),
         );
         trustify_module_analysis::endpoints::configure(svc, ctx.db.clone(), analysis);
+        trustify_module_signature::endpoints::configure(svc, ctx.db.clone());
     })
     .await
 }
