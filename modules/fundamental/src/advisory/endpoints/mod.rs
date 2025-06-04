@@ -354,9 +354,7 @@ pub async fn verify_signatures(
 
     let content = tempfile::tempfile()?;
     tokio::io::copy(
-        &mut StreamReader::new(
-            stream.map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err.to_string())),
-        ),
+        &mut StreamReader::new(stream.map_err(|err| std::io::Error::other(err.to_string()))),
         &mut tokio::fs::File::from_std(content.try_clone().map_err(|err| Error::Any(err.into()))?),
     )
     .await
