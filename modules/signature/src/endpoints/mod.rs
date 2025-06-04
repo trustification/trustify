@@ -81,7 +81,7 @@ async fn create(
     tag = "trustAnchor",
     operation_id = "getTrustAnchor",
     params(
-        ("name", Path, description = "The name of the trust anchor"),
+        ("id", Path, description = "The name of the trust anchor"),
     ),
     responses(
         (status = 200, description = "Retrieved trust anchor configuration",
@@ -151,7 +151,7 @@ async fn update(
         content_type = guards::JSON_MERGE_CONTENT_TYPE,
     ),
     params(
-        ("name", Path, description = "The name of the trust anchor"),
+        ("id", Path, description = "The name of the trust anchor"),
         ("if-match"=Option<String>, Header, description = "The revision to update"),
     ),
     responses(
@@ -189,7 +189,7 @@ async fn patch_json_merge(
     tag = "trustAnchor",
     operation_id = "deleteTrustAnchor",
     params(
-        ("name", Path, description = "The name of the trust anchor"),
+        ("id", Path, description = "The name of the trust anchor"),
         ("if-match"=Option<String>, Header, description = "The revision to delete"),
     ),
     responses(
@@ -220,7 +220,7 @@ async fn delete(
     operation_id = "enableTrustAnchor",
     request_body = bool,
     params(
-        ("name", Path, description = "The name of the trust anchor"),
+        ("id", Path, description = "The name of the trust anchor"),
         ("if-match"=Option<String>, Header, description = "The revision to update"),
     ),
     responses(
