@@ -9518,7 +9518,7 @@ dependencies = [
 [[package]]
 name = "trustify-ui"
 version = "0.1.0"
-source = "git+https://github.com/trustification/trustify-ui.git?branch=publish%2Fmain#b4c71d5db37e39ef46792ec54af2bda21426d958"
+source = "git+https://github.com/trustification/trustify-ui.git?branch=publish%2Fmain#95872c3c1bb24e874f723497940b92477c383d1f"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
