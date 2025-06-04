@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749027044989,
+  "lastUpdate": 1749028200592,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10666,6 +10666,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/e637f8de8c70a66313ed6348c7acb1f07af2218a"
         },
         "date": 1749027044137,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "97404df651781691d227efab2b8428d062204fb7",
+          "message": "chore: add 'async-graphql' feature flag to prevent unused_imports warnings\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-06-04T08:47:26Z",
+          "tree_id": "325e20a2ad65d76e8dd56d5e447d3425fdb0bb11",
+          "url": "https://github.com/trustification/trustify/commit/97404df651781691d227efab2b8428d062204fb7"
+        },
+        "date": 1749028199552,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
