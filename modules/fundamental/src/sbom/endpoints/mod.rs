@@ -576,7 +576,7 @@ pub async fn list_signatures(
     Ok(HttpResponse::Ok().json(result))
 }
 
-/// Get signatures of an SBOM
+/// [BETA] Validate signatures of an SBOM
 #[utoipa::path(
     tag = "sbom",
     operation_id = "verifySbomSignatures",

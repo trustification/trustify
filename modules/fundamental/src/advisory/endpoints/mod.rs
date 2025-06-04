@@ -294,7 +294,7 @@ pub async fn list_signatures(
     Ok(HttpResponse::Ok().json(result))
 }
 
-/// Get signatures of an advisory
+/// [BETA] Validate signatures of an advisory
 #[utoipa::path(
     tag = "advisory",
     operation_id = "verifyAdvisorySignatures",
