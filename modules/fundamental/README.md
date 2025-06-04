@@ -64,8 +64,14 @@ http GET localhost:8080/api/v2/sbom 'q==label:foo=bar' | jq '.items[] | {id, nam
 All examples in this section expect the environment variable `ID`
 to point to an SBOM/advisory in the form of `urn:uuid:<id>`.
 
-Get all signatures of an SBOM
+### Get all signatures of an SBOM
 
 ```bash
 http GET localhost:8080/api/v2/sbom/$ID/signature
+```
+
+### Verify all signatures against all trust anchors
+
+```bash
+http GET localhost:8080/api/v2/sbom/$ID/verify
 ```

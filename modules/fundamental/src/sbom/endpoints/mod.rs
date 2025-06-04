@@ -42,6 +42,8 @@ use trustify_module_ingestor::{
     model::IngestResult,
     service::{Cache, Format, Ingest, IngestorService},
 };
+use trustify_module_signature::model::VerificationResult;
+use trustify_module_signature::service::TrustAnchorService;
 use trustify_module_signature::{
     model::Signature,
     service::{DocumentType, SignatureService},
@@ -74,6 +76,7 @@ pub fn configure(
         .service(upload)
         .service(download)
         .service(list_signatures)
+        .service(verify_signatures)
         .service(label::set)
         .service(label::update)
         .service(label::all)
@@ -568,6 +571,45 @@ pub async fn list_signatures(
 
     let result = service
         .list_signatures(DocumentType::Sbom, id, paginated, db.get_ref())
+        .await?;
+
+    Ok(HttpResponse::Ok().json(result))
+}
+
+/// Get signatures of an SBOM
+#[utoipa::path(
+    tag = "sbom",
+    operation_id = "verifySbomSignatures",
+    params(
+        ("key" = Id, Path),
+    ),
+    responses(
+        (status = 200, description = "Signatures of an SBOM", body = PaginatedResults<VerificationResult>),
+        (status = 404, description = "The document could not be found"),
+    )
+)]
+#[get("/v2/sbom/{key}/verify")]
+#[allow(clippy::too_many_arguments)]
+pub async fn verify_signatures(
+    db: web::Data<Database>,
+    signature_service: web::Data<SignatureService>,
+    trust_anchor_service: web::Data<TrustAnchorService>,
+    ingestor: web::Data<IngestorService>,
+    key: web::Path<String>,
+    web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadAdvisory>,
+) -> Result<impl Responder, Error> {
+    let id = Id::from_str(&key).map_err(Error::IdKey)?;
+
+    let result = signature_service
+        .verify(
+            DocumentType::Sbom,
+            id,
+            paginated,
+            &trust_anchor_service,
+            db.as_ref(),
+            ingestor.storage(),
+        )
         .await?;
 
     Ok(HttpResponse::Ok().json(result))

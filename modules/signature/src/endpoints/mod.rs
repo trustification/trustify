@@ -1,3 +1,5 @@
+mod test;
+
 use crate::{
     error::{Error, PatchError},
     model::{TrustAnchor, TrustAnchorData},
@@ -41,7 +43,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "List trust anchors", body = [PaginatedResults<TrustAnchor>])
     )
 )]
-#[get("/v2/trustAnchor")]
+#[get("/v2/trust-anchor")]
 /// List trust anchors
 async fn list(
     service: web::Data<TrustAnchorService>,
@@ -63,7 +65,7 @@ async fn list(
         (status = 409, description = "A trust anchor with this name already exists"),
     )
 )]
-#[post("/v2/trustAnchor/{id}")]
+#[post("/v2/trust-anchor/{id}")]
 /// Create a new trust anchor configuration
 async fn create(
     service: web::Data<TrustAnchorService>,
@@ -91,7 +93,7 @@ async fn create(
         (status = 404, description = "A trust anchor with that name could not be found")
     )
 )]
-#[get("/v2/trustAnchor/{id}")]
+#[get("/v2/trust-anchor/{id}")]
 /// Get a trust anchor configuration
 async fn read(
     service: web::Data<TrustAnchorService>,
@@ -122,7 +124,7 @@ async fn read(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[put("/v2/trustAnchor/{id}")]
+#[put("/v2/trust-anchor/{id}")]
 /// Update an existing trust anchor configuration
 async fn update(
     service: web::Data<TrustAnchorService>,
@@ -158,7 +160,7 @@ async fn update(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[patch("/v2/trustAnchor/{id}", guard = "guards::json_merge")]
+#[patch("/v2/trust-anchor/{id}", guard = "guards::json_merge")]
 /// Update an existing trust anchor
 async fn patch_json_merge(
     service: web::Data<TrustAnchorService>,
@@ -194,7 +196,7 @@ async fn patch_json_merge(
         (status = 201, description = "Delete the trust anchor"),
     )
 )]
-#[delete("/v2/trustAnchor/{id}")]
+#[delete("/v2/trust-anchor/{id}")]
 /// Delete a trust anchor
 async fn delete(
     service: web::Data<TrustAnchorService>,
@@ -227,7 +229,7 @@ async fn delete(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[put("/v2/trustAnchor/{id}/enabled")]
+#[put("/v2/trust-anchor/{id}/enabled")]
 /// Set the active state of a trust anchor
 async fn set_enabled(
     service: web::Data<TrustAnchorService>,

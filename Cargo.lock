@@ -9477,8 +9477,10 @@ dependencies = [
 name = "trustify-module-signature"
 version = "0.3.2"
 dependencies = [
+ "actix-http",
  "actix-web",
  "anyhow",
+ "futures-util",
  "json-merge-patch",
  "log",
  "sea-orm",
@@ -9487,12 +9489,18 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
+ "tempfile",
+ "test-context",
+ "test-log",
  "thiserror 2.0.12",
  "tokio",
+ "tokio-util",
  "tracing",
  "trustify-auth",
  "trustify-common",
  "trustify-entity",
+ "trustify-module-storage",
+ "trustify-test-context",
  "utoipa",
  "utoipa-actix-web",
  "walker-common",
@@ -9525,6 +9533,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "trustify-common",
+ "trustify-entity",
  "urlencoding",
  "uuid",
 ]

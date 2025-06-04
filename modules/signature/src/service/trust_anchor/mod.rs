@@ -6,8 +6,8 @@ use crate::{
     service::trust_anchor::pgp::Anchor,
 };
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryOrder, Set,
-    prelude::Uuid, query::QueryFilter,
+    ActiveEnum, ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait,
+    QueryOrder, Set, prelude::Uuid, query::QueryFilter,
 };
 use sea_query::{Expr, Order, SimpleExpr};
 use sequoia_openpgp::{Cert, cert::CertParser, parse::Parse};
@@ -129,7 +129,7 @@ impl TrustAnchorService {
             id,
             expected_revision,
             vec![
-                (trust_anchor::Column::Type, r#type.into()),
+                (trust_anchor::Column::Type, r#type.as_enum()),
                 (trust_anchor::Column::Payload, payload.into()),
                 (trust_anchor::Column::Description, description.into()),
                 (trust_anchor::Column::Disabled, disabled.into()),
