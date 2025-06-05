@@ -24,21 +24,11 @@ We are focusing on the signals: **traces** and **metrics**.
 * Clone trustify
 * Open a terminal and run the command below to start OTEL Collector, Tempo, Prometheus, and Grafana:
 
+> This will also start the database and apply migrations for convenience.
+
 ```shell
 podman compose -f etc/telemetry/compose.yaml up
 ```
-
-* Open a new terminal and run the command below to start the database:
-
-```shell
-podman compose -f etc/deploy/compose/compose.yaml up
-```
-
-* Open a new terminal and run the command below to execute the migration
-
-````
-DATABASE_URL="postgres://postgres:trustify@localhost:5432/trustify" cargo run --bin trustify-migration
-````
 
 * Open a new terminal and run the command below to start trustify with traces and metrics enabled:
 
@@ -57,8 +47,10 @@ RUST_LOG=info OTEL_TRACES_SAMPLER_ARG=1 cargo run --bin trustd importer --db-por
 ```
 
 Access Trustify at [localhost:8080](http://localhost:8080) to generate traces and metrics.
-You can visualize traces using [Grafana](http://localhost:3000/) and explore metrics
-with the [Prometheus expression browser](http://localhost:9090).
+
+You can visualize traces and metrics using [Grafana](http://localhost:3000/). The default username and password are both `admin`.
+
+We still have access to the [Prometheus expression browser](http://localhost:9090).
 
 To view Trustify's metrics in the Prometheus expression browser, use the following PromQL query: `{job="trustify"}`, then click the Execute button.
 

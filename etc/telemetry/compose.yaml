@@ -23,6 +23,9 @@ services:
       - "3000:3000"
     volumes:
       - ./grafana/datasources:/etc/grafana/provisioning/datasources:z
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:z
+      - ./grafana/dashboards/traces.json:/var/lib/grafana/dashboards/traces.json:z
+      - ./grafana/dashboards/metrics.json:/var/lib/grafana/dashboards/metrics.json:z
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_AUTH_ANONYMOUS_ENABLED=false
