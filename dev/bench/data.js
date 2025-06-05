@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749107941068,
+  "lastUpdate": 1749117958467,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10811,6 +10811,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/7f668d9d804c987b7981e1747945a66e12cefb16"
         },
         "date": 1749107939943,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "a674edc17e715671c94b21f7127797857336837b",
+          "message": "chore: update OTELCOL",
+          "timestamp": "2025-06-05T09:41:58Z",
+          "tree_id": "9628d8b704f1169348ac0e6d20089652c3767efa",
+          "url": "https://github.com/trustification/trustify/commit/a674edc17e715671c94b21f7127797857336837b"
+        },
+        "date": 1749117957596,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
