@@ -346,7 +346,7 @@ Complete the following steps to configure Keycloak:
  * Click the **Create** button -> then **Import**.
  * Select and import the following client configuration files:
  ** `frontend.json`
-
++
 [source, json]
 ----
 {
@@ -386,7 +386,7 @@ Complete the following steps to configure Keycloak:
   }
 ----
  ** `cli.json`
-
++
 [source, json]
 ----
 {
@@ -474,35 +474,36 @@ Before proceeding with the Openshift Data Foundation installation, ensure you ha
 To avoid performance issues, add additional nodes to the Openshift Cluster:
 
  * To create additional nodes, run the following command:
-
++
 [source, bash]
 ----
 curl -s https://raw.githubusercontent.com/red-hat-storage/ocs-training/master/training/modules/ocs4/attachments/create_machinesets.sh | bash
 ----
  * Wait for the new nodes to be in a `READY` and `AVAILABLE` state. Verify the Machineset status with:
-
++
 [source, bash]
 ----
 watch "oc get machinesets -n openshift-machine-api | egrep 'NAME|workerocs'"
 ----
  * Confirm the nodes are ready for use:
-
++
 [source, bash]
 ----
 oc get nodes -l cluster.ocs.openshift.io/openshift-storage=
 ----
+
 ===== Installation
 
 Follow these steps to install and configure the Openshift Data Foundation Operator:
 
 * Create a dedicated namespace for the Openshift Data Foundation installation.
-
++
 [source, bash]
 ----
 oc create namespace openshift-storage
 ----
 * Label the namespace to enable cluster monitoring.
-
++
 [source, bash]
 ----
 oc label namespace openshift-storage "openshift.io/cluster-monitoring=true"
@@ -510,17 +511,18 @@ oc label namespace openshift-storage "openshift.io/cluster-monitoring=true"
 * Install the Openshift Data Foundation Operator by following the official deployment link:https://docs.redhat.com/en/documentation/red_hat_openshift_data_foundation/4.18/html-single/deploying_openshift_data_foundation_on_any_platform/index#deploy-standalone-multicloud-object-gateway[guide].
 
 * Confirm the Openshift Data Foundation installation is successful and the `StorageCluster` is in a `READY` state.
-
++
 [source, bash]
 ----
 oc get storagecluster -n openshift-storage ocs-storagecluster -o jsonpath='{.status.phase}{"\n"}'
 ----
+
 [[_object_storage]]
 ===== Object Storage Configuration
 After Openshift Data Foundation is installed, proceed with the following steps to configure and test object storage:
 
 * Get the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `External DNS` (under the S3 address section) from the `NooBaa` status command.
-
++
 [source, bash]
 ----
 noobaa status -n openshift-storage
@@ -530,7 +532,7 @@ noobaa status -n openshift-storage
 [[_ocp_tls_certs]]
 ===== Export Default Openshift TLS Certs
 * Export the cluster's default TLS certificate. This is often required for S3 clients to trust the endpoint.
-
++
 [source, bash]
 ----
 oc get secret -n openshift-ingress  router-certs-default -o go-template='{{index .data "tls.crt"}}' | base64 -d > tls.crt
@@ -539,7 +541,7 @@ oc get secret -n openshift-ingress  router-certs-default -o go-template='{{index
 [[_verify_s3]]
 ===== Verify S3 Connection
 * Verify the connection to your S3 endpoint by exporting the Openshift Data Foundation storage <<_object_storage, details>> and SSL <<_ocp_tls_certs, certs>> using the AWS CLI.
-
++
 [source, bash]
 ----
 export AWS_ACCESS_KEY_ID=<AWS Access key>
@@ -554,7 +556,7 @@ To add bucket policies to object buckets by using the Amazon Web Services (AWS) 
 [[_bucket_policy]]
 ===== Create Bucket Policy
  * Create a `policy.json` file with the desired content. The example below grants `Allow` access to anyone; update the `Principal` section to restrict user permissions.
-
++
 [source, json]
 ----
 {
@@ -575,11 +577,12 @@ To add bucket policies to object buckets by using the Amazon Web Services (AWS) 
 }
 ----
  * Run the following command to update the bucket policy:
-
++
 [source, bash]
 ----
 aws --endpoint <Noobaa External DNS Endpoint> s3api put-bucket-policy --bucket <bucket name> --policy file://<policy.json file path>
 ----
+
 ===== Usage
 For the RHTPA installation, the following S3 values are retrieved from your Red Hat OpenShift Data Foundation installation:
 
