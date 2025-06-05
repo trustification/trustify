@@ -1,5 +1,4 @@
 use sea_orm::{DeriveActiveEnum, EnumIter};
-use std::fmt;
 
 #[derive(
     Debug,
@@ -10,8 +9,9 @@ use std::fmt;
     Eq,
     EnumIter,
     DeriveActiveEnum,
-    strum::VariantArray,
+    strum::Display,
     strum::EnumString,
+    strum::VariantArray,
     serde::Serialize,
     serde::Deserialize,
     utoipa::ToSchema,
@@ -23,12 +23,6 @@ use std::fmt;
 pub enum SignatureType {
     #[sea_orm(string_value = "pgp")]
     Pgp,
-}
-
-impl fmt::Display for SignatureType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
 }
 
 #[cfg(test)]
