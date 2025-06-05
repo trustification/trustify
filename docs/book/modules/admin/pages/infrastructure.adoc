@@ -297,19 +297,19 @@ NOTE: The `--devel` flag is currently necessary as the Helm chart has a pre-rele
 
 == Red Hat Services on Openshift
 
-The following Red Hat services can be used for the installation
+Install the following Red Hat services:
 
-* OIDC provider: Red Hat Single Sign-on Operator
-* Storage: Red Hat Openshift Data Foundation Operator
+* Red Hat Single Sign-on (SSO) operator as the OpenID Connect (OIDC) provider.
+* Red Hat OpenShift Data Foundation operator as the storage provider.
 
 === Manual setup
 
 ==== Red Hat Single Sign-on operator
 
- * Install Single Sing-on operator with deployment https://docs.redhat.com/en/documentation/red_hat_single_sign-on/7.6/html/server_installation_and_configuration_guide/operator#installing-operator[guide]
- * Navigate to the related Keycloak instance of RHSSO operator and login to the Admin console with valid credentials
+ * Install Single Sign-on operator with deployment https://docs.redhat.com/en/documentation/red_hat_single_sign-on/7.6/html/server_installation_and_configuration_guide/operator#installing-operator[guide].
+ * Navigate to the related Keycloak instance of RHSSO operator and login to the Admin console with valid credentials.
 
-Follow the below steps required to configure Keycloak:
+Complete the following steps to configure Keycloak:
 
 [[_realm_creation]]
 ===== Realm Creation
@@ -319,7 +319,7 @@ Follow the below steps required to configure Keycloak:
 [[_role_definition]]
 ===== Role Definition
 
- * Create the following custom role: `trust-admin`. (Note: This role name can be customized to your specific needs).
+ * Create a custom role, for example, `trust-admin`.
  * Assign the `trust-admin` role to the default roles for your newly created realm.
  * Navigate to **Realm Settings** -> **Roles** tab -> Select the `default-roles-{your-realm-name}` role -> **Role Mappings** tab -> **Assign Role** to add `trust-admin`.
 
@@ -342,88 +342,92 @@ Follow the below steps required to configure Keycloak:
 [[_client_import]]
 ===== Client Import
 
- * Navigate to the **Clients** section in the Keycloak administration console.
- * Click the **Create** button, then **Import**.
+ * Go to Keycloak administration console -> Go to **Clients** section.
+ * Click the **Create** button -> then **Import**.
  * Select and import the following client configuration files:
-  ** `frontend.json`
-[source, json]
-    {
-        "clientId": "frontend",
-        "clientAuthenticatorType": "client-secret",
-        "enabled": true,
-        "publicClient": true,
-        "implicitFlowEnabled": true,
-        "standardFlowEnabled": true,
-        "directAccessGrantsEnabled": false,
-        "serviceAccountsEnabled": false,
-        "fullScopeAllowed": true,
-        "webOrigins": [
-          "*"
-        ],
-        "defaultClientScopes": [
-          "basic",
-          "email",
-          "profile",
-          "roles",
-          "web-origins",
-          "create:document",
-          "read:document",
-          "update:document",
-          "delete:document"
-        ],
-        "optionalClientScopes": [
-          "address",
-          "microprofile-jwt",
-          "offline_access",
-          "phone"
-        ],
-        "attributes": {
-          "access.token.lifespan": "300",
-          "post.logout.redirect.uris": "+"
-        }
-      }
+ ** `frontend.json`
 
-  ** `cli.json`
 [source, json]
-    {
-      "clientId": "cli",
-      "clientAuthenticatorType": "client-secret",
-      "enabled": true,
-      "publicClient": false,
-      "implicitFlowEnabled": false,
-      "standardFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
-      "serviceAccountsEnabled": true,
-      "fullScopeAllowed": true,
-      "defaultClientScopes": [
-        "basic",
-        "email",
-        "profile",
-        "roles",
-        "web-origins",
-        "create:document",
-        "read:document",
-        "update:document",
-        "delete:document"
-      ],
-      "optionalClientScopes": [
-        "address",
-        "microprofile-jwt",
-        "offline_access",
-        "phone"
-      ],
-      "attributes": {
-        "access.token.lifespan": "300",
-        "post.logout.redirect.uris": "+"
-      }
+----
+{
+    "clientId": "frontend",
+    "clientAuthenticatorType": "client-secret",
+    "enabled": true,
+    "publicClient": true,
+    "implicitFlowEnabled": true,
+    "standardFlowEnabled": true,
+    "directAccessGrantsEnabled": false,
+    "serviceAccountsEnabled": false,
+    "fullScopeAllowed": true,
+    "webOrigins": [
+      "*"
+    ],
+    "defaultClientScopes": [
+      "basic",
+      "email",
+      "profile",
+      "roles",
+      "web-origins",
+      "create:document",
+      "read:document",
+      "update:document",
+      "delete:document"
+    ],
+    "optionalClientScopes": [
+      "address",
+      "microprofile-jwt",
+      "offline_access",
+      "phone"
+    ],
+    "attributes": {
+      "access.token.lifespan": "300",
+      "post.logout.redirect.uris": "+"
     }
+  }
+----
+ ** `cli.json`
+
+[source, json]
+----
+{
+  "clientId": "cli",
+  "clientAuthenticatorType": "client-secret",
+  "enabled": true,
+  "publicClient": false,
+  "implicitFlowEnabled": false,
+  "standardFlowEnabled": false,
+  "directAccessGrantsEnabled": false,
+  "serviceAccountsEnabled": true,
+  "fullScopeAllowed": true,
+  "defaultClientScopes": [
+    "basic",
+    "email",
+    "profile",
+    "roles",
+    "web-origins",
+    "create:document",
+    "read:document",
+    "update:document",
+    "delete:document"
+  ],
+  "optionalClientScopes": [
+    "address",
+    "microprofile-jwt",
+    "offline_access",
+    "phone"
+  ],
+  "attributes": {
+    "access.token.lifespan": "300",
+    "post.logout.redirect.uris": "+"
+  }
+}
+----
 
 [[_user_management]]
 ===== User Management
 
- * Navigate to the **Users** section and add a new user.
- * Once the user is created:
- * Go to the **Role Mapping** tab for this user and assign the `trust-admin` role (created in <<_role_definition,Role Definition>>) to them.
+ * Go to the **Users** section and add a new user.
+ * Go to the **Role Mapping** tab for this user, and assign the `trust-admin` role to the user.
  * Under the **Credentials** tab, set a password for this user.
 
 [[_cli_client_secret]]
@@ -444,123 +448,146 @@ Follow the below steps required to configure Keycloak:
 
 ===== Usage
 
-For the TPA installation, the following OIDC (OpenID Connect) values are retrieved from your Keycloak (RH-SSO) configuration:
+For the RHTPA installation, the following OIDC values are retrieved from your Keycloak (RH-SSO) configuration:
 
 * **issuerURL**: `_keycloakURL_/realms/<<_realm_creation,Realm name>>`
-* **frontend**: `empty object as {}` (This typically means no secret or specific configuration is needed for the frontend from the perspective of OIDC setup for the TPA install).
+* **frontend**: `empty object as {}`
+
+[NOTE]
+This means no secret or specific configuration is needed for the OIDC setup to install RHTPA.
+
 * **cli**: Retrieve the **Client Secret** from the Keycloak admin console by navigating to **Clients** -> **cli** -> **Credentials** tab.
 
 ==== Red Hat OpenShift Data Foundation Operator Configuration
 
-This guide details the steps to configure and verify the Red Hat OpenShift Data Foundation (ODF) Operator.
-
-
+This guide details the steps to configure and verify the Red Hat OpenShift Data Foundation Operator.
 
 [[_prerequisites]]
 ===== Prerequisites
 
-Before proceeding with the ODF installation, ensure you have the following:
+Before proceeding with the Openshift Data Foundation installation, ensure you have the following:
 
 * Install the latest version of the link:https://github.com/noobaa/noobaa.github.io/blob/master/noobaa-operator-cli.md[NooBaa CLI].
 
-[NOTE]
-.Optional: Adding Additional Nodes for ODF
-It's recommended to add additional worker nodes to your OpenShift cluster to avoid performance issues. Follow the below steps to add additional nodes
+.Optional: Add additional OpenShift Data Foundation nodes.
+
+To avoid performance issues, add additional nodes to the Openshift Cluster:
 
  * To create additional nodes, run the following command:
-[source, bash]
-  curl -s https://raw.githubusercontent.com/red-hat-storage/ocs-training/master/training/modules/ocs4/attachments/create_machinesets.sh | bash
 
+[source, bash]
+----
+curl -s https://raw.githubusercontent.com/red-hat-storage/ocs-training/master/training/modules/ocs4/attachments/create_machinesets.sh | bash
+----
  * Wait for the new nodes to be in a `READY` and `AVAILABLE` state. Verify the Machineset status with:
-[source, bash]
-  watch "oc get machinesets -n openshift-machine-api | egrep 'NAME|workerocs'"
 
+[source, bash]
+----
+watch "oc get machinesets -n openshift-machine-api | egrep 'NAME|workerocs'"
+----
  * Confirm the nodes are ready for use:
-[source, bash]
-  oc get nodes -l cluster.ocs.openshift.io/openshift-storage=
 
+[source, bash]
+----
+oc get nodes -l cluster.ocs.openshift.io/openshift-storage=
+----
 ===== Installation
 
-Follow these steps to install and configure the ODF Operator:
+Follow these steps to install and configure the Openshift Data Foundation Operator:
 
-* Create a dedicated namespace for the ODF installation.
+* Create a dedicated namespace for the Openshift Data Foundation installation.
+
 [source, bash]
-  oc create namespace openshift-storage
-
+----
+oc create namespace openshift-storage
+----
 * Label the namespace to enable cluster monitoring.
+
 [source, bash]
-  oc label namespace openshift-storage "openshift.io/cluster-monitoring=true"
+----
+oc label namespace openshift-storage "openshift.io/cluster-monitoring=true"
+----
+* Install the Openshift Data Foundation Operator by following the official deployment link:https://docs.redhat.com/en/documentation/red_hat_openshift_data_foundation/4.18/html-single/deploying_openshift_data_foundation_on_any_platform/index#deploy-standalone-multicloud-object-gateway[guide].
 
-* Install the ODF Operator by following the official deployment link:https://docs.redhat.com/en/documentation/red_hat_openshift_data_foundation/4.18/html-single/deploying_openshift_data_foundation_on_any_platform/index#deploy-standalone-multicloud-object-gateway[guide].
+* Confirm the Openshift Data Foundation installation is successful and the `StorageCluster` is in a `READY` state.
 
-* Confirm the ODF installation is successful and the `StorageCluster` is in a `READY` state.
 [source, bash]
-  oc get storagecluster -n openshift-storage ocs-storagecluster -o jsonpath='{.status.phase}{"\n"}'
-
+----
+oc get storagecluster -n openshift-storage ocs-storagecluster -o jsonpath='{.status.phase}{"\n"}'
+----
 [[_object_storage]]
 ===== Object Storage Configuration
-After ODF is installed, proceed with the following steps to configure and test object storage:
+After Openshift Data Foundation is installed, proceed with the following steps to configure and test object storage:
 
 * Get the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `External DNS` (under the S3 address section) from the `NooBaa` status command.
-[source, bash]
-  noobaa status -n openshift-storage
 
+[source, bash]
+----
+noobaa status -n openshift-storage
+----
 * Create new object buckets by following the link:https://docs.redhat.com/en/documentation/red_hat_openshift_data_foundation/4.18/html-single/managing_hybrid_and_multicloud_resources/index#creating-new-buckets-using-mcg-object-browser_rhodf[guide].
 
 [[_ocp_tls_certs]]
-===== Export Default OCP TLS Certs
+===== Export Default Openshift TLS Certs
 * Export the cluster's default TLS certificate. This is often required for S3 clients to trust the endpoint.
-[source, bash]
-  oc get secret -n openshift-ingress  router-certs-default -o go-template='{{index .data "tls.crt"}}' | base64 -d > tls.crt
 
+[source, bash]
+----
+oc get secret -n openshift-ingress  router-certs-default -o go-template='{{index .data "tls.crt"}}' | base64 -d > tls.crt
+----
 
 [[_verify_s3]]
 ===== Verify S3 Connection
-* Verify the connection to your S3 endpoint by exporting the ODF storage <<_object_storage, details>> and SSL <<_ocp_tls_certs, certs>> using the AWS CLI.
-[source, bash]
-  export AWS_ACCESS_KEY_ID=<AWS Access key>
-  export AWS_SECRET_ACCESS_KEY=<AWS Secret>
-  export AWS_CA_BUNDLE=<path to tls.crt>
-  aws  s3 ls --endpoint <External DNS>
+* Verify the connection to your S3 endpoint by exporting the Openshift Data Foundation storage <<_object_storage, details>> and SSL <<_ocp_tls_certs, certs>> using the AWS CLI.
 
-[NOTE]
-.Optional: Adding Bucket Policies
-Bucket policies can be added to object buckets using the AWS CLI to manage access permissions.
+[source, bash]
+----
+export AWS_ACCESS_KEY_ID=<AWS Access key>
+export AWS_SECRET_ACCESS_KEY=<AWS Secret>
+export AWS_CA_BUNDLE=<path to tls.crt>
+aws  s3 ls --endpoint <External DNS>
+----
+
+.Optional: Add Bucket Policies
+To add bucket policies to object buckets by using the Amazon Web Services (AWS) command-line interface to manage access permissions.
 
 [[_bucket_policy]]
 ===== Create Bucket Policy
  * Create a `policy.json` file with the desired content. The example below grants `Allow` access to anyone; update the `Principal` section to restrict user permissions.
+
 [source, json]
-
-  {
-  "Statement": [
-        {
-          "Effect": "Allow",
-          "Principal": "*",
-          "Action": [
-              "s3:GetObject",
-              "s3:DeleteObject",
-              "s3:ListBucket",
-              "s3:PutObject",
-              "s3:ListAllMyBuckets"
-          ],
-          "Resource": ["arn:aws:s3:::<bucketname>","arn:aws:s3:::<bucketname>/*"]
-        }
+----
+{
+"Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": "*",
+        "Action": [
+            "s3:GetObject",
+            "s3:DeleteObject",
+            "s3:ListBucket",
+            "s3:PutObject",
+            "s3:ListAllMyBuckets"
+        ],
+        "Resource": ["arn:aws:s3:::<bucketname>","arn:aws:s3:::<bucketname>/*"]
+      }
   ]
-  }
-
+}
+----
  * Run the following command to update the bucket policy:
-[source, bash]
-  aws --endpoint <Noobaa External DNS Endpoint> s3api put-bucket-policy --bucket <bucket name> --policy file://<policy.json file path>
 
+[source, bash]
+----
+aws --endpoint <Noobaa External DNS Endpoint> s3api put-bucket-policy --bucket <bucket name> --policy file://<policy.json file path>
+----
 ===== Usage
-For the TPA installation, the following S3 values are retrieved from your Red Hat OpenShift Data Foundation (RHODF) installation:
+For the RHTPA installation, the following S3 values are retrieved from your Red Hat OpenShift Data Foundation installation:
 
 * **type**: `s3`
-* **region**: The External DNS from the `noobaa status` command (refer to <<_retrieve_noobaa_credentials_and_endpoint,Object Storage Configuration and Testing>>)
+* **region**: The external DNS from the noobaa status command. For more information, refer to <<_retrieve_noobaa_credentials_and_endpoint,Object Storage Configuration and Testing>> section.
 * **bucket**: S3 Bucket created
 * **accessKey**: AWS_ACCESS_KEY_ID 
 * **secretKey**: AWS_SECRET_ACCESS_KEY
 
-Additionally, the `tls.crt` file must be referred to for the installation with `Values.tls.additionalTrustAnchor`
+Additionally, you must refer to the `tls.crt` file for installing with the `Values.tls.additionalTrustAnchor` option.
 
