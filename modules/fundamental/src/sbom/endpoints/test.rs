@@ -26,7 +26,7 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
         .id
         .to_string();
 
-    let uri = format!("/api/v2/sbom/{id}/licenseIds");
+    let uri = format!("/api/v2/sbom/{id}/allLicenseIds");
     let req = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(req).await;
     let expected_result = &vec![
@@ -68,7 +68,7 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
         .id
         .to_string();
 
-    let uri = format!("/api/v2/sbom/{id}/licenseIds");
+    let uri = format!("/api/v2/sbom/{id}/allLicenseIds");
     let req = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(req).await;
     let expected_result = &vec![
@@ -91,6 +91,11 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
         _ => panic!("Incorrect response"),
     }
     log::debug!("{response:#?}");
+
+    let uri = "/api/v2/sbom/sha256:e5c850b67868563002801668950832278f8093308b3a3c57931f591442ed3160/allLicenseIds".to_string();
+    let req = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(req).await;
+    assert_eq!(StatusCode::BAD_REQUEST, response.status());
     Ok(())
 }
 

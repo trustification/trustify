@@ -2463,6 +2463,29 @@ paths:
                   $ref: '#/components/schemas/SbomAdvisory'
         '404':
           description: Matching SBOM not found
+  /api/v2/sbom/{id}/allLicenseIds:
+    get:
+      tags:
+      - sbom
+      operationId: allLicenseIds
+      parameters:
+      - name: id
+        in: path
+        description: ID of the SBOM to get the license IDs for
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: fetch all unique license id and license info id
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':
+          description: Invalid UUID format.
   /api/v2/sbom/{id}/label:
     put:
       tags:
@@ -2534,30 +2557,6 @@ paths:
                   minimum: 0
         '404':
           description: The document could not be found
-  /api/v2/sbom/{id}/licenseIds:
-    get:
-      tags:
-      - sbom
-      operationId: getUniqueLicenses
-      parameters:
-      - name: id
-        in: path
-        description: ID of the SBOM to get the license IDs for
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: fetch all unique license id and license info id
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-        '400':
-          description: Invalid UUID format.
   /api/v2/sbom/{id}/packages:
     get:
       tags:
