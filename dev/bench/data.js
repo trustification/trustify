@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749130530896,
+  "lastUpdate": 1749141659197,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10898,6 +10898,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/f645e456d8c4fdcb1c43c21f6a1f799d3305f28a"
         },
         "date": 1749130529751,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mbrophy@redhat.com",
+            "name": "Mark Brophy",
+            "username": "m-brophy"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "9dfb1287a4800897c311b9b8b5a6fad431c3960e",
+          "message": "fix env variable name typo",
+          "timestamp": "2025-06-05T16:19:30Z",
+          "tree_id": "65d67cb19fde64977ac82f19e3f1061eecf069c7",
+          "url": "https://github.com/trustification/trustify/commit/9dfb1287a4800897c311b9b8b5a6fad431c3960e"
+        },
+        "date": 1749141658215,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
