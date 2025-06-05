@@ -9,7 +9,8 @@ use sea_orm::{ConnectionTrait, EntityTrait, QueryFilter};
 use trustify_common::id::{Id, TryFilterForId};
 use trustify_entity::{advisory, sbom, source_document};
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, strum::Display)]
+#[strum(serialize_all = "lowercase")]
 pub enum DocumentType {
     Advisory,
     Sbom,
