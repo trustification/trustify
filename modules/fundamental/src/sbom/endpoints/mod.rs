@@ -88,7 +88,7 @@ const CONTENT_TYPE_GZIP: &str = "application/gzip";
     (status = 400, description = "Invalid UUID format."),
     ),
 )]
-#[get("/v2/sbom/{id}/allLicenseIds")]
+#[get("/v2/sbom/{id}/all-license-ids")]
 pub async fn get_unique_licenses(
     fetcher: web::Data<LicenseService>,
     db: web::Data<Database>,
