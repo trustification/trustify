@@ -97,5 +97,9 @@ Alternative: Instead of doing an ad-hoc check, do a check another time, and serv
 * [ ] How to deal with signatures that no longer validate?
 * [ ] Do we store evaluation results? When adding a signature, do we validate it, and store the result? So that we have
   the outcome stored, "at that point in time".
+* [ ] In order to verify the signature, we need the original content. Which can be retrieved from the storage. But
+  that's costly. Couldn't we cache the verification?
+* [ ] PGP is a mechanism to ensure content is not modified during transport. For compressed content, the signature is
+  in the compressed content. We store the uncompressed content. So we can't validate the signature.
 
 ## Conclusion
