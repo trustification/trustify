@@ -56,3 +56,22 @@ This will set `foo` to `bar` and remove the label `bar`.
 ```bash
 http GET localhost:8080/api/v2/sbom 'q==label:foo=bar' | jq '.items[] | {id, name, labels}'
 ```
+
+## Signatures
+
+**NOTE:** The allowing examples use SBOMs. It works the same way with advisories.
+
+All examples in this section expect the environment variable `ID`
+to point to an SBOM/advisory in the form of `urn:uuid:<id>`.
+
+### Get all signatures of an SBOM
+
+```bash
+http GET localhost:8080/api/v2/sbom/$ID/signature
+```
+
+### Verify all signatures against all trust anchors
+
+```bash
+http GET localhost:8080/api/v2/sbom/$ID/verify
+```

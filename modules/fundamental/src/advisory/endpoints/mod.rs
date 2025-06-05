@@ -25,7 +25,12 @@ use trustify_common::{
     model::{BinaryData, Paginated, PaginatedResults},
 };
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Cache, Format, IngestorService};
+use trustify_module_ingestor::service::{Format, Ingest, IngestorService};
+use trustify_module_signature::model::VerificationResult;
+use trustify_module_signature::{
+    model::Signature,
+    service::{DocumentType, SignatureService, TrustAnchorService},
+};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::IntoParams;
 
@@ -36,17 +41,23 @@ pub fn configure(
 ) {
     let advisory_service = AdvisoryService::new(db.clone());
     let purl_service = PurlService::new();
+    let signature_service = SignatureService::new();
+    let trust_anchor_service = TrustAnchorService::new(db.clone());
 
     config
         .app_data(web::Data::new(db))
         .app_data(web::Data::new(advisory_service))
         .app_data(web::Data::new(purl_service))
+        .app_data(web::Data::new(signature_service))
+        .app_data(web::Data::new(trust_anchor_service))
         .app_data(web::Data::new(Config { upload_limit }))
         .service(all)
         .service(get)
         .service(delete)
         .service(upload)
         .service(download)
+        .service(list_signatures)
+        .service(verify_signatures)
         .service(label::set)
         .service(label::update)
         .service(label::all);
@@ -197,13 +208,13 @@ pub async fn upload(
 ) -> Result<impl Responder, Error> {
     let bytes = decompress_async(bytes, content_type.map(|ct| ct.0), config.upload_limit).await??;
     let result = service
-        .ingest(
-            &bytes,
+        .ingest(Ingest {
+            data: &bytes,
             format,
             labels,
             issuer,
-            Cache::Skip, /* we only cache SBOMs */
-        )
+            ..Default::default()
+        })
         .await?;
     log::info!("Uploaded Advisory: {}", result.id);
     Ok(HttpResponse::Created().json(result))
@@ -254,4 +265,72 @@ pub async fn download(
     } else {
         Ok(HttpResponse::NotFound().finish())
     }
+}
+
+/// Get signatures of an advisory
+#[utoipa::path(
+    tag = "advisory",
+    operation_id = "listAdvisorySignatures",
+    params(
+        ("key" = Id, Path),
+    ),
+    responses(
+        (status = 200, description = "Signatures of an advisory", body = PaginatedResults<Signature>),
+        (status = 404, description = "The document could not be found"),
+    )
+)]
+#[get("/v2/advisory/{key}/signature")]
+pub async fn list_signatures(
+    db: web::Data<Database>,
+    service: web::Data<SignatureService>,
+    key: web::Path<String>,
+    web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadAdvisory>,
+) -> Result<impl Responder, Error> {
+    let id = Id::from_str(&key).map_err(Error::IdKey)?;
+
+    let result = service
+        .list_signatures(DocumentType::Advisory, id, paginated, db.get_ref())
+        .await?;
+
+    Ok(HttpResponse::Ok().json(result))
+}
+
+/// [BETA] Validate signatures of an advisory
+#[utoipa::path(
+    tag = "advisory",
+    operation_id = "verifyAdvisorySignatures",
+    params(
+        ("key" = Id, Path),
+    ),
+    responses(
+        (status = 200, description = "Signatures of an advisory", body = PaginatedResults<VerificationResult>),
+        (status = 404, description = "The document could not be found"),
+    )
+)]
+#[get("/v2/advisory/{key}/verify")]
+#[allow(clippy::too_many_arguments)]
+pub async fn verify_signatures(
+    db: web::Data<Database>,
+    signature_service: web::Data<SignatureService>,
+    trust_anchor_service: web::Data<TrustAnchorService>,
+    ingestor: web::Data<IngestorService>,
+    key: web::Path<String>,
+    web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadAdvisory>,
+) -> Result<impl Responder, Error> {
+    let id = Id::from_str(&key).map_err(Error::IdKey)?;
+
+    let result = signature_service
+        .verify(
+            DocumentType::Advisory,
+            id,
+            paginated,
+            &trust_anchor_service,
+            db.as_ref(),
+            ingestor.storage(),
+        )
+        .await?;
+
+    Ok(HttpResponse::Ok().json(result))
 }

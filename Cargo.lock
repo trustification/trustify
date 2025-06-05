@@ -9189,6 +9189,7 @@ dependencies = [
  "spdx-rs",
  "strum 0.27.1",
  "tar",
+ "tempfile",
  "termimad",
  "test-context",
  "test-log",
@@ -9207,6 +9208,7 @@ dependencies = [
  "trustify-entity",
  "trustify-module-analysis",
  "trustify-module-ingestor",
+ "trustify-module-signature",
  "trustify-module-storage",
  "trustify-test-context",
  "urlencoding",
@@ -9351,6 +9353,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "trustify-module-signature"
+version = "0.3.0-rc.1"
+dependencies = [
+ "actix-http",
+ "actix-web",
+ "anyhow",
+ "futures-util",
+ "json-merge-patch",
+ "log",
+ "sea-orm",
+ "sea-query",
+ "sequoia-openpgp",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "strum 0.27.1",
+ "tempfile",
+ "test-context",
+ "test-log",
+ "thiserror 2.0.12",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "trustify-auth",
+ "trustify-common",
+ "trustify-entity",
+ "trustify-module-storage",
+ "trustify-test-context",
+ "utoipa",
+ "utoipa-actix-web",
+ "walker-common",
+]
+
+[[package]]
 name = "trustify-module-storage"
 version = "0.3.0-rc.1"
 dependencies = [
@@ -9377,6 +9413,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "trustify-common",
+ "trustify-entity",
  "uuid",
 ]
 
@@ -9451,6 +9488,7 @@ dependencies = [
  "trustify-module-graphql",
  "trustify-module-importer",
  "trustify-module-ingestor",
+ "trustify-module-signature",
  "trustify-module-storage",
  "trustify-module-ui",
  "trustify-module-user",

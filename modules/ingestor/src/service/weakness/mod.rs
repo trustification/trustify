@@ -1,12 +1,16 @@
-use crate::{graph::Graph, model::IngestResult, service::Error};
+use crate::{
+    graph::Graph,
+    model::IngestResult,
+    service::{Error, Metadata},
+};
 use hex::ToHex;
 use roxmltree::{Document, Node};
 use sea_orm::{EntityTrait, Iterable, Set, TransactionTrait};
 use sea_query::OnConflict;
 use std::str::from_utf8;
 use tracing::instrument;
-use trustify_common::{db::chunk::EntityChunkedIter, hashing::Digests, id::Id};
-use trustify_entity::{labels::Labels, weakness};
+use trustify_common::{db::chunk::EntityChunkedIter, id::Id};
+use trustify_entity::weakness;
 
 pub struct CweCatalogLoader<'d> {
     graph: &'d Graph,
@@ -20,24 +24,28 @@ impl<'d> CweCatalogLoader<'d> {
     #[instrument(skip(self, buffer), ret)]
     pub async fn load_bytes(
         &self,
-        labels: Labels,
+        metadata: Metadata,
         buffer: &[u8],
-        digests: &Digests,
     ) -> Result<IngestResult, Error> {
         let xml = from_utf8(buffer)?;
-
         let document = Document::parse(xml)?;
 
-        self.load(labels, &document, digests).await
+        self.load(metadata, &document).await
     }
 
     #[instrument(skip(self, doc), ret)]
     pub async fn load<'x>(
         &self,
-        _labels: Labels,
+        metadata: Metadata,
         doc: &Document<'x>,
-        digests: &Digests,
     ) -> Result<IngestResult, Error> {
+        let Metadata {
+            labels: _,
+            issuer: _,
+            digests,
+            signatures: _,
+        } = metadata;
+
         let root = doc.root();
 
         let catalog = root.first_element_child();
@@ -188,13 +196,13 @@ fn gather_content_inner(node: &Node, dest: &mut String) {
 #[cfg(test)]
 mod test {
     use crate::graph::Graph;
+    use crate::service::Metadata;
     use crate::service::weakness::CweCatalogLoader;
     use roxmltree::Document;
     use std::io::Read;
     use test_context::test_context;
     use test_log::test;
     use trustify_common::hashing::HashingRead;
-    use trustify_entity::labels::Labels;
     use trustify_test_context::TrustifyContext;
     use trustify_test_context::document_read;
     use zip::ZipArchive;
@@ -218,8 +226,28 @@ mod test {
         let doc = Document::parse(&xml)?;
 
         // should work twice without error/conflict.
-        loader.load(Labels::default(), &doc, &digests).await?;
-        loader.load(Labels::default(), &doc, &digests).await?;
+        loader
+            .load(
+                Metadata {
+                    labels: Default::default(),
+                    issuer: None,
+                    digests,
+                    signatures: vec![],
+                },
+                &doc,
+            )
+            .await?;
+        loader
+            .load(
+                Metadata {
+                    labels: Default::default(),
+                    issuer: None,
+                    digests,
+                    signatures: vec![],
+                },
+                &doc,
+            )
+            .await?;
 
         Ok(())
     }
