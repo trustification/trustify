@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749117958467,
+  "lastUpdate": 1749129977922,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10840,6 +10840,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/a674edc17e715671c94b21f7127797857336837b"
         },
         "date": 1749117957596,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "058fd52b11163df3b2c1362908d579ddb7358ed8",
+          "message": "chore: update otel-rust dependencies",
+          "timestamp": "2025-06-05T12:57:59Z",
+          "tree_id": "d78bf10f4e2a42cdbdf7df40fd4064ebbc6459ee",
+          "url": "https://github.com/trustification/trustify/commit/058fd52b11163df3b2c1362908d579ddb7358ed8"
+        },
+        "date": 1749129975869,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
