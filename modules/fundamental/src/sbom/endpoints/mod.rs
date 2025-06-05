@@ -79,7 +79,7 @@ const CONTENT_TYPE_GZIP: &str = "application/gzip";
 
 #[utoipa::path(
     tag = "sbom",
-    operation_id = "getUniqueLicenses",
+    operation_id = "allLicenseIds",
     params(
     ("id", Path, description = "ID of the SBOM to get the license IDs for"),
     ),
@@ -88,18 +88,23 @@ const CONTENT_TYPE_GZIP: &str = "application/gzip";
     (status = 400, description = "Invalid UUID format."),
     ),
 )]
-#[get("/v2/sbom/{id}/licenseIds")]
+#[get("/v2/sbom/{id}/allLicenseIds")]
 pub async fn get_unique_licenses(
     fetcher: web::Data<LicenseService>,
     db: web::Data<Database>,
-    id: web::Path<Uuid>,
+    id: web::Path<String>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(
-        fetcher
-            .get_all_license_info(id.into_inner(), db.as_ref())
-            .await?,
-    ))
+    let parsed_id = Id::from_str(&id).map_err(Error::IdKey)?;
+    match parsed_id {
+        Id::Uuid(uuid) => {
+            Ok(HttpResponse::Ok().json(fetcher.get_all_license_info(uuid, db.as_ref()).await?))
+        }
+        _ => {
+            let error_msg = format!("This ID: {} is not in UUID format.", parsed_id);
+            Ok(HttpResponse::BadRequest().json(error_msg))
+        }
+    }
 }
 
 #[utoipa::path(
