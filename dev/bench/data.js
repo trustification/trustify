@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749056682760,
+  "lastUpdate": 1749107941068,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10782,6 +10782,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/6ed67fb81448101623c7172b800dad70cd80a25b"
         },
         "date": 1749056681816,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "7f668d9d804c987b7981e1747945a66e12cefb16",
+          "message": "TC-1902 Switch to BTreeSet response to have sorted values\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-06-05T06:50:00Z",
+          "tree_id": "66ab37b8a97269381efdd335b48594943cc9b523",
+          "url": "https://github.com/trustification/trustify/commit/7f668d9d804c987b7981e1747945a66e12cefb16"
+        },
+        "date": 1749107939943,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
