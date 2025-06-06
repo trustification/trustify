@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749141659197,
+  "lastUpdate": 1749197226962,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10927,6 +10927,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/9dfb1287a4800897c311b9b8b5a6fad431c3960e"
         },
         "date": 1749141658215,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "8cab5c0ca9249ed57652ad456fb53efd447be7d8",
+          "message": "chore: listAllLicenseIds by SBOM Id rather than Uuid (#29)\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-06-06T07:44:14Z",
+          "tree_id": "4a46a2fce5369f53b87ee86ca6210da0bfa9bd2d",
+          "url": "https://github.com/trustification/trustify/commit/8cab5c0ca9249ed57652ad456fb53efd447be7d8"
+        },
+        "date": 1749197225847,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
