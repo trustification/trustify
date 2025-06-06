@@ -42,7 +42,7 @@ pub async fn list_weaknesses(
     operation_id = "getWeakness",
     responses(
         (status = 200, description = "The weakness", body = LicenseSummary),
-        (status = 404, description = "The weakness was not found"),
+        (status = 404, description = "The weakness could not be found"),
     ),
 )]
 #[get("/v2/weakness/{id}")]

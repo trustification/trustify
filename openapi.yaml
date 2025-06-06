@@ -289,7 +289,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdvisoryDetails'
         '404':
-          description: Matching advisory not found
+          description: The advisory could not be found
     delete:
       tags:
       - advisory
@@ -309,7 +309,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdvisoryDetails'
         '404':
-          description: Matching advisory not found
+          description: The advisory could not be found
   /api/v2/advisory/{key}/download:
     get:
       tags:
@@ -961,7 +961,7 @@ paths:
         '403':
           description: The user lacks the required permission
         '404':
-          description: The SBOM was not found
+          description: The SBOM could not be found
         '415':
           description: Unsupported rendering format
   /api/v2/analysis/status:
@@ -1050,7 +1050,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Revisioned_Importer'
         '404':
-          description: An importer with that name could not be found
+          description: The importer could not be found
     put:
       tags:
       - importer
@@ -1081,7 +1081,7 @@ paths:
         '201':
           description: Updated the importer configuration
         '409':
-          description: An importer with that name does not exist
+          description: The importer could not be found
         '412':
           description: The provided if-match header did not match the stored revision
     post:
@@ -1159,7 +1159,7 @@ paths:
         '201':
           description: Created a new importer configuration
         '409':
-          description: An importer with that name does not exist
+          description: The importer could not be found
         '412':
           description: The provided if-match header did not match the stored revision
   /api/v2/importer/{name}/enabled:
@@ -1193,7 +1193,7 @@ paths:
         '201':
           description: Updated the enable state
         '404':
-          description: An importer with that name does not exist
+          description: The importer could not be found
         '412':
           description: The provided if-match header did not match the stored revision
   /api/v2/importer/{name}/force:
@@ -1227,7 +1227,7 @@ paths:
         '201':
           description: Updated the state
         '404':
-          description: An importer with that name does not exist
+          description: The importer could not be found
         '412':
           description: The provided if-match header did not match the stored revision
   /api/v2/importer/{name}/report:
@@ -1606,7 +1606,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/OrganizationDetails'
         '404':
-          description: Matching organization not found
+          description: The organization could not be found
   /api/v2/product:
     get:
       tags:
@@ -1737,7 +1737,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProductDetails'
         '404':
-          description: Matching product not found
+          description: The product could not be found
     delete:
       tags:
       - product
@@ -1758,7 +1758,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProductDetails'
         '404':
-          description: Matching product not found
+          description: The product could not be found
   /api/v2/purl:
     get:
       tags:
@@ -2419,7 +2419,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SbomSummary'
         '404':
-          description: Matching SBOM not found
+          description: The SBOM could not be found
     delete:
       tags:
       - sbom
@@ -2439,7 +2439,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/SbomSummary'
         '404':
-          description: Matching SBOM not found
+          description: The SBOM could not be found
   /api/v2/sbom/{id}/advisory:
     get:
       tags:
@@ -2462,7 +2462,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/SbomAdvisory'
         '404':
-          description: Matching SBOM not found
+          description: The SBOM could not be found
   /api/v2/sbom/{id}/all-license-ids:
     get:
       tags:
@@ -2896,7 +2896,7 @@ paths:
             application/json:
               schema: {}
         '404':
-          description: Unknown user preference key
+          description: The user preference key could not be found
     put:
       tags:
       - userPreferences
@@ -3112,7 +3112,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/VulnerabilityDetails'
         '404':
-          description: Specified vulnerability not found
+          description: The vulnerability could not be found
     delete:
       tags:
       - vulnerability
@@ -3259,7 +3259,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LicenseSummary'
         '404':
-          description: The weakness was not found
+          description: The weakness could not be found
 components:
   schemas:
     AdvisoryDetails:
