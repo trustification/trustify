@@ -131,7 +131,7 @@ impl SbomService {
             .distinct_on([(sbom::Entity, sbom::Column::SbomId)])
             .order_by_asc(sbom::Column::SbomId)
             .join(JoinType::Join, sbom::Relation::SourceDocument.def())
-            .join(JoinType::Join, sbom::Relation::Packages.def()) // Use inner join for sbom_package for filtering
+            .join(JoinType::LeftJoin, sbom::Relation::Packages.def()) // Use left join to preserve SBOMs without packages
             .find_also_linked(SbomNodeLink)
             .filtering_with(
                 search,

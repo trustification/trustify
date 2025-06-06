@@ -282,8 +282,8 @@ async fn query_sboms_by_ingested_time(ctx: &TrustifyContext) -> Result<(), anyho
 
     // assert expected fields
     assert_eq!(all["total"], 2);
-    assert_eq!(all["items"][0]["name"], json!("zookeeper"));
-    assert_eq!(all["items"][1]["name"], json!("ubi9-container"));
+    assert_eq!(all["items"][0]["name"], json!("ubi9-container"));
+    assert_eq!(all["items"][1]["name"], json!("zookeeper"));
     assert_eq!(ubi["total"], 1);
     assert_eq!(ubi["items"][0]["name"], json!("ubi9-container"));
     assert_eq!(zoo["total"], 1);
