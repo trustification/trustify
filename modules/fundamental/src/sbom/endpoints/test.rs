@@ -556,12 +556,12 @@ async fn query_sboms_by_ingested_time(ctx: &TrustifyContext) -> Result<(), anyho
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn query_sboms_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let query = async |q| {
+    let query = async |total, q| {
         let app = caller(ctx).await.unwrap();
         let uri = format!("/api/v2/sbom?q={}", encode(q));
         let req = TestRequest::get().uri(&uri).to_request();
         let response: Value = app.call_and_read_body_json(req).await;
-        assert_eq!(1, response["total"], "for {q}");
+        assert_eq!(total, response["total"], "for {q}");
     };
     ctx.ingest_document_as(
         "zookeeper-3.9.2-cyclonedx.json",
@@ -576,23 +576,48 @@ async fn query_sboms_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error
         ],
     )
     .await?;
+    ctx.ingest_document_as(
+        "spdx/openssl-3.0.7-18.el9_2.spdx.json",
+        Format::SPDX,
+        [
+            ("type", "spdx"),
+            ("source", "test"),
+            ("importer", "some"),
+            ("file", "openssl.json"),
+            ("datasetFile", "zilch"),
+            ("foo", "baz"),
+        ],
+    )
+    .await?;
 
-    query("labels:type!=spdx").await;
-    query("labels:type~clone").await;
-    query("labels:type=cyclonedx").await;
-    query("labels:type=cyclonedx&labels:source=test").await;
-    query("labels:type=cyclonedx&labels:source=test&labels:importer=none").await;
-    query("labels:type=cyclonedx&labels:source=test&labels:importer=none&labels:file=zoo.json")
-        .await;
-    query("labels:type=cyclonedx&labels:source=test&labels:importer=none&labels:file=zoo.json&labels:datasetFile=none").await;
-    query("labels:file>foo.json").await;
-    query("labels:datasetFile<zilch").await;
-    query("label:foo=bar").await;
-    query("label:type=cyclonedx").await;
-    query("label:importer=some|none").await;
-    query("label:type!=spdx").await;
-    query("labels:type~one&labels:foo>aah").await;
-    query("labels:importer~one&label:file~zoo").await;
+    query(0, "labels:type=spdx&labels:type=cyclonedx").await;
+    query(0, "labels:type!=spdx&labels:type!=cyclonedx").await;
+    query(0, "labels:type!=spdx|cyclonedx").await;
+    query(2, "labels:type=spdx|cyclonedx").await;
+    query(1, "labels:type!=spdx").await;
+    query(1, "labels:type~clone").await;
+    query(1, "labels:type=cyclonedx").await;
+    query(1, "labels:type=cyclonedx&labels:source=test").await;
+    query(
+        1,
+        "labels:type=cyclonedx&labels:source=test&labels:importer=none",
+    )
+    .await;
+    query(
+        1,
+        "labels:type=cyclonedx&labels:source=test&labels:importer=none&labels:file=zoo.json",
+    )
+    .await;
+    query(1, "labels:type=cyclonedx&labels:source=test&labels:importer=none&labels:file=zoo.json&labels:datasetFile=none").await;
+    query(2, "labels:file>foo.json").await;
+    query(1, "labels:file>poo.json").await;
+    query(1, "labels:datasetFile<zilch").await;
+    query(1, "label:foo=bar").await;
+    query(1, "label:type=cyclonedx").await;
+    query(2, "label:importer=some|none").await;
+    query(1, "label:type!=spdx").await;
+    query(1, "labels:type~one&labels:foo>aah").await;
+    query(1, "labels:importer~one&label:file~zoo").await;
 
     Ok(())
 }
