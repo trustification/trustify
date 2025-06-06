@@ -523,6 +523,13 @@
           "type": "string",
           "default": "quay.io"
         },
+        "apiToken": {
+          "description": "The API token authorizing access to the quay registry",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "namespace": {
           "description": "The namespace of the registry to \"walk\"",
           "type": [

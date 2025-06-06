@@ -15,8 +15,6 @@ use tracing::instrument;
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Cache, Format, IngestorService};
 
-const QUAY_API_TOKEN: &str = "QUAY_API_TOKEN";
-
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct LastModified(Option<i64>);
 
@@ -36,10 +34,10 @@ impl<C: RunContext> QuayWalker<C> {
         report: Arc<Mutex<ReportBuilder>>,
         context: C,
     ) -> Result<Self, Error> {
-        let client = match std::env::var(QUAY_API_TOKEN) {
-            Ok(token) => authorized_client(token)?,
-            _ => {
-                log::warn!("{QUAY_API_TOKEN} not set in environment; results will be limited");
+        let client = match importer.api_token {
+            Some(ref token) => authorized_client(token)?,
+            None => {
+                log::warn!("Quay API token not configured; results may be limited");
                 Default::default()
             }
         };
@@ -198,7 +196,7 @@ impl<C: RunContext> QuayWalker<C> {
     }
 }
 
-fn authorized_client(token: String) -> Result<reqwest::Client, Error> {
+fn authorized_client(token: &str) -> Result<reqwest::Client, Error> {
     let token = format!("Bearer {token}");
     let mut auth_value = header::HeaderValue::from_str(&token)?;
     auth_value.set_sensitive(true);
@@ -265,7 +263,7 @@ mod test {
             QuayImporter {
                 source: "quay.io".into(),
                 namespace: Some("redhat-user-workloads".into()),
-                size_limit: Some(ByteSize::kib(1).into()),
+                size_limit: Some(ByteSize::kib(3).into()),
                 ..Default::default()
             },
             ctx.ingestor.clone(),

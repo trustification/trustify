@@ -22,6 +22,10 @@ pub struct QuayImporter {
     #[serde(default = "default::source")]
     pub source: String,
 
+    /// The API token authorizing access to the quay registry
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub api_token: Option<String>,
+
     /// The namespace of the registry to "walk"
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub namespace: Option<String>,
