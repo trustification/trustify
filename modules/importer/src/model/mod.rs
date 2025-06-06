@@ -381,6 +381,42 @@ mod test {
     use super::*;
     use time::macros::datetime;
 
+    fn create_test_importer(
+        heartbeat: Option<i128>,
+        last_run: Option<OffsetDateTime>,
+        disabled: bool,
+    ) -> Importer {
+        let now = OffsetDateTime::now_utc();
+        Importer {
+            name: "test".into(),
+            heartbeat,
+            data: ImporterData {
+                configuration: ImporterConfiguration::Sbom(SbomImporter {
+                    common: CommonImporter {
+                        disabled,
+                        period: Duration::from_secs(30),
+                        description: None,
+                        labels: Default::default(),
+                    },
+                    source: "test".into(),
+                    keys: vec![],
+                    only_patterns: vec![],
+                    v3_signatures: false,
+                    size_limit: None,
+                    fetch_retries: None,
+                    ignore_missing: false,
+                }),
+                state: State::Waiting,
+                last_change: now,
+                last_success: None,
+                last_run,
+                last_error: None,
+                progress: Default::default(),
+                continuation: serde_json::Value::Null,
+            },
+        }
+    }
+
     #[test]
     fn progress() {
         let start = datetime!(2024-01-01 00:00:00 UTC);
@@ -426,5 +462,38 @@ mod test {
             into_progress(start, now, Some(0), Some(0), None),
             Progress::default()
         );
+    }
+
+    #[test]
+    fn importer_is_due() {
+        let now = OffsetDateTime::now_utc();
+        let importer = create_test_importer(None, None, false);
+        assert!(importer.is_due());
+
+        let importer = create_test_importer(None, Some(now - Duration::from_secs(20)), false);
+        assert!(!importer.is_due());
+    }
+
+    #[test]
+    fn importer_is_running() {
+        let now = OffsetDateTime::now_utc();
+        let importer = create_test_importer(Some(now.unix_timestamp_nanos()), None, false);
+        assert!(importer.is_running());
+
+        let importer = create_test_importer(
+            Some((now - Duration::from_secs(30)).unix_timestamp_nanos()),
+            None,
+            false,
+        );
+        assert!(!importer.is_running());
+    }
+
+    #[test]
+    fn importer_is_enabled() {
+        let importer = create_test_importer(None, None, false);
+        assert!(importer.is_enabled());
+
+        let importer = create_test_importer(None, None, true);
+        assert!(!importer.is_enabled());
     }
 }
