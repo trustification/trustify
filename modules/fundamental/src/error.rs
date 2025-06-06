@@ -2,6 +2,7 @@ use actix_web::{HttpResponse, ResponseError, body::BoxBody};
 use langchain_rust::{agent::AgentError, chain::ChainError};
 use sea_orm::DbErr;
 use trustify_common::{decompress, error::ErrorInformation, id::IdError, purl::PurlErr};
+use trustify_entity::labels;
 use trustify_module_storage::service::StorageKeyError;
 
 #[derive(Debug, thiserror::Error)]
@@ -46,6 +47,8 @@ pub enum Error {
     CsvIntoInnerError(String),
     #[error(transparent)]
     Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Label(#[from] labels::Error),
 }
 
 impl From<DbErr> for Error {
@@ -83,6 +86,9 @@ impl ResponseError for Error {
             }
             Self::Compression(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("CompressionError", err))
+            }
+            Self::Label(err) => {
+                HttpResponse::BadRequest().json(ErrorInformation::new("Label", err))
             }
 
             // All other cases are internal system errors that are not expected to occur.
