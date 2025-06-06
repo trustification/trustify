@@ -129,13 +129,17 @@ impl SbomService {
             sbom::Entity::find().filter(Expr::col(sbom::Column::Labels).contains(labels))
         };
         let limiter = query
+            .distinct_on([(sbom::Entity, sbom::Column::SbomId)])
+            .order_by_asc(sbom::Column::SbomId)
             .join(JoinType::Join, sbom::Relation::SourceDocument.def())
+            .join(JoinType::LeftJoin, sbom::Relation::Packages.def()) // Use left join to preserve SBOMs without packages
             .find_also_linked(SbomNodeLink)
             .filtering_with(
                 search,
                 Columns::from_entity::<sbom::Entity>()
                     .add_columns(sbom_node::Entity)
                     .add_columns(source_document::Entity)
+                    .add_columns(sbom_package::Entity)
                     .alias("sbom_node", "r0")
                     .translator(|f, op, v| match f.split_once(':') {
                         Some(("label", key)) => Some(format!("labels:{key}{op}{v}")),
