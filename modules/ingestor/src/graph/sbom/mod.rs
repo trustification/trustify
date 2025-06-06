@@ -135,7 +135,7 @@ impl Graph {
             suppliers: Set(suppliers),
 
             source_document_id: Set(Some(new_id)),
-            labels: Set(labels.into()),
+            labels: Set(labels.into().validate()?),
             data_licenses: Set(data_licenses),
         };
 

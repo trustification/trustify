@@ -243,7 +243,7 @@ impl AdvisoryService {
     ) -> Result<Option<()>, Error> {
         let result = advisory::Entity::update_many()
             .try_filter(id)?
-            .col_expr(advisory::Column::Labels, Expr::value(labels))
+            .col_expr(advisory::Column::Labels, Expr::value(labels.validate()?))
             .exec(connection)
             .await?;
 
@@ -260,12 +260,13 @@ impl AdvisoryService {
     where
         F: FnOnce(Labels) -> Labels,
     {
-        let tx = self.db.begin().await?;
+        let tx = self.db.begin().await.map_err(Error::from)?;
 
         // work around missing "FOR UPDATE" issue
 
         let mut query = advisory::Entity::find()
-            .try_filter(id)?
+            .try_filter(id)
+            .map_err(Error::IdKey)?
             .build(DatabaseBackend::Postgres);
 
         query.sql.push_str(" FOR UPDATE");
@@ -275,7 +276,8 @@ impl AdvisoryService {
         let Some(result) = advisory::Entity::find()
             .from_raw_sql(query)
             .one(&tx)
-            .await?
+            .await
+            .map_err(Error::from)?
         else {
             // return early, nothing found
             return Ok(None);
@@ -285,15 +287,15 @@ impl AdvisoryService {
 
         let labels = result.labels.clone();
         let mut result = result.into_active_model();
-        result.labels = Set(mutator(labels));
+        result.labels = Set(mutator(labels).validate()?);
 
         // store
 
-        result.update(&tx).await?;
+        result.update(&tx).await.map_err(Error::from)?;
 
         // commit
 
-        tx.commit().await?;
+        tx.commit().await.map_err(Error::from)?;
 
         // return
 
