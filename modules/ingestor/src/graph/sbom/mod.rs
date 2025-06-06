@@ -349,7 +349,7 @@ impl Graph {
 
 #[derive(Clone, Debug)]
 #[allow(clippy::large_enum_variant)]
-enum RelationshipReference {
+pub enum RelationshipReference {
     Root,
     Purl(Purl),
     Cpe(Cpe),
@@ -471,11 +471,10 @@ impl SbomContext {
     /// **NOTE:** This is a convenience function, creating relationships for tests. It is terribly slow.
     #[instrument(skip(connection, er), err)]
     pub async fn ingest_package_relates_to_package<
-        'a,
         C: ConnectionTrait,
         ER: ExternalReferenceProcessor,
     >(
-        &'a self,
+        &self,
         left: impl Into<RelationshipReference> + Debug,
         relationship: Relationship,
         right: impl Into<RelationshipReference> + Debug,
