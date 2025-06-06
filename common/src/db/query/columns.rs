@@ -554,6 +554,24 @@ mod tests {
             r#"(("advisory"."purl" ->> 'name') ILIKE '%log4j%') AND ("advisory"."purl" ->> 'version') > '1.0'"#
         );
         assert_eq!(
+            clause(q("purl:name=log4j&purl:name=jdk"))?,
+            r#"("advisory"."purl" ->> 'name') = 'log4j' AND ("advisory"."purl" ->> 'name') = 'jdk'"#
+        );
+        assert_eq!(
+            clause(q("purl:name=log4j|jdk"))?,
+            r#"("advisory"."purl" ->> 'name') = 'log4j' OR ("advisory"."purl" ->> 'name') = 'jdk'"#
+        );
+        // Note that negating multiple values is essentially shorthand...
+        assert_eq!(
+            clause(q("purl:name!=log4j|jdk"))?,
+            r#"("advisory"."purl" ->> 'name') <> 'log4j' AND ("advisory"."purl" ->> 'name') <> 'jdk'"#
+        );
+        // ...for this
+        assert_eq!(
+            clause(q("purl:name!=log4j&purl:name!=jdk"))?,
+            r#"("advisory"."purl" ->> 'name') <> 'log4j' AND ("advisory"."purl" ->> 'name') <> 'jdk'"#
+        );
+        assert_eq!(
             clause(q("purl:name=log4j").sort(r"purl:name"))?,
             r#"("advisory"."purl" ->> 'name') = 'log4j' ORDER BY "advisory"."purl" ->> 'name' ASC"#
         );
