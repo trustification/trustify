@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749197226962,
+  "lastUpdate": 1749200597264,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10956,6 +10956,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/8cab5c0ca9249ed57652ad456fb53efd447be7d8"
         },
         "date": 1749197225847,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "e8a3d1338551f0d4e78fa3f492ae4276bc27eb90",
+          "message": "feat: implement validation of labels\n\nThis implements label validation, ensuring to eliminate some corner\ncases up front.\n\nCloses: #1708",
+          "timestamp": "2025-06-06T08:40:19Z",
+          "tree_id": "0b398f8488009509744b15b4a162aabbd9b4a312",
+          "url": "https://github.com/trustification/trustify/commit/e8a3d1338551f0d4e78fa3f492ae4276bc27eb90"
+        },
+        "date": 1749200596270,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
