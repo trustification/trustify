@@ -18,7 +18,6 @@ use sea_orm::{
 };
 use sqlx::error::ErrorKind;
 use std::{
-    error::Error,
     ops::{Deref, DerefMut},
     pin::Pin,
     time::Duration,
@@ -208,7 +207,7 @@ impl TransactionTrait for Database {
             ) -> Pin<Box<dyn Future<Output = Result<T, E>> + Send + 'c>>
             + Send,
         T: Send,
-        E: Error + Send,
+        E: std::fmt::Display + std::fmt::Debug + Send,
     {
         self.db.transaction(callback).await
     }
@@ -225,7 +224,7 @@ impl TransactionTrait for Database {
             ) -> Pin<Box<dyn Future<Output = Result<T, E>> + Send + 'c>>
             + Send,
         T: Send,
-        E: Error + Send,
+        E: std::fmt::Display + std::fmt::Debug + Send,
     {
         self.db
             .transaction_with_config(callback, isolation_level, access_mode)
