@@ -254,7 +254,7 @@ pub async fn count_related(
     ),
     responses(
         (status = 200, description = "Matching SBOM", body = SbomSummary),
-        (status = 404, description = "Matching SBOM not found"),
+        (status = 404, description = "The SBOM could not be found"),
     ),
 )]
 #[get("/v2/sbom/{id}")]
@@ -280,7 +280,7 @@ pub async fn get(
     ),
     responses(
         (status = 200, description = "Matching SBOM", body = Vec<SbomAdvisory>),
-        (status = 404, description = "Matching SBOM not found"),
+        (status = 404, description = "The SBOM could not be found"),
     ),
 )]
 #[get("/v2/sbom/{id}/advisory")]
@@ -312,7 +312,7 @@ all!(GetSbomAdvisories -> ReadSbom, ReadAdvisory);
     ),
     responses(
         (status = 200, description = "Matching SBOM", body = SbomSummary),
-        (status = 404, description = "Matching SBOM not found"),
+        (status = 404, description = "The SBOM could not be found"),
     ),
 )]
 #[delete("/v2/sbom/{id}")]

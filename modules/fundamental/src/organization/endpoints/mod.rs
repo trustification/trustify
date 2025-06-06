@@ -57,7 +57,7 @@ pub async fn all(
     ),
     responses(
         (status = 200, description = "Matching organization", body = OrganizationDetails),
-        (status = 404, description = "Matching organization not found"),
+        (status = 404, description = "The organization could not be found"),
     ),
 )]
 #[get("/v2/organization/{id}")]

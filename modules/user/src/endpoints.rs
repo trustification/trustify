@@ -30,7 +30,7 @@ pub fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, db: 
                 ("etag" = String, description = "Revision ID")
             )
         ),
-        (status = 404, description = "Unknown user preference key"),
+        (status = 404, description = "The user preference key could not be found"),
     )
 )]
 #[get("/v2/userPreference/{key}")]

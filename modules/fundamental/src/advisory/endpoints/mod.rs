@@ -89,7 +89,7 @@ pub async fn all(
     ),
     responses(
         (status = 200, description = "Matching advisory", body = AdvisoryDetails),
-        (status = 404, description = "Matching advisory not found"),
+        (status = 404, description = "The advisory could not be found"),
     ),
 )]
 #[get("/v2/advisory/{key}")]
@@ -118,7 +118,7 @@ pub async fn get(
     ),
     responses(
         (status = 200, description = "Matching advisory", body = AdvisoryDetails),
-        (status = 404, description = "Matching advisory not found"),
+        (status = 404, description = "The advisory could not be found"),
     ),
 )]
 #[delete("/v2/advisory/{key}")]

@@ -113,7 +113,7 @@ pub async fn tools(
     responses(
         (status = 200, description = "The result of the tool call", body = String, content_type = "text/plain"),
         (status = 400, description = "The tool request was invalid"),
-        (status = 404, description = "The tool was not found")
+        (status = 404, description = "The tool could not be found")
     )
 )]
 #[post("/v2/ai/tools/{name}")]
@@ -183,7 +183,7 @@ fn to_offset_date_time(uuid: Uuid) -> Result<OffsetDateTime, Error> {
     responses(
         (status = 200, description = "The resulting conversation", body = Conversation),
         (status = 400, description = "The request was invalid"),
-        (status = 404, description = "The AI service is not enabled or the conversation was not found")
+        (status = 404, description = "The conversation could not be found")
     )
 )]
 #[put("/v2/ai/conversations/{id}")]
@@ -334,7 +334,7 @@ pub async fn get_conversation(
     responses(
         (status = 200, description = "The resulting conversation", body = Conversation),
         (status = 400, description = "The request was invalid"),
-        (status = 404, description = "The AI service is not enabled or the conversation was not found")
+        (status = 404, description = "The conversation could not be found")
     )
 )]
 #[delete("/v2/ai/conversations/{id}")]

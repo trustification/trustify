@@ -130,7 +130,7 @@ pub async fn search_component(
     responses(
         AuthResponse,
         (status = 200, description = "A rendered version of the SBOM graph in the format requested", body = String),
-        (status = 404, description = "The SBOM was not found"),
+        (status = 404, description = "The SBOM could not be found"),
         (status = 415, description = "Unsupported rendering format"),
     ),
 )]
