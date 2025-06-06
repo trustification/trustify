@@ -24,6 +24,7 @@ use std::{fmt::Debug, io, str::FromStr};
 use tokio::{fs, io::AsyncRead};
 use tokio_util::io::ReaderStream;
 use tracing::instrument;
+use urlencoding::encode;
 
 /// Resolver using a provided base url
 #[derive(Debug)]
@@ -38,7 +39,7 @@ impl From<String> for StringResolver {
 impl ResolveEndpoint for StringResolver {
     fn resolve_endpoint<'a>(&'a self, params: &'a Params) -> EndpointFuture<'a> {
         if let Some(bucket) = params.bucket() {
-            let url = format!("{}/{bucket}", self.0.url());
+            let url = format!("{}/{}", self.0.url(), encode(bucket));
             EndpointFuture::ready(Ok(Endpoint::builder().url(url).build()))
         } else {
             EndpointFuture::ready(Ok(self.0.clone()))
