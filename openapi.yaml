@@ -2467,7 +2467,7 @@ paths:
     get:
       tags:
       - sbom
-      operationId: allLicenseIds
+      operationId: listAllLicenseIds
       parameters:
       - name: id
         in: path

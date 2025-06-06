@@ -22,7 +22,6 @@ use trustify_entity::{
     license, licensing_infos, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
     sbom_package_license, sbom_package_purl_ref,
 };
-use uuid::Uuid;
 
 pub mod license_export;
 
@@ -214,30 +213,42 @@ impl LicenseService {
 
     pub async fn get_all_license_info<C: ConnectionTrait>(
         &self,
-        sbom_id: Uuid,
+        id: Id,
         connection: &C,
-    ) -> Result<BTreeSet<String>, Error> {
-        let stmt = Statement::from_sql_and_values(
-            connection.get_database_backend(),
-            r#"
-        (
-            SELECT DISTINCT unnest(l.spdx_licenses) as license
-            FROM sbom_package_license spl
-            JOIN license l ON spl.license_id = l.id
-            WHERE spl.sbom_id = $1
-            AND l.spdx_licenses IS NOT NULL
-        )
-        "#,
-            [sbom_id.into()],
-        );
+    ) -> Result<Option<BTreeSet<String>>, Error> {
+        // check the SBOM exists searching by the provided Id
+        let sbom = sbom::Entity::find()
+            .join(JoinType::LeftJoin, sbom::Relation::SourceDocument.def())
+            .try_filter(id)?
+            .one(connection)
+            .await?;
 
-        let result: Vec<String> = connection
-            .query_all(stmt)
-            .await?
-            .into_iter()
-            .map(|row| row.try_get_by_index::<String>(0))
-            .collect::<Result<Vec<String>, DbErr>>()?;
+        match sbom {
+            Some(sbom) => {
+                let stmt = Statement::from_sql_and_values(
+                    connection.get_database_backend(),
+                    r#"
+                    (
+                        SELECT DISTINCT unnest(l.spdx_licenses) as license
+                        FROM sbom_package_license spl
+                        JOIN license l ON spl.license_id = l.id
+                        WHERE spl.sbom_id = $1
+                        AND l.spdx_licenses IS NOT NULL
+                    )
+                    "#,
+                    [sbom.sbom_id.into()],
+                );
 
-        Ok(result.into_iter().collect())
+                let result: Vec<String> = connection
+                    .query_all(stmt)
+                    .await?
+                    .into_iter()
+                    .map(|row| row.try_get_by_index::<String>(0))
+                    .collect::<Result<Vec<String>, DbErr>>()?;
+
+                Ok(Some(result.into_iter().collect()))
+            }
+            None => Ok(None),
+        }
     }
 }
