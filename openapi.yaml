@@ -4621,6 +4621,11 @@ components:
       - $ref: '#/components/schemas/CommonImporter'
       - type: object
         properties:
+          apiToken:
+            type:
+            - string
+            - 'null'
+            description: The API token authorizing access to the quay registry
           namespace:
             type:
             - string
