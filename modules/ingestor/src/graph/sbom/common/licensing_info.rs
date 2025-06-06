@@ -64,7 +64,7 @@ impl LicensingInfoCreator {
     }
 
     #[instrument(skip_all, fields(num = self.license_refs.len()), err)]
-    pub async fn create<'g, C>(self, db: &C) -> Result<(), DbErr>
+    pub async fn create<C>(self, db: &C) -> Result<(), DbErr>
     where
         C: ConnectionTrait,
     {

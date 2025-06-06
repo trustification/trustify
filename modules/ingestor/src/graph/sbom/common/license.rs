@@ -82,7 +82,7 @@ impl LicenseCreator {
     }
 
     #[instrument(skip_all, fields(num = self.licenses.len()), err(level=tracing::Level::INFO))]
-    pub async fn create<'g, C>(self, db: &C) -> Result<(), DbErr>
+    pub async fn create<C>(self, db: &C) -> Result<(), DbErr>
     where
         C: ConnectionTrait,
     {

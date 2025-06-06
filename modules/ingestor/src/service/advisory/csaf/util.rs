@@ -1,42 +1,10 @@
 use csaf::{
     Csaf,
-    definitions::{Branch, BranchesT, ProductIdT},
+    definitions::{Branch, BranchesT},
     product_tree::{ProductTree, Relationship},
 };
 use packageurl::PackageUrl;
 use std::collections::HashMap;
-use tracing::instrument;
-
-#[instrument(skip(cache))]
-pub fn resolve_identifier<'a>(
-    cache: &'a ResolveProductIdCache,
-    id: &'a ProductIdT,
-) -> Option<(
-    Option<&'a cpe::uri::OwnedUri>,
-    Option<&'a PackageUrl<'static>>,
-)> {
-    let rel = cache.get_relationship(&id.0)?;
-
-    let inner_id = &rel.product_reference;
-    let context = &rel.relates_to_product_reference;
-
-    let purls: Vec<_> = cache
-        .trace_product(&inner_id.0)
-        .iter()
-        .flat_map(|branch| branch_purl(branch))
-        .collect();
-    let cpes: Vec<_> = cache
-        .trace_product(&context.0)
-        .iter()
-        .flat_map(|branch| branch_cpe(branch))
-        .collect();
-
-    if cpes.is_empty() && purls.is_empty() {
-        None
-    } else {
-        Some((cpes.first().cloned(), purls.first().cloned()))
-    }
-}
 
 pub fn branch_purl(branch: &Branch) -> Option<&PackageUrl<'static>> {
     branch.product.as_ref().and_then(|name| {
