@@ -92,8 +92,15 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
     }
     log::debug!("{response:#?}");
 
-    let uri = "/api/v2/sbom/sha256:e5c850b67868563002801668950832278f8093308b3a3c57931f591442ed3160/all-license-ids".to_string();
-    let req = TestRequest::get().uri(&uri).to_request();
+    // properly formatted but not existent Id
+    let req = TestRequest::get().uri("/api/v2/sbom/sha256:e5c850b67868563002801668950832278f8093308b3a3c57931f591442ed3160/all-license-ids").to_request();
+    let response = app.call_service(req).await;
+    assert_eq!(StatusCode::NOT_FOUND, response.status());
+
+    // badly formatted Id
+    let req = TestRequest::get()
+        .uri("/api/v2/sbom/sha123:1234/all-license-ids")
+        .to_request();
     let response = app.call_service(req).await;
     assert_eq!(StatusCode::BAD_REQUEST, response.status());
     Ok(())
