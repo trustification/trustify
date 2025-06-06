@@ -81,7 +81,7 @@ async fn create(
                 ("etag" = String, description = "Revision ID")
             )
         ),
-        (status = 404, description = "An importer with that name could not be found")
+        (status = 404, description = "The importer could not be found")
     )
 )]
 #[get("/v2/importer/{name}")]
@@ -111,7 +111,7 @@ async fn read(
     ),
     responses(
         (status = 201, description = "Updated the importer configuration"),
-        (status = 409, description = "An importer with that name does not exist"),
+        (status = 409, description = "The importer could not be found"),
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
@@ -149,7 +149,7 @@ async fn update(
     ),
     responses(
         (status = 201, description = "Created a new importer configuration"),
-        (status = 409, description = "An importer with that name does not exist"),
+        (status = 409, description = "The importer could not be found"),
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
@@ -188,7 +188,7 @@ async fn patch_json_merge(
     ),
     responses(
         (status = 201, description = "Updated the enable state"),
-        (status = 404, description = "An importer with that name does not exist"),
+        (status = 404, description = "The importer could not be found"),
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
@@ -226,7 +226,7 @@ async fn set_enabled(
     ),
     responses(
         (status = 201, description = "Updated the state"),
-        (status = 404, description = "An importer with that name does not exist"),
+        (status = 404, description = "The importer could not be found"),
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]

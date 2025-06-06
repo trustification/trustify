@@ -57,7 +57,7 @@ pub async fn all(
     ),
     responses(
         (status = 200, description = "Matching product", body = ProductDetails),
-        (status = 404, description = "Matching product not found"),
+        (status = 404, description = "The product could not be found"),
     ),
 )]
 #[get("/v2/product/{id}")]
@@ -83,7 +83,7 @@ pub async fn get(
     ),
     responses(
         (status = 200, description = "Matching product", body = ProductDetails),
-        (status = 404, description = "Matching product not found"),
+        (status = 404, description = "The product could not be found"),
     ),
 )]
 #[delete("/v2/product/{id}")]
