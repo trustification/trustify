@@ -17,7 +17,7 @@ use trustify_common::{
     error::ErrorInformation,
     model::{Paginated, PaginatedResults, Revisioned},
 };
-use trustify_entity::{importer, importer_report};
+use trustify_entity::{importer, importer_report, labels};
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -34,6 +34,8 @@ pub enum Error {
     Json(#[from] serde_json::Error),
     #[error(transparent)]
     Query(#[from] trustify_common::db::query::Error),
+    #[error(transparent)]
+    Label(#[from] labels::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -123,8 +125,10 @@ impl ImporterService {
     pub async fn create(
         &self,
         name: String,
-        configuration: ImporterConfiguration,
+        mut configuration: ImporterConfiguration,
     ) -> Result<(), Error> {
+        configuration.labels.validate_mut()?;
+
         let entity = importer::ActiveModel {
             name: Set(name.clone()),
             revision: Set(Uuid::new_v4()),
@@ -192,7 +196,15 @@ impl ImporterService {
 
         // apply mutation
 
-        let configuration = f(current.value.data.configuration).map_err(PatchError::Transform)?;
+        let mut configuration =
+            f(current.value.data.configuration).map_err(PatchError::Transform)?;
+
+        // validate
+
+        configuration
+            .labels
+            .validate_mut()
+            .map_err(|err| PatchError::Common(err.into()))?;
 
         // store
 
@@ -216,8 +228,10 @@ impl ImporterService {
         &self,
         name: &str,
         expected_revision: Option<&str>,
-        configuration: ImporterConfiguration,
+        mut configuration: ImporterConfiguration,
     ) -> Result<(), Error> {
+        configuration.labels.validate_mut()?;
+
         self.update(
             &self.db,
             name,

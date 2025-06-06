@@ -1,5 +1,6 @@
 use sea_orm::DbErr;
 use trustify_common::purl::PurlErr;
+use trustify_entity::labels;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -20,4 +21,7 @@ pub enum Error {
 
     #[error("Invalid status {0}")]
     InvalidStatus(String),
+
+    #[error(transparent)]
+    Label(#[from] labels::Error),
 }

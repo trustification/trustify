@@ -76,9 +76,11 @@ pub async fn update_labels(
     let request = TestRequest::patch()
         .uri(&api.into_uri(id, Some("/label")))
         .set_json(Update::new().extend([
-            ("foo", Some("bar")),
-            ("source", Some("different")),
-            ("type", None),
+            ("foo", Some("bar")),             // set
+            ("source", Some("different")),    // replace
+            ("type", None),                   // delete
+            ("space ", Some(" with space ")), // with space
+            ("empty", Some("")),              // empty label, aka tag
         ]))
         .to_request();
     let response = app.call_service(request).await;
@@ -92,6 +94,8 @@ pub async fn update_labels(
         json!({
             "source": "different",
             "foo": "bar",
+            "space": "with space",
+            "empty": "",
         }),
     )
     .await?;
@@ -100,7 +104,7 @@ pub async fn update_labels(
 
     let request = TestRequest::put()
         .uri(&api.into_uri(id, Some("/label")))
-        .set_json(Labels::new().extend([("bar", "foo")]))
+        .set_json(Labels::new().extend([("bar", "foo"), ("foo ", " bar ")]))
         .to_request();
     let response = app.call_service(request).await;
     log::debug!("Code: {}", response.status());
@@ -112,9 +116,28 @@ pub async fn update_labels(
         id,
         json!({
             "bar": "foo",
+            "foo": "bar",
         }),
     )
     .await?;
+
+    // try setting invalid labels
+
+    let request = TestRequest::put()
+        .uri(&api.into_uri(id, Some("/label")))
+        .set_json(Labels::new().extend([(" ", "foo")]))
+        .to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let request = TestRequest::put()
+        .uri(&api.into_uri(id, Some("/label")))
+        .set_json(Labels::new().extend([("foo", "bar=baz")]))
+        .to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    // done
 
     Ok(())
 }

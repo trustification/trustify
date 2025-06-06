@@ -9009,6 +9009,7 @@ dependencies = [
  "strum 0.27.1",
  "test-context",
  "test-log",
+ "thiserror 2.0.12",
  "time",
  "tokio",
  "trustify-common",

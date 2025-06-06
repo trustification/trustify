@@ -20,7 +20,7 @@ impl SbomService {
     ) -> Result<Option<()>, Error> {
         let result = sbom::Entity::update_many()
             .try_filter(id)?
-            .col_expr(sbom::Column::Labels, Expr::value(labels))
+            .col_expr(sbom::Column::Labels, Expr::value(labels.validate()?))
             .exec(connection)
             .await?;
 
@@ -58,7 +58,7 @@ impl SbomService {
 
         let labels = result.labels.clone();
         let mut result = result.into_active_model();
-        result.labels = Set(mutator(labels));
+        result.labels = Set(mutator(labels).validate()?);
 
         // store
 
