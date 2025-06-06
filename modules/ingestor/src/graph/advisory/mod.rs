@@ -163,7 +163,7 @@ impl Graph {
             published: Set(published),
             modified: Set(modified),
             withdrawn: Set(withdrawn),
-            labels: Set(labels),
+            labels: Set(labels.validate()?),
             source_document_id: Set(Some(new_id)),
         };
 
