@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749211401240,
+  "lastUpdate": 1749475081438,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11072,6 +11072,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/93df8ff9958e4dea60bbb52a90b84e139e44a75a"
         },
         "date": 1749211400212,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "1e8b246c1e10f1a88119450644efff9de3f95361",
+          "message": "Add some more unit tests around label queries\n\nRelates #1652",
+          "timestamp": "2025-06-09T09:12:00-04:00",
+          "tree_id": "a2639ff9ac3c6ad2ac041e9e57d15c69aff97082",
+          "url": "https://github.com/trustification/trustify/commit/1e8b246c1e10f1a88119450644efff9de3f95361"
+        },
+        "date": 1749475080374,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
