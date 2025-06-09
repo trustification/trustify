@@ -371,14 +371,14 @@ async fn set_advisory_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     let fetched_again = advisory_service.fetch_advisory(id.clone(), &ctx.db).await?;
     let advisory = fetched_again.expect("The advisory does not exist.");
-        assert_eq!(
-            advisory.head.labels.0,
-            HashMap::from([
-                ("label_1".into(), "First Label".into()),
-                ("label_2".into(), "Second Label".into())
-            ]),
-            "Labels were not set correctly"
-        );
+    assert_eq!(
+        advisory.head.labels.0,
+        HashMap::from([
+            ("label_1".into(), "First Label".into()),
+            ("label_2".into(), "Second Label".into())
+        ]),
+        "Labels were not set correctly"
+    );
 
 
     Ok(())
