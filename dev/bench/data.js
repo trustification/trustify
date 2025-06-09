@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749481549793,
+  "lastUpdate": 1749482140566,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11188,6 +11188,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b6f4969d65631c2a048cefbd9c7edb0dbd6245a1"
         },
         "date": 1749481548752,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4b86c3fc827b32b73661312a071940d69e3a4975",
+          "message": "chore: update dependencies (#1721)",
+          "timestamp": "2025-06-09T11:59:34-03:00",
+          "tree_id": "8fdd65f69659eb9215c3835dc6fba8c2355636e9",
+          "url": "https://github.com/trustification/trustify/commit/4b86c3fc827b32b73661312a071940d69e3a4975"
+        },
+        "date": 1749482138631,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
