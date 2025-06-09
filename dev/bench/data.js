@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749480496059,
+  "lastUpdate": 1749481549793,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11159,6 +11159,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/1bb18f5e712c9eb7d56ee901b5e28d1eebd39489"
         },
         "date": 1749480494297,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "36955467+m-brophy@users.noreply.github.com",
+            "name": "Mark Brophy",
+            "username": "m-brophy"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "b6f4969d65631c2a048cefbd9c7edb0dbd6245a1",
+          "message": "tests for sbom/advisory label api methods (#1659)",
+          "timestamp": "2025-06-09T11:59:04-03:00",
+          "tree_id": "16b03c456fa505a15e2837d85513041d0cd5d39c",
+          "url": "https://github.com/trustification/trustify/commit/b6f4969d65631c2a048cefbd9c7edb0dbd6245a1"
+        },
+        "date": 1749481548752,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
