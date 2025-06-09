@@ -1,0 +1,34 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: "0.0.0.0:4317"
+
+exporters:
+  otlp:
+    endpoint: tempo:5001
+    tls:
+      insecure: true
+  otlphttp/prometheus:
+    endpoint: "http://prometheus:9090/api/v1/otlp"
+    tls:
+      insecure: true
+  debug:
+    verbosity: basic
+
+processors:
+  filter/duration:
+    traces:
+      span:
+        - (end_time - start_time) < Duration("1ms")
+  batch: {}
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [filter/duration,batch]
+      exporters: [debug, otlp]
+    metrics:
+      receivers: [otlp]
+      exporters: [otlphttp/prometheus, debug]

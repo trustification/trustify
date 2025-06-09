@@ -394,6 +394,9 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
     for each in [
         r"purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/\&type=pom",
         "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl:qualifiers:type=pom&purl:qualifiers:repository_url=https://maven.repository.redhat.com/ga/",
+        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@",
+        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom",
+        // "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bo", <-- not all partial purl's will match
         "purl:name=quarkus-bom",
         "cpe=cpe:/a:redhat:quarkus:3.2::el8",
         "cpe~cpe:/a:redhat:quarkus:3.2::el8",

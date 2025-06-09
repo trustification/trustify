@@ -4,6 +4,7 @@ use std::fmt::{Display, Formatter};
 use trustify_cvss::cvss3;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::SimpleObject))]
 #[sea_orm(table_name = "cvss3")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -92,6 +93,7 @@ impl Related<advisory_vulnerability::Entity> for Entity {
 impl ActiveModelBehavior for ActiveModel {}
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::Enum))]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_av")]
 pub enum AttackVector {
     #[sea_orm(string_value = "n")]
@@ -127,6 +129,7 @@ impl From<cvss3::AttackVector> for AttackVector {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::Enum))]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_ac")]
 pub enum AttackComplexity {
     #[sea_orm(string_value = "l")]
@@ -154,6 +157,7 @@ impl From<cvss3::AttackComplexity> for AttackComplexity {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::Enum))]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_pr")]
 pub enum PrivilegesRequired {
     #[sea_orm(string_value = "n")]
@@ -185,6 +189,7 @@ impl From<cvss3::PrivilegesRequired> for PrivilegesRequired {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::Enum))]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_ui")]
 pub enum UserInteraction {
     #[sea_orm(string_value = "n")]
@@ -212,6 +217,7 @@ impl From<cvss3::UserInteraction> for UserInteraction {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::Enum))]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_s")]
 pub enum Scope {
     #[sea_orm(string_value = "u")]
@@ -239,6 +245,7 @@ impl From<cvss3::Scope> for Scope {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::Enum))]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_c")]
 pub enum Confidentiality {
     #[sea_orm(string_value = "n")]
@@ -270,6 +277,7 @@ impl From<cvss3::Confidentiality> for Confidentiality {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::Enum))]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_i")]
 pub enum Integrity {
     #[sea_orm(string_value = "n")]
@@ -301,6 +309,7 @@ impl From<cvss3::Integrity> for Integrity {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::Enum))]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_a")]
 pub enum Availability {
     #[sea_orm(string_value = "n")]
@@ -332,6 +341,7 @@ impl From<cvss3::Availability> for Availability {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::Enum))]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_severity")]
 pub enum Severity {
     #[sea_orm(string_value = "none")]

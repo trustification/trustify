@@ -8,7 +8,7 @@ use crate::{
         vulnerability::VulnerabilityInformation,
     },
     model::IngestResult,
-    service::{Error, advisory::cve::divination::divine_purl},
+    service::{Error, Warnings, advisory::cve::divination::divine_purl},
 };
 use cve::{
     Cve, Timestamp,
@@ -16,9 +16,11 @@ use cve::{
 };
 use sea_orm::TransactionTrait;
 use std::fmt::Debug;
+use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
+use trustify_cvss::cvss3::{Cvss3Base, severity::Severity};
 use trustify_entity::{labels::Labels, version_scheme::VersionScheme};
 
 /// Loader capable of parsing a CVE Record JSON file
@@ -45,6 +47,7 @@ impl<'g> CveLoader<'g> {
         cve: Cve,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
+        let warnings = Warnings::new();
         let id = cve.id();
         let labels = labels.into().add("type", "cve");
 
@@ -56,6 +59,7 @@ impl<'g> CveLoader<'g> {
             assigned,
             affected,
             information,
+            scores,
         } = Self::extract_vuln_info(&cve);
 
         let cwes = information.cwes.clone();
@@ -102,6 +106,12 @@ impl<'g> CveLoader<'g> {
                 &tx,
             )
             .await?;
+
+        if !scores.is_empty() {
+            for score in scores {
+                advisory_vuln.ingest_cvss3_score(score, &tx).await?;
+            }
+        }
 
         if let Some(affected) = affected {
             for product in affected {
@@ -172,7 +182,7 @@ impl<'g> CveLoader<'g> {
         Ok(IngestResult {
             id: Id::Uuid(advisory.advisory.id),
             document_id: Some(id.to_string()),
-            warnings: vec![],
+            warnings: warnings.into(),
         })
     }
 
@@ -264,6 +274,45 @@ impl<'g> CveLoader<'g> {
             ),
         };
 
+        let mut scores = vec![];
+        let mut base_score = None;
+        let mut base_severity = None;
+        if let Cve::Published(published) = cve.clone() {
+            let all_metrics = published.containers.cna.metrics.iter().chain(
+                published
+                    .containers
+                    .adp
+                    .iter()
+                    .flat_map(|adp| adp.metrics.iter()),
+            );
+
+            for metric in all_metrics {
+                if let Some(cvss) = metric.cvss_v3_1.as_ref().or(metric.cvss_v3_0.as_ref()) {
+                    if let Some(vector) = cvss.get("vectorString").and_then(|v| v.as_str()) {
+                        if let Ok(cvss3) = Cvss3Base::from_str(vector) {
+                            scores.push(cvss3);
+                        }
+                    }
+
+                    // Set base_score and base_severity to the first found
+                    // value (where CNA value have a precedence). ADP values are used as fallback.
+                    // TODO: With https://github.com/trustification/trustify/issues/1656 we will start
+                    // saving the type of the score (CNA or ADP) to be able to distinguish between them.
+                    if base_score.is_none() {
+                        base_score = cvss.get("baseScore").and_then(|v| v.as_f64());
+                    }
+
+                    if base_severity.is_none() {
+                        base_severity = cvss
+                            .get("baseSeverity")
+                            .and_then(|v| v.as_str())
+                            .and_then(|s| Severity::from_str(s).ok())
+                            .map(trustify_entity::cvss3::Severity::from);
+                    }
+                }
+            }
+        }
+
         VulnerabilityDetails {
             org_name,
             descriptions,
@@ -276,7 +325,10 @@ impl<'g> CveLoader<'g> {
                 modified,
                 withdrawn,
                 cwes: cwe,
+                base_score,
+                base_severity,
             },
+            scores,
         }
     }
 }
@@ -287,6 +339,7 @@ struct VulnerabilityDetails<'a> {
     pub assigned: Option<OffsetDateTime>,
     pub affected: Option<&'a Vec<Product>>,
     pub information: VulnerabilityInformation,
+    pub scores: Vec<Cvss3Base>,
 }
 
 #[cfg(test)]
@@ -339,6 +392,22 @@ mod test {
         assert!(
             descriptions[0]
                 .starts_with("Canarytokens helps track activity and actions on a network")
+        );
+
+        let loaded_advisory = loaded_advisory.unwrap();
+        let advisory_vuln = loaded_advisory
+            .get_vulnerability("CVE-2024-28111", &ctx.db)
+            .await?;
+        assert!(advisory_vuln.is_some());
+
+        let advisory_vuln = advisory_vuln.unwrap();
+        let scores = advisory_vuln.cvss3_scores(&ctx.db).await?;
+        assert_eq!(1, scores.len());
+
+        let score = scores[0];
+        assert_eq!(
+            score.to_string(),
+            "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N"
         );
 
         Ok(())

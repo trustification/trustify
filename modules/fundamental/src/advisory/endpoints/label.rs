@@ -1,8 +1,62 @@
-use crate::advisory::service::AdvisoryService;
-use actix_web::{HttpResponse, Responder, patch, put, web};
-use trustify_auth::{UpdateAdvisory, authorizer::Require};
+use crate::{
+    advisory::service::AdvisoryService,
+    common::{service::DocumentType, service::fetch_labels},
+};
+use actix_web::{HttpResponse, Responder, get, patch, put, web};
+use trustify_auth::{
+    Permission, UpdateAdvisory,
+    authenticator::user::UserInformation,
+    authorizer::{Authorizer, Require},
+};
 use trustify_common::{db::Database, id::Id};
 use trustify_entity::labels::{Labels, Update};
+use utoipa::IntoParams;
+
+#[derive(serde::Deserialize, IntoParams)]
+struct LabelQuery {
+    #[serde(default)]
+    filter_text: String,
+
+    #[serde(default = "default::limit")]
+    limit: u64,
+}
+
+mod default {
+    pub const fn limit() -> u64 {
+        10
+    }
+}
+
+#[utoipa::path(
+    tag = "advisory",
+    operation_id = "listAdvisoryLabels",
+    params(
+        LabelQuery,
+    ),
+    responses(
+        (status = 200, description = "List all unique key/value labels from all Advisories", body = Vec<Value>),
+    ),
+)]
+#[get("/v2/advisory-labels")]
+/// List all unique key/value labels from all Advisories
+pub async fn all(
+    db: web::Data<Database>,
+    web::Query(query): web::Query<LabelQuery>,
+    authorizer: web::Data<Authorizer>,
+    user: UserInformation,
+) -> actix_web::Result<impl Responder> {
+    authorizer.require(&user, Permission::ReadAdvisory)?;
+
+    let result = fetch_labels(
+        DocumentType::Advisory,
+        query.filter_text,
+        query.limit,
+        db.as_ref(),
+    )
+    .await?;
+
+    Ok(HttpResponse::Ok().json(result))
+}
 
 /// Replace the labels of an advisory
 #[utoipa::path(

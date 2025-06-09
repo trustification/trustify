@@ -6,8 +6,23 @@ publish.workspace = true
 license.workspace = true
 
 [dependencies]
+
+trustify-common = { workspace = true }
+trustify-module-ingestor = { workspace = true }
+
 actix-web = { workspace = true }
 actix-web-static-files = { workspace = true }
 anyhow = { workspace = true }
+serde = { workspace = true }
+serde-cyclonedx = { workspace = true }
+serde_json = { workspace = true }
+spdx-rs = { workspace = true }
+thiserror = { workspace = true }
+tokio = {workspace = true }
 trustify-ui = { workspace = true }
 utoipa = { workspace = true }
+utoipa-actix-web = { workspace = true }
+
+[dev-dependencies]
+test-log = { workspace = true }
+trustify-test-context = { workspace = true }

@@ -782,7 +782,7 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // running the gc, should delete those orphaned purls
     let deleted_records_count = purl_service.gc_purls(&ctx.db).await?;
-    assert_eq!(792, deleted_records_count);
+    assert_eq!(978, deleted_records_count);
 
     let result = purl_service
         .purls(Query::default(), Paginated::default(), &ctx.db)
@@ -801,7 +801,7 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // running the gc, should delete those orphaned purls
     let deleted_records_count = purl_service.gc_purls(&ctx.db).await?;
-    assert_eq!(1759, deleted_records_count);
+    assert_eq!(2639, deleted_records_count);
 
     let result = purl_service
         .purls(Query::default(), Paginated::default(), &ctx.db)

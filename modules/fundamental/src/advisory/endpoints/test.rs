@@ -660,3 +660,81 @@ async fn advisory_with_null_severity(ctx: &TrustifyContext) -> Result<(), anyhow
 
     Ok(())
 }
+
+async fn test_label(
+    ctx: &TrustifyContext,
+    query: &str,
+    limit: impl Into<Option<u64>>,
+    result: Value,
+) -> anyhow::Result<()> {
+    let app = caller(ctx).await.unwrap();
+
+    let _id = ctx
+        .ingest_document("cve/CVE-1999-0001.json")
+        .await?
+        .id
+        .to_string();
+
+    let mut uri = format!("/api/v2/advisory-labels?filter_text={}", encode(query));
+
+    if let Some(limit) = limit.into() {
+        uri.push_str(&format!("&limit={limit}"));
+    }
+
+    let req = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(req).await;
+    tracing::debug!(test = "", "{response:#?}");
+
+    assert_eq!(response, result,);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn all_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    test_label(
+        ctx,
+        "",
+        None,
+        json!([
+            { "key": "source", "value": "TrustifyContext"},
+            { "key": "type", "value": "cve"}
+        ]),
+    )
+    .await?;
+
+    test_label(
+        ctx,
+        "v",
+        None,
+        json!([
+            { "key": "type", "value": "cve"}
+        ]),
+    )
+    .await?;
+
+    test_label(
+        ctx,
+        "yp",
+        None,
+        json!([
+            { "key": "type", "value": "cve"}
+        ]),
+    )
+    .await?;
+
+    test_label(ctx, "%", None, json!([])).await?;
+
+    test_label(
+        ctx,
+        "",
+        1u64,
+        json!([
+            { "key": "source", "value": "TrustifyContext"},
+        ]),
+    )
+    .await?;
+
+    Ok(())
+}

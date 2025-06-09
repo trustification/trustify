@@ -100,7 +100,7 @@ impl Database {
                 Ok(s) => s.parse::<u32>()?,
                 _ => DB_MAX_CONN,
             },
-            min_conn: match env::var(ENV_DB_SSLMODE) {
+            min_conn: match env::var(ENV_DB_MIN_CONN) {
                 Ok(s) => s.parse::<u32>()?,
                 _ => DB_MIN_CONN,
             },

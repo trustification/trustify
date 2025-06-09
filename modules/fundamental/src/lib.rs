@@ -1,6 +1,7 @@
 pub mod advisory;
 #[cfg(feature = "ai")]
 pub mod ai;
+pub mod common;
 pub mod endpoints;
 pub mod error;
 pub mod license;
@@ -9,6 +10,7 @@ pub mod product;
 pub mod purl;
 pub mod sbom;
 pub mod source_document;
+#[allow(deprecated)]
 pub mod vulnerability;
 pub mod weakness;
 

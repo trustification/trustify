@@ -18,6 +18,7 @@ use crate::{
 };
 use fixedbitset::FixedBitSet;
 use futures::{StreamExt, stream};
+
 use opentelemetry::global;
 use petgraph::{
     Direction,
@@ -26,8 +27,8 @@ use petgraph::{
     visit::{IntoNodeIdentifiers, VisitMap, Visitable},
 };
 use sea_orm::{
-    ColumnTrait, DatabaseBackend, EntityOrSelect, EntityTrait, QueryFilter, QuerySelect,
-    RelationTrait, Statement, prelude::ConnectionTrait,
+    ColumnTrait, EntityOrSelect, EntityTrait, PaginatorTrait, QueryFilter, QuerySelect,
+    RelationTrait, prelude::ConnectionTrait,
 };
 use sea_query::JoinType;
 use std::{
@@ -374,10 +375,10 @@ impl AnalysisService {
         &self,
         connection: &C,
     ) -> Result<AnalysisStatus, Error> {
-        let distinct_sbom_ids = sbom::Entity::find().select().all(connection).await?;
+        let distinct_sbom_ids = sbom::Entity::find().count(connection).await?;
 
         Ok(AnalysisStatus {
-            sbom_count: distinct_sbom_ids.len() as u32,
+            sbom_count: distinct_sbom_ids as u32,
             graph_count: self.inner.graph_cache.len() as u32,
         })
     }
@@ -423,6 +424,7 @@ impl AnalysisService {
         graph_cache: Arc<GraphMap>,
     ) -> Vec<Node> {
         let relationships = options.relationships;
+        log::debug!("relations: {:?}", relationships);
 
         self.collect_graph(query, graphs, async |graph, node_index, node| {
             log::debug!(
@@ -534,7 +536,11 @@ impl AnalysisService {
         let query = query.into();
         let options = options.into();
 
-        let graphs = self.inner.load_graphs_query(connection, query).await?;
+        // load only latest graphs
+        let graphs = self
+            .inner
+            .load_latest_graphs_query(connection, query)
+            .await?;
 
         let components = self
             .run_graph_query(
@@ -546,155 +552,7 @@ impl AnalysisService {
             )
             .await;
 
-        // This is a limited scope implementation of 'latest filtering' which performs a
-        // post-processing of a normal result set. The query type (name, cpe, purl or generic)
-        // determines
-        let latest_sbom_ids = match query {
-            GraphQuery::Component(ComponentReference::Id(name)) => {
-                let sql = r#"
-                    SELECT distinct sbom.sbom_id
-                    FROM sbom_node
-                    JOIN sbom ON sbom.sbom_id = sbom_node.sbom_id
-                    WHERE sbom_node.node_id = $1
-                    AND sbom.published = (
-                        SELECT MAX(published)
-                        FROM sbom
-                        JOIN sbom_node ON sbom.sbom_id = sbom_node.sbom_id
-                        WHERE sbom_node.node_id = $1
-                    );
-                "#;
-                let stmt =
-                    Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, [name.into()]);
-                let rows = connection.query_all(stmt).await?;
-                rows.into_iter()
-                    .filter_map(|row| {
-                        row.try_get_by_index::<Uuid>(0)
-                            .ok()
-                            .map(|sbom_id| sbom_id.to_string())
-                    })
-                    .collect::<Vec<String>>()
-            }
-            GraphQuery::Component(ComponentReference::Name(name)) => {
-                let sql = r#"
-                    SELECT distinct sbom.sbom_id
-                    FROM sbom_node
-                    JOIN sbom ON sbom.sbom_id = sbom_node.sbom_id
-                    WHERE sbom_node.name = $1
-                    AND sbom.published = (
-                        SELECT MAX(published)
-                        FROM sbom
-                        JOIN sbom_node ON sbom.sbom_id = sbom_node.sbom_id
-                        WHERE sbom_node.name = $1
-                    );
-                "#;
-                let stmt =
-                    Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, [name.into()]);
-                let rows = connection.query_all(stmt).await?;
-                rows.into_iter()
-                    .filter_map(|row| {
-                        row.try_get_by_index::<Uuid>(0)
-                            .ok()
-                            .map(|sbom_id| sbom_id.to_string())
-                    })
-                    .collect::<Vec<String>>()
-            }
-            GraphQuery::Component(ComponentReference::Purl(purl)) => {
-                let sql = r#"
-                    SELECT distinct sbom.sbom_id
-                    FROM sbom_package_purl_ref
-                    JOIN sbom ON sbom.sbom_id = sbom_package_purl_ref.sbom_id
-                    WHERE sbom_package_purl_ref.qualified_purl_id = $1
-                    AND sbom.published = (
-                        SELECT MAX(published)
-                        FROM sbom
-                        JOIN sbom_package_purl_ref ON sbom.sbom_id = sbom_package_purl_ref.sbom_id
-                        WHERE sbom_package_purl_ref.qualified_purl_id = $1
-                    );
-                "#;
-                let stmt = Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    sql,
-                    [purl.qualifier_uuid().into()],
-                );
-                let rows = connection.query_all(stmt).await?;
-                rows.into_iter()
-                    .filter_map(|row| {
-                        row.try_get_by_index::<Uuid>(0)
-                            .ok()
-                            .map(|sbom_id| sbom_id.to_string())
-                    })
-                    .collect::<Vec<String>>()
-            }
-            GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
-                let sql = r#"
-                    SELECT distinct sbom.sbom_id
-                    FROM sbom_package_cpe_ref
-                    JOIN sbom ON sbom.sbom_id = sbom_package_cpe_ref.sbom_id
-                    WHERE sbom_package_cpe_ref.cpe_id = $1
-                    AND sbom.published = (
-                        SELECT MAX(published)
-                        FROM sbom
-                        JOIN sbom_package_cpe_ref ON sbom.sbom_id = sbom_package_cpe_ref.sbom_id
-                        WHERE sbom_package_cpe_ref.cpe_id = $1
-                    );
-                "#;
-                let stmt = Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    sql,
-                    [cpe.uuid().into()],
-                );
-                let rows = connection.query_all(stmt).await?;
-                rows.into_iter()
-                    .filter_map(|row| {
-                        row.try_get_by_index::<Uuid>(0)
-                            .ok()
-                            .map(|sbom_id| sbom_id.to_string())
-                    })
-                    .collect::<Vec<String>>()
-            }
-            GraphQuery::Query(query) => {
-                // TODO - when we formally define 'latest authoratative filters' this area will become
-                //        much more complex ... for now we are happy with just searching node_id with
-                //        LIKE matches.
-                let sql = r#"
-                    SELECT distinct sbom.sbom_id
-                    FROM sbom_node
-                    JOIN sbom ON sbom.sbom_id = sbom_node.sbom_id
-                    WHERE sbom_node.node_id ~ $1
-                    AND sbom.published = (
-                        SELECT MAX(published)
-                        FROM sbom
-                        JOIN sbom_node ON sbom.sbom_id = sbom_node.sbom_id
-                        WHERE sbom_node.node_id ~ $1
-                    );
-                "#;
-                let stmt = Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    sql,
-                    [query.clone().q.into()],
-                );
-                let rows = connection.query_all(stmt).await?;
-                rows.into_iter()
-                    .filter_map(|row| {
-                        row.try_get_by_index::<Uuid>(0)
-                            .ok()
-                            .map(|sbom_id| sbom_id.to_string())
-                    })
-                    .collect::<Vec<String>>()
-            }
-        };
-
-        log::debug!("Latest sbom IDs: {:?}", latest_sbom_ids);
-
-        // filter initial set of top level matched nodes by latest_sbom_ids which will ensure
-        // our 'starting points' are on nodes that are from latest sboms
-        let mut latest_components = vec![];
-        for component in components {
-            if latest_sbom_ids.contains(&component.sbom_id) {
-                latest_components.push(component);
-            }
-        }
-        Ok(paginated.paginate_array(&latest_components))
+        Ok(paginated.paginate_array(&components))
     }
 
     /// check if a node in the graph matches the provided query
@@ -764,7 +622,7 @@ fn acyclic(id: &str, graph: &Arc<PackageGraph>) -> bool {
         // FIXME: we need a better strategy handling such errors
         let start = graph.node_weight(start);
         let end = graph.node_weight(end);
-        log::warn!(
+        log::debug!(
             "analysis graph of sbom {id} has circular references (detected: {start:?} -> {end:?})!",
         );
     }

@@ -6,12 +6,12 @@ publish.workspace = true
 license.workspace = true
 
 [dependencies]
-trustify-entity = { workspace = true }
+trustify-entity = { workspace = true, features = ["graphql"] }
 trustify-common = { workspace = true }
-trustify-module-fundamental = { workspace = true }
+trustify-module-fundamental = { workspace = true, features = ["graphql"] }
 trustify-module-ingestor = { workspace = true }
 
-async-graphql = { workspace = true }
+async-graphql = { workspace = true, features = ["uuid"] }
 async-graphql-actix-web = { workspace = true }
 actix-web = { workspace = true }
 uuid = { workspace = true }

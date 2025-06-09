@@ -7,8 +7,12 @@ use crate::{
         },
     },
 };
-use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
+use sea_orm::{
+    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, QueryFilter, QuerySelect, RelationTrait,
+    Statement,
+};
 use sea_query::{Condition, JoinType};
+use std::collections::BTreeSet;
 use trustify_common::{
     db::query::Query,
     id::{Id, TrySelectForId},
@@ -16,8 +20,7 @@ use trustify_common::{
 };
 use trustify_entity::{
     license, licensing_infos, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
-    sbom_package_license::{self, LicenseCategory},
-    sbom_package_purl_ref,
+    sbom_package_license, sbom_package_purl_ref,
 };
 
 pub mod license_export;
@@ -46,7 +49,7 @@ impl LicenseService {
         id: Id,
         connection: &C,
     ) -> Result<LicenseExportResult, Error> {
-        let name_version_group = sbom::Entity::find()
+        let name_version_group: Option<SbomNameId> = sbom::Entity::find()
             .try_filter(id.clone())?
             .join(JoinType::Join, sbom::Relation::SbomNode.def())
             .select_only()
@@ -68,10 +71,6 @@ impl LicenseService {
                 JoinType::InnerJoin,
                 sbom_package_license::Relation::License.def(),
             )
-            .filter(
-                Condition::all()
-                    .add(sbom_package_license::Column::LicenseType.eq(LicenseCategory::Declared)),
-            )
             .select_only()
             .column_as(sbom::Column::SbomId, "sbom_id")
             .column_as(sbom_package::Column::NodeId, "node_id")
@@ -79,6 +78,7 @@ impl LicenseService {
             .column_as(sbom_package::Column::Group, "group")
             .column_as(sbom_package::Column::Version, "version")
             .column_as(license::Column::Text, "license_text")
+            .column_as(sbom_package_license::Column::LicenseType, "license_type")
             .into_model::<SbomPackageLicenseBase>()
             .all(connection)
             .await?;
@@ -124,6 +124,7 @@ impl LicenseService {
                 purl: result_purl,
                 cpe: result_cpe,
                 license_text: spl.license_text,
+                license_type: spl.license_type,
             });
         }
         let license_info_list: Vec<ExtractedLicensingInfos> = licensing_infos::Entity::find()
@@ -208,5 +209,46 @@ impl LicenseService {
             }
         }
         Ok(None)
+    }
+
+    pub async fn get_all_license_info<C: ConnectionTrait>(
+        &self,
+        id: Id,
+        connection: &C,
+    ) -> Result<Option<BTreeSet<String>>, Error> {
+        // check the SBOM exists searching by the provided Id
+        let sbom = sbom::Entity::find()
+            .join(JoinType::LeftJoin, sbom::Relation::SourceDocument.def())
+            .try_filter(id)?
+            .one(connection)
+            .await?;
+
+        match sbom {
+            Some(sbom) => {
+                let stmt = Statement::from_sql_and_values(
+                    connection.get_database_backend(),
+                    r#"
+                    (
+                        SELECT DISTINCT unnest(l.spdx_licenses) as license
+                        FROM sbom_package_license spl
+                        JOIN license l ON spl.license_id = l.id
+                        WHERE spl.sbom_id = $1
+                        AND l.spdx_licenses IS NOT NULL
+                    )
+                    "#,
+                    [sbom.sbom_id.into()],
+                );
+
+                let result: Vec<String> = connection
+                    .query_all(stmt)
+                    .await?
+                    .into_iter()
+                    .map(|row| row.try_get_by_index::<String>(0))
+                    .collect::<Result<Vec<String>, DbErr>>()?;
+
+                Ok(Some(result.into_iter().collect()))
+            }
+            None => Ok(None),
+        }
     }
 }

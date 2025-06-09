@@ -6,9 +6,10 @@ mod common;
 
 #[allow(clippy::expect_used, clippy::unwrap_used)]
 pub(crate) mod trustify_benches {
+    use std::hint::black_box;
     use std::time::{Duration, Instant};
 
-    use criterion::{Criterion, black_box};
+    use criterion::Criterion;
     use std::ops::Add;
     use trustify_entity::labels::Labels;
     use trustify_module_ingestor::service::{Cache, Format};

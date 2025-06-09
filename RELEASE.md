@@ -101,7 +101,7 @@ PR should pass CI.
 
 Get a friend to review.
 
-On succesful review go ahead and merge!
+On successful review go ahead and merge!
 
 ### 4. Create release
 

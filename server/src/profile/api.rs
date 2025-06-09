@@ -36,7 +36,6 @@ use trustify_infrastructure::{
     otel::{Metrics as OtelMetrics, Tracing},
 };
 use trustify_module_analysis::{config::AnalysisConfig, service::AnalysisService};
-use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::{
@@ -60,6 +59,7 @@ pub struct Run {
     #[arg(long, env)]
     pub sample_data: bool,
 
+    #[cfg(feature = "graphql")]
     /// Allows enabling the GraphQL endpoint
     #[arg(long, env = "TRUSTD_WITH_GRAPHQL", default_value_t = false)]
     pub with_graphql: bool,
@@ -92,6 +92,14 @@ pub struct Run {
         default_value_t = default::dataset_entry_limit()
     )]
     pub dataset_entry_limit: BinaryByteSize,
+
+    /// The size limit of documents for a scan, uncompressed.
+    #[arg(
+        long,
+        env = "TRUSTD_SCAN_LIMIT",
+        default_value_t = default::scan_limit()
+    )]
+    pub scan_limit: BinaryByteSize,
 
     // flattened commands must go last
     //
@@ -138,6 +146,10 @@ mod default {
     pub const fn dataset_entry_limit() -> BinaryByteSize {
         BinaryByteSize(ByteSize::gib(1))
     }
+
+    pub const fn scan_limit() -> BinaryByteSize {
+        BinaryByteSize(ByteSize::gib(1))
+    }
 }
 
 #[derive(clap::Args, Debug, Clone)]
@@ -153,9 +165,6 @@ pub struct UiConfig {
     /// Scopes to request
     #[arg(id = "ui-scope", long, env = "UI_SCOPE", default_value = "openid")]
     pub scope: String,
-    /// The write-key for the analytics system.
-    #[arg(id = "analytics-write-key", long, env = "UI_ANALYTICS_WRITE_KEY")]
-    pub analytics_write_key: Option<String>,
 }
 
 const SERVICE_ID: &str = "trustify";
@@ -172,6 +181,7 @@ struct InitData {
     #[cfg(feature = "garage-door")]
     embedded_oidc: Option<embedded_oidc::EmbeddedOidc>,
     ui: UI,
+    #[cfg(feature = "graphql")]
     with_graphql: bool,
     config: ModuleConfig,
     analysis: AnalysisService,
@@ -182,6 +192,7 @@ struct InitData {
 pub(crate) struct ModuleConfig {
     fundamental: trustify_module_fundamental::endpoints::Config,
     ingestor: trustify_module_ingestor::endpoints::Config,
+    ui: trustify_module_ui::endpoints::Config,
 }
 
 impl Run {
@@ -280,8 +291,6 @@ impl InitData {
             oidc_server_url: run.ui.issuer_url,
             oidc_client_id: run.ui.client_id,
             oidc_scope: run.ui.scope,
-            analytics_enabled: run.ui.analytics_write_key.is_some().to_string(),
-            analytics_write_key: run.ui.analytics_write_key.unwrap_or_default(),
         };
 
         let config = ModuleConfig {
@@ -291,6 +300,9 @@ impl InitData {
             },
             ingestor: trustify_module_ingestor::endpoints::Config {
                 dataset_entry_limit: run.dataset_entry_limit.into(),
+            },
+            ui: trustify_module_ui::endpoints::Config {
+                scan_limit: run.scan_limit.into(),
             },
         };
 
@@ -308,6 +320,7 @@ impl InitData {
             #[cfg(feature = "garage-door")]
             embedded_oidc,
             ui,
+            #[cfg(feature = "graphql")]
             with_graphql: run.with_graphql,
         })
     }
@@ -316,6 +329,7 @@ impl InitData {
         let ui = Arc::new(UiResources::new(&self.ui)?);
         let db = self.db.clone();
         let storage = self.storage.clone();
+        let ui_config = self.config.ui.clone();
 
         let http = {
             HttpServerBuilder::try_from(self.http)?
@@ -333,7 +347,7 @@ impl InitData {
                             storage: self.storage.clone(),
                             auth: self.authenticator.clone(),
                             analysis: self.analysis.clone(),
-
+                            #[cfg(feature = "graphql")]
                             with_graphql: self.with_graphql,
                         },
                     );
@@ -381,20 +395,24 @@ pub(crate) struct Config {
     pub(crate) storage: DispatchBackend,
     pub(crate) analysis: AnalysisService,
     pub(crate) auth: Option<Arc<Authenticator>>,
+    #[cfg(feature = "graphql")]
     pub(crate) with_graphql: bool,
 }
 
 pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, config: Config) {
     let Config {
-        config: ModuleConfig {
-            ingestor,
-            fundamental,
-        },
+        config:
+            ModuleConfig {
+                ingestor,
+                fundamental,
+                ui,
+            },
         db,
         storage,
         auth,
         analysis,
 
+        #[cfg(feature = "graphql")]
         with_graphql,
     } = config;
 
@@ -407,6 +425,7 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
 
     // register GraphQL API and UI
 
+    #[cfg(feature = "graphql")]
     if with_graphql {
         svc.service(
             utoipa_actix_web::scope("/graphql")
@@ -450,6 +469,7 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
                     );
                     trustify_module_analysis::endpoints::configure(svc, db.clone(), analysis);
                     trustify_module_user::endpoints::configure(svc, db.clone());
+                    trustify_module_ui::endpoints::configure(svc, ui)
                 }),
         );
 }
@@ -466,7 +486,7 @@ fn post_configure(svc: &mut web::ServiceConfig, config: PostConfig) {
     svc.configure(|svc| {
         // I think the UI must come last due to
         // its use of `resolve_not_found_to`
-        trustify_module_ui::endpoints::configure(svc, &ui);
+        trustify_module_ui::endpoints::post_configure(svc, &ui);
     });
 }
 
@@ -521,6 +541,7 @@ mod test {
                             storage: DispatchBackend::Filesystem(storage),
                             auth: None,
                             analysis,
+                            #[cfg(feature = "graphql")]
                             with_graphql: true,
                         },
                     );
@@ -565,11 +586,13 @@ mod test {
         assert!(text.contains("<title>Swagger UI</title>"));
 
         // GraphQL UI
-
-        let req = TestRequest::get().uri("/graphql").to_request();
-        let body = call_and_read_body(&app, req).await;
-        let text = std::str::from_utf8(&body)?;
-        assert!(text.contains("<title>GraphiQL IDE</title>"));
+        #[cfg(feature = "graphql")]
+        {
+            let req = TestRequest::get().uri("/graphql").to_request();
+            let body = call_and_read_body(&app, req).await;
+            let text = std::str::from_utf8(&body)?;
+            assert!(text.contains("<title>GraphiQL IDE</title>"));
+        }
 
         // API
 

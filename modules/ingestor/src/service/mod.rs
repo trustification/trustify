@@ -19,8 +19,7 @@ use sea_orm::error::DbErr;
 use std::{fmt::Debug, sync::Arc, time::Instant};
 use tokio::task::JoinError;
 use tracing::instrument;
-use trustify_common::id::Id;
-use trustify_common::{error::ErrorInformation, id::IdError};
+use trustify_common::{error::ErrorInformation, id::Id, id::IdError};
 use trustify_entity::labels::Labels;
 use trustify_module_analysis::service::AnalysisService;
 use trustify_module_storage::service::{StorageBackend, dispatch::DispatchBackend};
@@ -248,7 +247,7 @@ impl IngestorService {
         Ok(result)
     }
 
-    /// Ingest a dataset archiv
+    /// Ingest a dataset archive
     #[instrument(skip(self, bytes), err(level=tracing::Level::INFO))]
     pub async fn ingest_dataset(
         &self,

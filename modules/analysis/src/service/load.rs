@@ -14,9 +14,10 @@ use anyhow::anyhow;
 use petgraph::{Graph, prelude::NodeIndex};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
-    FromQueryResult, QueryFilter, QuerySelect, QueryTrait, RelationTrait, Statement,
+    FromQueryResult, QueryFilter, QuerySelect, QueryTrait, Related, RelationTrait, Select,
+    Statement,
 };
-use sea_query::{JoinType, SelectStatement};
+use sea_query::{Alias, Expr, JoinType, PostgresQueryBuilder, Query, SelectStatement};
 use serde_json::Value;
 use std::{
     collections::{HashMap, HashSet, hash_map::Entry},
@@ -27,7 +28,7 @@ use std::{
 use tracing::{Level, instrument};
 use trustify_common::{
     cpe::Cpe as TrustifyCpe,
-    db::query::{Filtering, IntoColumns},
+    db::query::{Columns, Filtering, IntoColumns},
     purl::Purl,
 };
 use trustify_entity::qualified_purl::{self, CanonicalPurl};
@@ -269,6 +270,7 @@ impl InnerService {
                 .join(JoinType::Join, sbom_package::Relation::Purl.def())
                 .filter(sbom_package_purl_ref::Column::QualifiedPurlId.eq(purl.qualifier_uuid()))
                 .select_only()
+                .distinct()
                 .column(sbom_node::Column::SbomId)
                 .into_query(),
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => sbom_node::Entity::find()
@@ -279,8 +281,135 @@ impl InnerService {
                 .column(sbom_node::Column::SbomId)
                 .distinct()
                 .into_query(),
+            GraphQuery::Query(query) => sbom_node::Entity::find()
+                .join(JoinType::Join, sbom_node::Relation::Package.def())
+                .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
+                .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+                .join(
+                    JoinType::LeftJoin,
+                    sbom_package_cpe_ref::Relation::Cpe.def(),
+                )
+                .join(
+                    JoinType::LeftJoin,
+                    sbom_package_purl_ref::Relation::Purl.def(),
+                )
+                .select_only()
+                .column(sbom_node::Column::SbomId)
+                .filtering_with(query.clone(), q_columns())?
+                .distinct()
+                .into_query(),
+        };
+
+        self.load_graphs_subquery(connection, search_sbom_subquery)
+            .await
+    }
+
+    #[instrument(skip(self, connection), err(level=Level::INFO))]
+    pub(crate) async fn load_latest_graphs_query<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+        query: GraphQuery<'_>,
+    ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
+        #[derive(Debug, FromQueryResult)]
+        struct Row {
+            sbom_id: Uuid,
+        }
+
+        fn find<E>() -> Select<E>
+        where
+            E: EntityTrait + Related<sbom::Entity>,
+        {
+            const RANK_SQL: &str = "RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC)";
+
+            E::find()
+                .select_only()
+                .column(sbom::Column::SbomId)
+                .column(sbom::Column::Published)
+                .column(cpe::Column::Id)
+                .column_as(Expr::cust(RANK_SQL), "rank")
+                .left_join(sbom::Entity)
+        }
+
+        async fn query_all<C>(
+            subquery: SelectStatement,
+            connection: &C,
+        ) -> Result<Vec<String>, Error>
+        where
+            C: ConnectionTrait,
+        {
+            let select_query = Query::select()
+                .expr(Expr::col(Alias::new("sbom_id")))
+                .from_subquery(subquery, Alias::new("subquery"))
+                .cond_where(Expr::col(Alias::new("rank")).eq(1))
+                .distinct()
+                .to_owned();
+            let (sql, values) = select_query.build(PostgresQueryBuilder);
+
+            let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
+                DatabaseBackend::Postgres,
+                sql,
+                values,
+            ))
+            .all(connection)
+            .await?;
+
+            Ok(rows
+                .into_iter()
+                .map(|row| row.sbom_id.to_string())
+                .collect())
+        }
+
+        let latest_sbom_ids: Vec<_> = match query {
+            GraphQuery::Component(ComponentReference::Id(node_id)) => {
+                let subquery = find::<sbom_node::Entity>()
+                    .left_join(sbom_package::Entity)
+                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
+                    )
+                    .filter(sbom_node::Column::NodeId.eq(node_id));
+
+                query_all(subquery.into_query(), connection).await?
+            }
+            GraphQuery::Component(ComponentReference::Name(name)) => {
+                let subquery = find::<sbom_node::Entity>()
+                    .left_join(sbom_package::Entity)
+                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
+                    )
+                    .filter(sbom_node::Column::Name.eq(name));
+
+                query_all(subquery.into_query(), connection).await?
+            }
+            GraphQuery::Component(ComponentReference::Purl(purl)) => {
+                let subquery = find::<sbom_package_purl_ref::Entity>()
+                    .left_join(sbom_package::Entity)
+                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
+                    )
+                    .filter(
+                        sbom_package_purl_ref::Column::QualifiedPurlId.eq(purl.qualifier_uuid()),
+                    );
+
+                query_all(subquery.into_query(), connection).await?
+            }
+            GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
+                let subquery = find::<sbom_package_cpe_ref::Entity>()
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
+                    )
+                    .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()));
+
+                query_all(subquery.into_query(), connection).await?
+            }
             GraphQuery::Query(query) => {
-                sbom_node::Entity::find()
+                let subquery = find::<sbom_node::Entity>()
                     .join(JoinType::Join, sbom_node::Relation::Package.def())
                     .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
@@ -292,58 +421,13 @@ impl InnerService {
                         JoinType::LeftJoin,
                         sbom_package_purl_ref::Relation::Purl.def(),
                     )
-                    .select_only()
-                    .column(sbom_node::Column::SbomId)
-                    .filtering_with(
-                        query.clone(),
-                        sbom_node::Entity
-                            .columns()
-                            .add_columns(cpe::Entity.columns())
-                            .add_columns(qualified_purl::Entity.columns())
-                            .translator(|f, op, v| {
-                                match f {
-                                    "purl:type" => Some(format!("purl:ty{op}{v}")),
-                                    "purl" => Purl::translate(op, v),
-                                    "cpe" => match (op, OwnedUri::from_str(v)) {
-                                        ("=" | "~", Ok(cpe)) => {
-                                            // We break out cpe into its constituent columns in CPE table
-                                            let q = match (cpe.part(), cpe.language()) {
-                                                (CpeType::Any, Language::Any) => String::new(),
-                                                (CpeType::Any, l) => format!("language={l}"),
-                                                (p, Language::Any) => format!("part={p}"),
-                                                (p, l) => format!("part={p}&language={l}"),
-                                            };
-                                            let q = [
-                                                ("vendor", cpe.vendor()),
-                                                ("product", cpe.product()),
-                                                ("version", cpe.version()),
-                                                ("update", cpe.update()),
-                                                ("edition", cpe.edition()),
-                                            ]
-                                            .iter()
-                                            .fold(q, |acc, (k, v)| match v {
-                                                Component::Value(s) => {
-                                                    format!("{acc}&{k}={s}|*")
-                                                }
-                                                _ => acc,
-                                            });
-                                            Some(q)
-                                        }
-                                        ("~", Err(_)) => Some(v.into()),
-                                        (_, Err(e)) => Some(e.to_string()),
-                                        (_, _) => Some("illegal operation for cpe field".into()),
-                                    },
-                                    _ => None,
-                                }
-                            }),
-                    )?
-                    .distinct()
-                    .into_query()
+                    .filtering_with(query.clone(), q_columns())?;
+
+                query_all(subquery.into_query(), connection).await?
             }
         };
 
-        self.load_graphs_subquery(connection, search_sbom_subquery)
-            .await
+        self.load_graphs(connection, &latest_sbom_ids).await
     }
 
     /// Take a select for sboms, and ensure they are loaded and return their IDs.
@@ -516,4 +600,49 @@ impl InnerService {
         }
         Ok(results)
     }
+}
+
+// These are the columns and translation rules with which we filter
+// 'q=' component queries
+fn q_columns() -> Columns {
+    sbom_node::Entity
+        .columns()
+        .add_columns(cpe::Entity.columns())
+        .add_columns(qualified_purl::Entity.columns())
+        .translator(|f, op, v| {
+            match f {
+                "purl:type" => Some(format!("purl:ty{op}{v}")),
+                "purl" => Purl::translate(op, v),
+                "cpe" => match (op, OwnedUri::from_str(v)) {
+                    ("=" | "~", Ok(cpe)) => {
+                        // We break out cpe into its constituent columns in CPE table
+                        let q = match (cpe.part(), cpe.language()) {
+                            (CpeType::Any, Language::Any) => String::new(),
+                            (CpeType::Any, l) => format!("language={l}"),
+                            (p, Language::Any) => format!("part={p}"),
+                            (p, l) => format!("part={p}&language={l}"),
+                        };
+                        let q = [
+                            ("vendor", cpe.vendor()),
+                            ("product", cpe.product()),
+                            ("version", cpe.version()),
+                            ("update", cpe.update()),
+                            ("edition", cpe.edition()),
+                        ]
+                        .iter()
+                        .fold(q, |acc, (k, v)| match v {
+                            Component::Value(s) => {
+                                format!("{acc}&{k}={s}|*")
+                            }
+                            _ => acc,
+                        });
+                        Some(q)
+                    }
+                    ("~", Err(_)) => Some(v.into()),
+                    (_, Err(e)) => Some(e.to_string()),
+                    (_, _) => Some("illegal operation for cpe field".into()),
+                },
+                _ => None,
+            }
+        })
 }

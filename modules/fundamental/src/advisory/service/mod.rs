@@ -3,9 +3,9 @@ use crate::{
     advisory::model::{AdvisoryDetails, AdvisorySummary},
 };
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, ColumnTypeTrait, ConnectionTrait,
-    DatabaseBackend, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, IntoIdentity,
-    QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Statement, TransactionTrait,
+    ActiveModelTrait, ActiveValue::Set, ConnectionTrait, DatabaseBackend, DbErr, EntityTrait,
+    FromQueryResult, IntoActiveModel, IntoIdentity, QueryResult, QuerySelect, QueryTrait,
+    RelationTrait, Select, Statement, TransactionTrait,
 };
 use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr};
 use trustify_common::{
@@ -95,10 +95,10 @@ impl AdvisoryService {
                 search,
                 Columns::from_entity::<advisory::Entity>()
                     .add_column(
-                        source_document::Column::Ingested.into_identity(),
-                        source_document::Column::Ingested.def(),
+                        source_document::Column::Ingested,
+                        ColumnType::TimestampWithTimeZone,
                     )
-                    .add_column("average_score", ColumnType::Decimal(None).def())
+                    .add_column("average_score", ColumnType::Decimal(None))
                     .add_column(
                         "average_severity",
                         ColumnType::Enum {
@@ -110,8 +110,7 @@ impl AdvisoryService {
                                 "high".into_identity().into_iden(),
                                 "critical".into_identity().into_iden(),
                             ],
-                        }
-                        .def(),
+                        },
                     )
                     .translator(|f, op, v| match (f, v) {
                         // v = "" for all sort fields
@@ -244,7 +243,7 @@ impl AdvisoryService {
     ) -> Result<Option<()>, Error> {
         let result = advisory::Entity::update_many()
             .try_filter(id)?
-            .col_expr(advisory::Column::Labels, Expr::value(labels))
+            .col_expr(advisory::Column::Labels, Expr::value(labels.validate()?))
             .exec(connection)
             .await?;
 
@@ -261,12 +260,13 @@ impl AdvisoryService {
     where
         F: FnOnce(Labels) -> Labels,
     {
-        let tx = self.db.begin().await?;
+        let tx = self.db.begin().await.map_err(Error::from)?;
 
         // work around missing "FOR UPDATE" issue
 
         let mut query = advisory::Entity::find()
-            .try_filter(id)?
+            .try_filter(id)
+            .map_err(Error::IdKey)?
             .build(DatabaseBackend::Postgres);
 
         query.sql.push_str(" FOR UPDATE");
@@ -276,7 +276,8 @@ impl AdvisoryService {
         let Some(result) = advisory::Entity::find()
             .from_raw_sql(query)
             .one(&tx)
-            .await?
+            .await
+            .map_err(Error::from)?
         else {
             // return early, nothing found
             return Ok(None);
@@ -286,15 +287,15 @@ impl AdvisoryService {
 
         let labels = result.labels.clone();
         let mut result = result.into_active_model();
-        result.labels = Set(mutator(labels));
+        result.labels = Set(mutator(labels).validate()?);
 
         // store
 
-        result.update(&tx).await?;
+        result.update(&tx).await.map_err(Error::from)?;
 
         // commit
 
-        tx.commit().await?;
+        tx.commit().await.map_err(Error::from)?;
 
         // return
 

@@ -1,5 +1,6 @@
 use crate::test::caller;
 use crate::weakness::model::{WeaknessDetails, WeaknessSummary};
+use actix_http::StatusCode;
 use actix_web::test::TestRequest;
 use test_context::test_context;
 use test_log::test;
@@ -90,6 +91,11 @@ async fn get_weakness(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(1, child_of.len());
     assert!(child_of.contains(&"CWE-732".to_string()));
+
+    let uri = "/api/v2/weakness/CWE-FOO";
+    let request = TestRequest::get().uri(uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
     Ok(())
 }

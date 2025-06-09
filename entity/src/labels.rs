@@ -1,4 +1,3 @@
-use async_graphql::scalar;
 use std::{
     borrow::Cow,
     collections::HashMap,
@@ -22,6 +21,12 @@ use utoipa::{
 )]
 pub struct Labels(pub HashMap<String, String>);
 
+#[derive(Clone, Debug, PartialEq, Eq, thiserror::Error)]
+pub enum Error {
+    #[error("invalid label: {0}")]
+    InvalidLabel(Cow<'static, str>),
+}
+
 impl ToSchema for Labels {
     fn name() -> Cow<'static, str> {
         "Labels".into()
@@ -39,7 +44,8 @@ impl PartialSchema for Labels {
     }
 }
 
-scalar!(Labels);
+#[cfg(feature = "async-graphql")]
+async_graphql::scalar!(Labels);
 
 impl Labels {
     pub fn new() -> Self {
@@ -70,6 +76,59 @@ impl Labels {
 
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
+    }
+
+    /// Validate labels of the current instance, or fail
+    ///
+    /// See [Self::validate] for details of the validation.
+    pub fn validate_mut(&mut self) -> Result<(), Error> {
+        let mut result = HashMap::with_capacity(self.0.len());
+
+        for (k, v) in &self.0 {
+            let k = k.trim().to_string();
+            let v = v.trim().to_string();
+
+            if k.is_empty() {
+                return Err(Error::InvalidLabel("empty keys are now allowed".into()));
+            }
+
+            if k.contains('=') {
+                return Err(Error::InvalidLabel(
+                    format!("key must not contain '=' ({k})").into(),
+                ));
+            }
+
+            if v.contains('=') {
+                return Err(Error::InvalidLabel(
+                    format!("value of '{k}'contains '=', which is not allowed").into(),
+                ));
+            }
+
+            result.insert(k, v);
+        }
+
+        self.0 = result;
+
+        Ok(())
+    }
+
+    /// Validate labels, returning the result, or fail
+    ///
+    /// ## Rules
+    ///
+    /// This will apply the following rules:
+    ///
+    /// * First trim (start, end) all "whitespaces" (see [`str::trim`])
+    /// * Then, ensure that keys are not empty
+    /// * Neither keys nor values must contain the `=` character
+    ///
+    /// ## Mutability
+    ///
+    /// Trimming may result in a mutation of the original input. In cases where trimming keys
+    /// results in overlapping keys, there is no guarantee of which value has precedence.
+    pub fn validate(mut self) -> Result<Self, Error> {
+        self.validate_mut()?;
+        Ok(self)
     }
 }
 
@@ -379,5 +438,31 @@ mod test {
                 "labels.bar": "42",
             }),
         );
+    }
+
+    #[test]
+    fn validate_label_ok() {
+        assert_eq!(
+            Labels::new()
+                .add("foo", "bar")
+                .add("foo foo ", "bar bar ")
+                .add("bar bar", " bar bar ")
+                .add("buz", "  ")
+                .validate(),
+            Ok(Labels::new()
+                .add("foo", "bar")
+                .add("foo foo", "bar bar")
+                .add("bar bar", "bar bar")
+                .add("buz", ""))
+        );
+    }
+
+    #[test]
+    fn validate_label_err() {
+        assert!(Labels::new().add("foo=bar", "").validate().is_err());
+        assert!(Labels::new().add("   ", "foo").validate().is_err());
+        assert!(Labels::new().add("  =  ", "foo").validate().is_err());
+        assert!(Labels::new().add("foo", "foo=bar").validate().is_err());
+        assert!(Labels::new().add("foo", "  == ").validate().is_err());
     }
 }

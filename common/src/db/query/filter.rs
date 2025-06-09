@@ -342,6 +342,25 @@ pub(crate) mod tests {
     }
 
     #[test(tokio::test)]
+    async fn empty_values() -> Result<(), anyhow::Error> {
+        assert_eq!(where_clause("location=")?, r#""advisory"."location" = ''"#);
+        assert_eq!(
+            where_clause("location=|foo")?,
+            r#""advisory"."location" = '' OR "advisory"."location" = 'foo'"#
+        );
+        assert_eq!(
+            where_clause("location=foo|")?,
+            r#""advisory"."location" = 'foo' OR "advisory"."location" = ''"#
+        );
+        assert_eq!(
+            where_clause("location=&authors=&purl:namespace=")?,
+            r#""advisory"."location" = '' AND '' = ANY("advisory"."authors") AND ("advisory"."purl" ->> 'namespace') = ''"#
+        );
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
     async fn human_time() -> Result<(), anyhow::Error> {
         let now = Local::now();
         let yesterday = (now - TimeDelta::try_days(1).unwrap()).format("%Y-%m-%d");

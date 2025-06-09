@@ -31,7 +31,7 @@ parking_lot = { workspace = true }
 regex = { workspace = true }
 reqwest = { workspace = true }
 sbom-walker = { workspace = true }
-schemars = { workspace = true, features = ["url"] }
+schemars = { workspace = true, features = ["url2"] }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print"] }
 sea-query = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
@@ -53,6 +53,7 @@ walker-common = { workspace = true }
 zip = { workspace = true }
 
 [dev-dependencies]
+actix-http = { workspace = true }
 bytesize = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 test-context = { workspace = true }

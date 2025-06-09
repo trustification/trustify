@@ -878,7 +878,7 @@ Alternately, we MAY use checksum hash of target (if when/known):
 Using the extended node id we can find the `sbom_id` using `sbom_external_node`, then retrieving descendants we 
 first identify the target sbom_id, then parse `node_id` to find the component in `sbom_node`. 
 
-Which looks in psuedocode like:
+Which looks in pseudocode like:
 ```rust
 // find entry in sbom_external_node
 let extended_node_id = "another-sbom-1.0.json#SPDXRef-OtherPackages:SPDXRef-PackageB";
@@ -925,7 +925,7 @@ Alternately, we MAY use checksum hash of target (if when/known):
 Using the extended node id we can find the `sbom_id` using `sbom_external_node` using  serial_number and version,
 then retrieving descendants we then use parse `node_id` to find the component in `sbom_node`.
 
-Which looks in psuedocode like:
+Which looks in pseudocode like:
 ```rust
 // find entry in sbom_external_node
 let extended_node_id = "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79/1.6#acme-application-1.0.0";
@@ -979,7 +979,7 @@ Which would result in a more familiar:
 Using the extended node id we can find the `sbom_id` using `sbom_external_node` using  serial_number and version,
 then retrieving descendants we then use parse `node_id` to find the component in `sbom_node`.
 
-Which looks in psuedocode like:
+Which looks in pseudocode like:
 ```rust
 // find entry in sbom_external_node
 let extended_node_id = "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79/1.6#:pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
@@ -1024,7 +1024,7 @@ analysis graph for ancestor in target sbom.
 
 In terms of analysis graph querying, when an extended node_id is encountered the same process to identify sbom is performed 
 from the extended node_id, which spawns collecting nodes from target analysis graph ... pushing those nodes into the returned
-response, in psuedocode this looks like:
+response, in pseudocode this looks like:
 ```rust
 // find entry in sbom_external_node
 let extended_node_id = "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79/1.6#:pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";

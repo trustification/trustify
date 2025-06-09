@@ -10,6 +10,7 @@ use csv::{Writer, WriterBuilder};
 use flate2::{Compression, write::GzEncoder};
 use tar::Builder;
 use trustify_common::purl::Purl;
+use trustify_entity::sbom_package_license::LicenseCategory;
 
 type CSVs = (Writer<Vec<u8>>, Writer<Vec<u8>>);
 
@@ -112,6 +113,7 @@ impl LicenseExporter {
             "package purl",
             "package cpe",
             "license",
+            "license type",
         ])?;
 
         for extracted_licensing_info in self.extracted_licensing_infos {
@@ -147,6 +149,10 @@ impl LicenseExporter {
                 &purl_list,
                 &alternate_package_reference,
                 &package.license_text.unwrap_or_else(String::default),
+                &package
+                    .license_type
+                    .unwrap_or(LicenseCategory::Declared)
+                    .to_string(),
             ])?;
         }
 

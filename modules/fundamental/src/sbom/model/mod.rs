@@ -3,16 +3,18 @@ pub mod raw_sql;
 
 use super::service::SbomService;
 use crate::{
-    Error, purl::model::summary::purl::PurlSummary, source_document::model::SourceDocument,
+    Error, purl::model::summary::purl::PurlSummary, sbom::service::sbom::LicenseBasicInfo,
+    source_document::model::SourceDocument,
 };
-use async_graphql::SimpleObject;
 use sea_orm::{ConnectionTrait, ModelTrait, PaginatorTrait, prelude::Uuid};
+use sea_query::FromValueTuple;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, model::Paginated, purl::Purl};
 use trustify_entity::{
-    labels::Labels, relationship::Relationship, sbom, sbom_node, sbom_package, source_document,
+    labels::Labels, relationship::Relationship, sbom, sbom_node, sbom_package,
+    sbom_package_license::LicenseCategory, source_document,
 };
 use utoipa::ToSchema;
 
@@ -101,8 +103,12 @@ impl SbomSummary {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, SimpleObject, Default)]
-#[graphql(concrete(name = "SbomPackage", params()))]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, Default)]
+#[cfg_attr(feature = "async-graphql", derive(async_graphql::SimpleObject))]
+#[cfg_attr(
+    feature = "async-graphql",
+    graphql(concrete(name = "SbomPackage", params()))
+)]
 pub struct SbomPackage {
     /// The SBOM internal ID of a package
     pub id: String,
@@ -113,10 +119,28 @@ pub struct SbomPackage {
     /// An optional version for an SBOM package
     pub version: Option<String>,
     /// PURLs identifying the package
-    #[graphql(skip)]
+    #[cfg_attr(feature = "async-graphql", graphql(skip))]
     pub purl: Vec<PurlSummary>,
     /// CPEs identifying the package
     pub cpe: Vec<String>,
+    /// License info
+    #[cfg_attr(feature = "async-graphql", graphql(skip))]
+    pub licenses: Vec<LicenseInfo>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema)]
+pub struct LicenseInfo {
+    pub license_name: String,
+    pub license_type: LicenseCategory,
+}
+
+impl From<LicenseBasicInfo> for LicenseInfo {
+    fn from(license_basic_info: LicenseBasicInfo) -> Self {
+        LicenseInfo {
+            license_name: license_basic_info.license_name,
+            license_type: LicenseCategory::from_value_tuple(license_basic_info.license_type),
+        }
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

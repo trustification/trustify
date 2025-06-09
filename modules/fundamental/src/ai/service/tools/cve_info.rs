@@ -198,8 +198,8 @@ mod tests {
   "identifier": "CVE-2021-32714",
   "title": "Integer Overflow in Chunked Transfer-Encoding",
   "description": "hyper is an HTTP library for Rust. In versions prior to 0.14.10, hyper's HTTP server and client code had a flaw that could trigger an integer overflow when decoding chunk sizes that are too big. This allows possible data loss, or if combined with an upstream HTTP proxy that allows chunk sizes larger than hyper does, can result in \"request smuggling\" or \"desync attacks.\" The vulnerability is patched in version 0.14.10. Two possible workarounds exist. One may reject requests manually that contain a `Transfer-Encoding` header or ensure any upstream proxy rejects `Transfer-Encoding` chunk sizes greater than what fits in 64-bit unsigned integers.",
-  "severity": 9.1,
-  "score": 9.1,
+  "severity": 5.9,
+  "score": 5.9,
   "released": null,
   "affected_packages": [
     {

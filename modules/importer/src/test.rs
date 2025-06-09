@@ -3,8 +3,10 @@
 use super::model::{
     CommonImporter, Importer, ImporterConfiguration, ImporterData, SbomImporter, State,
 };
+use actix_http::{Request, body::BoxBody};
 use actix_web::{
     App,
+    dev::{Service, ServiceResponse},
     http::{StatusCode, header},
     test as actix,
 };
@@ -52,11 +54,11 @@ fn mock_importer(result: &Importer, source: impl Into<String>) -> Importer {
     }
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
-#[test(actix_web::test)]
-async fn default(ctx: TrustifyContext) {
-    let db = ctx.db;
-    let app = actix::init_service(
+async fn app(
+    ctx: &TrustifyContext,
+) -> impl Service<Request, Response = ServiceResponse<BoxBody>, Error = actix_web::Error> {
+    let db = ctx.db.clone();
+    actix::init_service(
         App::new()
             .into_utoipa_app()
             .add_test_authorizer()
@@ -66,7 +68,13 @@ async fn default(ctx: TrustifyContext) {
             )
             .into_app(),
     )
-    .await;
+    .await
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn default(ctx: TrustifyContext) {
+    let app = app(&ctx).await;
 
     // create one
 
@@ -150,18 +158,7 @@ async fn default(ctx: TrustifyContext) {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn oplock(ctx: TrustifyContext) {
-    let db = ctx.db;
-    let app = actix::init_service(
-        App::new()
-            .into_utoipa_app()
-            .add_test_authorizer()
-            .service(
-                utoipa_actix_web::scope("/api")
-                    .configure(|svc| super::endpoints::configure(svc, db)),
-            )
-            .into_app(),
-    )
-    .await;
+    let app = app(&ctx).await;
 
     // create one
 
@@ -307,18 +304,7 @@ async fn oplock(ctx: TrustifyContext) {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn patch(ctx: TrustifyContext) {
-    let db = ctx.db;
-    let app = actix::init_service(
-        App::new()
-            .into_utoipa_app()
-            .add_test_authorizer()
-            .service(
-                utoipa_actix_web::scope("/api")
-                    .configure(|svc| super::endpoints::configure(svc, db)),
-            )
-            .into_app(),
-    )
-    .await;
+    let app = app(&ctx).await;
 
     // create one
 

@@ -1,5 +1,5 @@
 use sea_orm::FromQueryResult;
-use trustify_entity::qualified_purl::CanonicalPurl;
+use trustify_entity::{qualified_purl::CanonicalPurl, sbom_package_license::LicenseCategory};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Default)]
@@ -10,8 +10,9 @@ pub struct SbomPackageLicense {
     /// package package URL
     pub purl: Vec<Purl>,
     pub cpe: Vec<trustify_entity::cpe::Model>,
-    /// List of all package license
+    /// List of all package licenses with their types
     pub license_text: Option<String>,
+    pub license_type: Option<LicenseCategory>,
 }
 
 #[derive(Debug, Clone, FromQueryResult)]
@@ -34,6 +35,7 @@ pub struct SbomPackageLicenseBase {
     pub group: Option<String>,
     pub version: Option<String>,
     pub license_text: Option<String>,
+    pub license_type: Option<LicenseCategory>,
 }
 
 #[derive(Debug, Clone, Default, FromQueryResult)]

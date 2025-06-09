@@ -5,26 +5,25 @@ edition.workspace = true
 publish.workspace = true
 license.workspace = true
 
+[features]
+graphql = ["async-graphql"]
+
 [dependencies]
 trustify-common = { workspace = true }
 trustify-cvss = { workspace = true }
 
-async-graphql = { workspace = true, features = ["uuid", "time"] }
 cpe = { workspace = true }
 deepsize = { workspace = true }
 schemars = { workspace = true }
-sea-orm = { workspace = true, features = [
-    "sqlx-postgres",
-    "runtime-tokio-rustls",
-    "macros",
-    "with-json",
-    "postgres-array",
-] }
+sea-orm = { workspace = true, features = ["sqlx-postgres", "runtime-tokio-rustls", "macros", "with-json", "postgres-array"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 strum = { workspace = true, features = ["derive"] }
 time = { workspace = true }
+thiserror = { workspace = true }
 utoipa = { workspace = true }
+
+async-graphql = { workspace = true, features = ["uuid", "time"], optional = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }

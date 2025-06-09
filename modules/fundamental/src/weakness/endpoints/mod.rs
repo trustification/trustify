@@ -42,6 +42,7 @@ pub async fn list_weaknesses(
     operation_id = "getWeakness",
     responses(
         (status = 200, description = "The weakness", body = LicenseSummary),
+        (status = 404, description = "The weakness was not found"),
     ),
 )]
 #[get("/v2/weakness/{id}")]
@@ -51,7 +52,11 @@ pub async fn get_weakness(
     id: web::Path<String>,
     _: Require<ReadWeakness>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(state.get_weakness(&id).await?))
+    if let Some(weakness_details) = state.get_weakness(&id).await? {
+        Ok(HttpResponse::Ok().json(weakness_details))
+    } else {
+        Ok(HttpResponse::NotFound().finish())
+    }
 }
 
 #[cfg(test)]

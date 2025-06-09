@@ -199,6 +199,8 @@ impl PurlAdvisory {
                 modified: None,
                 withdrawn: None,
                 cwes: None,
+                base_severity: None,
+                base_score: None,
             });
 
             if let Some(advisory) = advisory {

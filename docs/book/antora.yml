@@ -6,3 +6,4 @@ nav:
   - modules/ROOT/nav.adoc
   - modules/admin/nav.adoc
   - modules/concepts/nav.adoc
+  - modules/migration/nav.adoc

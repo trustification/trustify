@@ -1,14 +1,13 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt::{Display, Formatter};
+use std::fmt::Display;
 
 use chrono::Local;
 use human_date_parser::{ParseResult, from_human_time};
 use sea_orm::{
-    ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable, Value as SeaValue,
-    entity::ColumnDef, sea_query,
+    ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable, Value as SeaValue, sea_query,
 };
 use sea_query::{
-    Alias, ColumnRef, Expr, ExprTrait, IntoColumnRef, IntoIden, SimpleExpr,
+    Alias, ColumnRef, Expr, ExprTrait, Func, IntoColumnRef, IntoIden, SimpleExpr,
     extension::postgres::PgExpr,
 };
 use time::{
@@ -25,35 +24,6 @@ pub struct Columns {
     translator: Option<Translator>,
     json_keys: BTreeMap<&'static str, ColumnRef>,
     exprs: BTreeMap<&'static str, (SimpleExpr, ColumnType)>,
-}
-
-impl Display for Columns {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        for (r, ty) in &self.columns {
-            writeln!(f)?;
-            match r {
-                ColumnRef::SchemaTableColumn(_, t, c) | ColumnRef::TableColumn(t, c) => {
-                    write!(f, "  \"{}\".\"{}\"", t.to_string(), c.to_string())?
-                }
-                ColumnRef::Column(c) => write!(f, "  \"{}\"", c.to_string())?,
-                _ => write!(f, "  {r:?}")?,
-            }
-            write!(f, " : ")?;
-            match ty {
-                ColumnType::Text | ColumnType::String(_) | ColumnType::Char(_) => {
-                    write!(f, "String")?
-                }
-                ColumnType::Enum { name, variants } => write!(
-                    f,
-                    "Enum({}) {:?}",
-                    name.to_string(),
-                    variants.iter().map(|v| v.to_string()).collect::<Vec<_>>()
-                )?,
-                t => write!(f, "  {t:?}")?,
-            }
-        }
-        Ok(())
-    }
 }
 
 pub trait IntoColumns {
@@ -94,11 +64,9 @@ impl Columns {
     }
 
     /// Add an arbitrary column into the context.
-    pub fn add_column<I: IntoIdentity>(mut self, name: I, def: ColumnDef) -> Self {
-        self.columns.push((
-            name.into_identity().into_column_ref(),
-            def.get_column_type().clone(),
-        ));
+    pub fn add_column<I: IntoIdentity>(mut self, name: I, ty: ColumnType) -> Self {
+        self.columns
+            .push((name.into_identity().into_column_ref(), ty));
         self
     }
 
@@ -190,12 +158,18 @@ impl Columns {
         value: &str,
     ) -> Result<SimpleExpr, Error> {
         self.for_field(field).and_then(|(lhs, ct)| {
-            match (value.to_lowercase().as_str(), operator) {
-                ("null", Operator::Equal) => Ok(lhs.is_null()),
-                ("null", Operator::NotEqual) => Ok(lhs.is_not_null()),
-                (_, Operator::Like) => Ok(lhs.ilike(like(value))),
-                (_, Operator::NotLike) => Ok(lhs.not_ilike(like(value))),
-                _ => parse(value, &ct).map(|rhs| lhs.binary(operator, rhs)),
+            match (value.to_lowercase().as_str(), operator, &ct) {
+                ("null", Operator::Equal, _) => Ok(lhs.is_null()),
+                ("null", Operator::NotEqual, _) => Ok(lhs.is_not_null()),
+                (v, op, ColumnType::Array(_)) => match op {
+                    Operator::Like => Ok(array_to_string(lhs).ilike(like(v))),
+                    Operator::NotLike => Ok(array_to_string(lhs).not_ilike(like(v))),
+                    Operator::NotEqual => Ok(Expr::val(value).binary(op, all(lhs))),
+                    _ => Ok(Expr::val(value).binary(op, any(lhs))),
+                },
+                (v, Operator::Like, _) => Ok(lhs.ilike(like(v))),
+                (v, Operator::NotLike, _) => Ok(lhs.not_ilike(like(v))),
+                (_, _, ct) => parse(value, ct).map(|rhs| lhs.binary(operator, rhs)),
             }
         })
     }
@@ -285,6 +259,20 @@ fn like(s: &str) -> String {
     format!("%{}%", s.replace('%', r"\%").replace('_', r"\_"))
 }
 
+fn array_to_string(expr: SimpleExpr) -> SimpleExpr {
+    SimpleExpr::FunctionCall(
+        Func::cust("array_to_string".into_identity())
+            .arg(expr)
+            .arg("|"),
+    )
+}
+fn any(expr: SimpleExpr) -> SimpleExpr {
+    SimpleExpr::FunctionCall(Func::cust("ANY".into_identity()).arg(expr))
+}
+fn all(expr: SimpleExpr) -> SimpleExpr {
+    SimpleExpr::FunctionCall(Func::cust("ALL".into_identity()).arg(expr))
+}
+
 fn parse(s: &str, ct: &ColumnType) -> Result<SimpleExpr, Error> {
     fn err(e: impl Display) -> Error {
         Error::SearchSyntax(format!(r#"conversion error: "{e}""#))
@@ -325,7 +313,7 @@ mod tests {
     use super::super::tests::*;
     use super::super::*;
     use super::*;
-    use sea_orm::{ColumnType, ColumnTypeTrait, QuerySelect, QueryTrait};
+    use sea_orm::{ColumnType, QuerySelect, QueryTrait};
     use sea_query::{Expr, Func, SimpleExpr};
     use test_log::test;
 
@@ -344,7 +332,7 @@ mod tests {
                 q("location_len>10"),
                 advisory::Entity
                     .columns()
-                    .add_column("location_len", ColumnType::Integer.def()),
+                    .add_column("location_len", ColumnType::Integer),
             )?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
@@ -359,11 +347,11 @@ mod tests {
 
     #[test(tokio::test)]
     async fn filters_extra_columns() -> Result<(), anyhow::Error> {
-        let test = |s: &str, expected: &str, def: ColumnDef| {
+        let test = |s: &str, expected: &str, ty: ColumnType| {
             let stmt = advisory::Entity::find()
                 .select_only()
                 .column(advisory::Column::Id)
-                .filtering_with(q(s), advisory::Entity.columns().add_column("len", def))
+                .filtering_with(q(s), advisory::Entity.columns().add_column("len", ty))
                 .unwrap()
                 .build(sea_orm::DatabaseBackend::Postgres)
                 .to_string()
@@ -375,14 +363,14 @@ mod tests {
         };
 
         use ColumnType::*;
-        test("len=42", r#""len" = 42"#, Integer.def());
-        test("len!=42", r#""len" <> 42"#, Integer.def());
-        test("len~42", r#""len" ILIKE '%42%'"#, Text.def());
-        test("len!~42", r#""len" NOT ILIKE '%42%'"#, Text.def());
-        test("len>42", r#""len" > 42"#, Integer.def());
-        test("len>=42", r#""len" >= 42"#, Integer.def());
-        test("len<42", r#""len" < 42"#, Integer.def());
-        test("len<=42", r#""len" <= 42"#, Integer.def());
+        test("len=42", r#""len" = 42"#, Integer);
+        test("len!=42", r#""len" <> 42"#, Integer);
+        test("len~42", r#""len" ILIKE '%42%'"#, Text);
+        test("len!~42", r#""len" NOT ILIKE '%42%'"#, Text);
+        test("len>42", r#""len" > 42"#, Integer);
+        test("len>=42", r#""len" >= 42"#, Integer);
+        test("len<42", r#""len" < 42"#, Integer);
+        test("len<=42", r#""len" <= 42"#, Integer);
 
         Ok(())
     }
@@ -571,6 +559,47 @@ mod tests {
         );
         assert!(clause(q("missing:name=log4j")).is_err());
         assert!(clause(q("").sort(r"missing:name")).is_err());
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn array_queries() -> Result<(), anyhow::Error> {
+        let clause = |query: Query| -> Result<String, Error> {
+            Ok(advisory::Entity::find()
+                .filtering(query)?
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string()
+                .split("WHERE ")
+                .last()
+                .unwrap()
+                .to_string())
+        };
+
+        assert_eq!(
+            clause(q("authors=null"))?,
+            r#""advisory"."authors" IS NULL"#
+        );
+        assert_eq!(
+            clause(q("authors~foo"))?,
+            r#"array_to_string("advisory"."authors", '|') ILIKE '%foo%'"#
+        );
+        assert_eq!(
+            clause(q("authors~foo|bar"))?,
+            r#"(array_to_string("advisory"."authors", '|') ILIKE '%foo%') OR (array_to_string("advisory"."authors", '|') ILIKE '%bar%')"#
+        );
+        assert_eq!(
+            clause(q("authors!~foo"))?,
+            r#"array_to_string("advisory"."authors", '|') NOT ILIKE '%foo%'"#
+        );
+        assert_eq!(
+            clause(q("authors=Foo"))?,
+            r#"'Foo' = ANY("advisory"."authors")"#
+        );
+        assert_eq!(
+            clause(q("authors!=FOO"))?,
+            r#"'FOO' <> ALL("advisory"."authors")"#
+        );
 
         Ok(())
     }

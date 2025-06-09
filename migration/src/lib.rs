@@ -24,6 +24,7 @@ mod m0001030_perf_adv_gin_index;
 mod m0001040_alter_pythonver_cmp;
 mod m0001050_foreign_key_cascade;
 mod m0001060_advisory_vulnerability_indexes;
+mod m0001070_vulnerability_scores;
 mod m0001100_remove_get_purl;
 
 pub struct Migrator;
@@ -52,6 +53,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0001040_alter_pythonver_cmp::Migration),
             Box::new(m0001050_foreign_key_cascade::Migration),
             Box::new(m0001060_advisory_vulnerability_indexes::Migration),
+            Box::new(m0001070_vulnerability_scores::Migration),
             Box::new(m0001100_remove_get_purl::Migration),
         ]
     }

@@ -8,11 +8,12 @@ use crate::{
 };
 use futures_util::{StreamExt, TryStreamExt, stream};
 use sea_orm::{
-    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
-    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns, Statement,
-    StreamTrait, prelude::Uuid,
+    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromJsonQueryResult, FromQueryResult,
+    IntoSimpleExpr, QueryFilter, QueryOrder, QueryResult, QuerySelect, RelationTrait, Select,
+    SelectColumns, Statement, StreamTrait, prelude::Uuid,
 };
 use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, fmt::Debug};
 use tracing::instrument;
@@ -31,12 +32,12 @@ use trustify_entity::{
     advisory, advisory_vulnerability, base_purl,
     cpe::{self, CpeDto},
     labels::Labels,
-    organization, package_relates_to_package,
+    license, organization, package_relates_to_package,
     qualified_purl::{self, CanonicalPurl},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document, status,
-    versioned_purl, vulnerability,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_license, sbom_package_purl_ref,
+    source_document, status, versioned_purl, vulnerability,
 };
 
 impl SbomService {
@@ -180,6 +181,7 @@ impl SbomService {
             .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
             .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def());
 
+        query = join_licenses(query);
         query = join_purls_and_cpes(query)
             .filtering_with(
                 search,
@@ -188,6 +190,8 @@ impl SbomService {
                     .add_columns(sbom_node::Entity)
                     .add_columns(base_purl::Entity)
                     .add_columns(sbom_package_cpe_ref::Entity)
+                    .add_columns(sbom_package_license::Entity)
+                    .add_columns(license::Entity)
                     .add_columns(sbom_package_purl_ref::Entity),
             )?
             // default order
@@ -416,6 +420,9 @@ impl SbomService {
             .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
             .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def());
 
+        // collect licenses
+        query = join_licenses(query);
+
         // collect PURLs and CPEs
 
         query = join_purls_and_cpes(query);
@@ -560,6 +567,37 @@ where
         )
 }
 
+/// Join License information.
+///
+/// Given a select over sbom_package, this adds joins to fetch the data for Licenses so that it can be
+/// built using [`package_from_row`].
+///
+/// This will add the column `licenses` to the selected output.
+fn join_licenses<E>(query: Select<E>) -> Select<E>
+where
+    E: EntityTrait,
+{
+    query
+        .select_column_as(
+            Expr::cust_with_exprs(
+                "coalesce(json_agg(distinct jsonb_build_object('license_name', $1, 'license_type', $2)) filter (where $3), '[]'::json)",
+                [
+                    license::Column::Text.into_simple_expr(),
+                    sbom_package_license::Column::LicenseType.into_simple_expr(),
+                    license::Column::Text.is_not_null().into_simple_expr(),
+                ],
+            ),
+            "licenses",
+        )
+        .join(
+            JoinType::LeftJoin,
+            sbom_package::Relation::PackageLicense.def(),
+        ).join(
+            JoinType::LeftJoin,
+            sbom_package_license::Relation::License.def(),
+        )
+}
+
 #[derive(FromQueryResult)]
 struct PackageCatcher {
     id: String,
@@ -569,6 +607,13 @@ struct PackageCatcher {
     purls: Vec<Value>,
     cpes: Value,
     relationship: Option<Relationship>,
+    licenses: Vec<LicenseBasicInfo>,
+}
+
+#[derive(Serialize, Deserialize, FromJsonQueryResult)]
+pub struct LicenseBasicInfo {
+    pub license_name: String,
+    pub license_type: i32,
 }
 
 /// Convert values from a "package row" into an SBOM package
@@ -609,6 +654,12 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
         .map(|cpe| cpe.to_string())
         .collect();
 
+    let licenses = row
+        .licenses
+        .into_iter()
+        .map(|license| license.into())
+        .collect();
+
     SbomPackage {
         id: row.id,
         name: row.name,
@@ -616,6 +667,7 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
         version: row.version,
         purl,
         cpe,
+        licenses,
     }
 }
 

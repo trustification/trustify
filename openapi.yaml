@@ -5,7 +5,7 @@ info:
   license:
     name: Apache License, Version 2.0
     identifier: Apache-2.0
-  version: 0.2.17
+  version: 0.3.0-rc.2
 paths:
   /.well-known/trustify:
     get:
@@ -53,19 +53,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -170,16 +172,16 @@ paths:
         schema:
           type: string
           enum:
-          - oSV
-          - cSAF
-          - cVE
-          - sPDX
-          - cycloneDX
-          - clearlyDefinedCuration
-          - clearlyDefined
-          - cweCatalog
+          - osv
+          - csaf
+          - cve
+          - spdx
+          - cyclonedx
+          - clearlydefinedcuration
+          - clearlydefined
+          - cwecatalog
           - advisory
-          - sBOM
+          - sbom
           - unknown
       requestBody:
         content:
@@ -193,6 +195,33 @@ paths:
           description: Upload a file
         '400':
           description: The file could not be parsed as an advisory
+  /api/v2/advisory-labels:
+    get:
+      tags:
+      - advisory
+      summary: List all unique key/value labels from all Advisories
+      operationId: listAdvisoryLabels
+      parameters:
+      - name: filter_text
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      responses:
+        '200':
+          description: List all unique key/value labels from all Advisories
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
   /api/v2/advisory/{id}/label:
     put:
       tags:
@@ -332,19 +361,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -482,19 +513,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -626,19 +659,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -776,19 +811,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -1200,6 +1237,102 @@ paths:
       summary: Get reports for an importer
       operationId: listImporterReports
       parameters:
+      - name: q
+        in: query
+        description: |
+          EBNF grammar for the _q_ parameter:
+          ```text
+              q = ( values | filter ) { '&' q }
+              values = value { '|', values }
+              filter = field, operator, values
+              operator = "=" | "!=" | "~" | "!~" | ">=" | ">" | "<=" | "<"
+              value = (* any text but escape special characters with '\' *)
+              field = (* must match an entity attribute name *)
+          ```
+          Any values in a _q_ will result in a case-insensitive "full
+          text search", effectively producing an OR clause of LIKE
+          clauses for every string-ish field in the resource being
+          queried.
+
+          Examples:
+          - `foo` - any field containing 'foo'
+          - `foo|bar` - any field containing either 'foo' OR 'bar'
+          - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
+
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
+          attributes. If it doesn't, an error will be returned
+          containing a list of the valid fields for that resource.
+
+          The value 'null' is treated specially for [Not]Equal filters:
+          it returns resources on which the field isn't set. Use the
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
+
+          Examples:
+          - `name=foo` - entity's _name_ matches 'foo' exactly
+          - `name~foo` - entity's _name_ contains 'foo', case-insensitive
+          - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
+          - `name=null` - entity's _name_ isn't set
+          - `published>3 days ago` - date values can be "human time"
+
+          Multiple full text searches and/or filters should be
+          '&'-delimited -- they are logically AND'd together.
+
+          - `red hat|fedora&labels:type=cve|osv&published>last wednesday 17:00`
+
+          Fields corresponding to JSON objects in the database may use a
+          ':' to delimit the column name and the object key,
+          e.g. `purl:qualifiers:type=pom`
+
+          Any operator or special character, e.g. '|', '&', within a
+          value should be escaped by prefixing it with a backslash.
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        description: |
+          EBNF grammar for the _sort_ parameter:
+          ```text
+              sort = field [ ':', order ] { ',' sort }
+              order = ( "asc" | "desc" )
+              field = (* must match the name of entity's attributes *)
+          ```
+          The optional _order_ should be one of "asc" or "desc". If
+          omitted, the order defaults to "asc".
+
+          Each _field_ name must correspond to one of the columns of the
+          table holding the entities being queried. Those corresponding
+          to JSON objects in the database may use a ':' to delimit the
+          column name and the object key,
+          e.g. `purl:qualifiers:type:desc`
+        required: false
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: |-
+          The first item to return, skipping all that come before it.
+
+          NOTE: The order of items is defined by the API being called.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: limit
+        in: query
+        description: |-
+          The maximum number of entries to return.
+
+          Zero means: no limit
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
       - name: name
         in: path
         required: true
@@ -1241,19 +1374,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -1368,19 +1503,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -1498,19 +1635,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -1649,19 +1788,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -1757,19 +1898,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -1913,19 +2056,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -2014,16 +2159,16 @@ paths:
         schema:
           type: string
           enum:
-          - oSV
-          - cSAF
-          - cVE
-          - sPDX
-          - cycloneDX
-          - clearlyDefinedCuration
-          - clearlyDefined
-          - cweCatalog
+          - osv
+          - csaf
+          - cve
+          - spdx
+          - cyclonedx
+          - clearlydefinedcuration
+          - clearlydefined
+          - cwecatalog
           - advisory
-          - sBOM
+          - sbom
           - unknown
       - name: cache
         in: query
@@ -2054,6 +2199,33 @@ paths:
                 $ref: '#/components/schemas/IngestResult'
         '400':
           description: The file could not be parsed as an SBOM
+  /api/v2/sbom-labels:
+    get:
+      tags:
+      - sbom
+      summary: List all unique key/value labels from all SBOMs
+      operationId: listSbomLabels
+      parameters:
+      - name: filter_text
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      responses:
+        '200':
+          description: List all unique key/value labels from all SBOMs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {}
   /api/v2/sbom/by-package:
     get:
       tags:
@@ -2086,19 +2258,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -2289,6 +2463,29 @@ paths:
                   $ref: '#/components/schemas/SbomAdvisory'
         '404':
           description: Matching SBOM not found
+  /api/v2/sbom/{id}/all-license-ids:
+    get:
+      tags:
+      - sbom
+      operationId: listAllLicenseIds
+      parameters:
+      - name: id
+        in: path
+        description: ID of the SBOM to get the license IDs for
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: fetch all unique license id and license info id
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':
+          description: Invalid UUID format.
   /api/v2/sbom/{id}/label:
     put:
       tags:
@@ -2396,19 +2593,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -2536,19 +2735,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -2637,6 +2838,39 @@ paths:
                 format: binary
         '404':
           description: The document could not be found
+  /api/v2/ui/extract-sbom-purls:
+    post:
+      tags:
+      - ui
+      summary: Extract PURLs from an SBOM provided in the request
+      operationId: extractSbomPurls
+      parameters:
+      - name: format
+        in: query
+        description: An SBOM format to expect, or [`Format::SBOM`] and [`Format::Unknown`] to auto-detect.
+        required: false
+        schema:
+          $ref: '#/components/schemas/Format'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        '200':
+          description: Information extracted from the SBOM
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractResult'
+        '400':
+          description: Bad request data, like an unsupported format or invalid data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
   /api/v2/userPreference/{key}:
     get:
       tags:
@@ -2757,19 +2991,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -2890,14 +3126,9 @@ paths:
         schema:
           type: string
       responses:
-        '200':
-          description: Specified vulnerability
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VulnerabilityDetails'
-        '404':
-          description: Specified vulnerability not found
+        '501':
+          description: Method not yet implemented
+      deprecated: true
   /api/v2/weakness:
     get:
       tags:
@@ -2927,19 +3158,21 @@ paths:
           - `foo|bar` - any field containing either 'foo' OR 'bar'
           - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
 
-          A _filter_ can further constrain the results. The filter's
-          field name must correspond to one of the resource's
+          A _filter_ may also be used to constrain the results. The
+          filter's field name must correspond to one of the resource's
           attributes. If it doesn't, an error will be returned
           containing a list of the valid fields for that resource.
 
-          The value 'null' is treated specially for [not]equal filters:
+          The value 'null' is treated specially for [Not]Equal filters:
           it returns resources on which the field isn't set. Use the
-          LIKE operator, `~`, to match a literal "null" string.
+          LIKE operator, `~`, to match a literal "null" string. Omit the
+          value to match an empty string.
 
           Examples:
           - `name=foo` - entity's _name_ matches 'foo' exactly
           - `name~foo` - entity's _name_ contains 'foo', case-insensitive
           - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+          - `name=` - entity's _name_ is the empty string, ''
           - `name=null` - entity's _name_ isn't set
           - `published>3 days ago` - date values can be "human time"
 
@@ -3025,6 +3258,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LicenseSummary'
+        '404':
+          description: The weakness was not found
 components:
   schemas:
     AdvisoryDetails:
@@ -3389,6 +3624,22 @@ components:
         properties:
           source:
             type: string
+    ErrorInformation:
+      type: object
+      required:
+      - error
+      properties:
+        details:
+          type:
+          - string
+          - 'null'
+          description: Human-readable error details
+        error:
+          type: string
+          description: A machine-readable error type
+        message:
+          type: string
+          description: A human-readable error message
     ExternalReferenceQuery:
       type: object
       properties:
@@ -3402,6 +3653,48 @@ components:
           - type: 'null'
           - $ref: '#/components/schemas/Purl'
             description: Find by PURL
+    ExtractPackage:
+      type: object
+      description: Information extracted from a package
+      required:
+      - purls
+      properties:
+        purls:
+          type: array
+          items:
+            type: string
+          description: PURLs found as alias for this package
+    ExtractResult:
+      type: object
+      description: Information extracted from an SBOM
+      required:
+      - format
+      - packages
+      properties:
+        format:
+          $ref: '#/components/schemas/Format'
+          description: the actual, concrete format
+        packages:
+          type: object
+          description: packages of the SBOM
+          additionalProperties:
+            $ref: '#/components/schemas/ExtractPackage'
+          propertyNames:
+            type: string
+    Format:
+      type: string
+      enum:
+      - osv
+      - csaf
+      - cve
+      - spdx
+      - cyclonedx
+      - clearlydefinedcuration
+      - clearlydefined
+      - cwecatalog
+      - advisory
+      - sbom
+      - unknown
     Id:
       type: string
       description: |-
@@ -3552,6 +3845,21 @@ components:
       type: object
       additionalProperties:
         type: string
+    LicenseCategory:
+      type: string
+      enum:
+      - declared
+      - concluded
+    LicenseInfo:
+      type: object
+      required:
+      - license_name
+      - license_type
+      properties:
+        license_name:
+          type: string
+        license_type:
+          $ref: '#/components/schemas/LicenseCategory'
     LicenseSummary:
       type: object
       required:
@@ -3932,6 +4240,7 @@ components:
             - name
             - purl
             - cpe
+            - licenses
             properties:
               cpe:
                 type: array
@@ -3946,6 +4255,11 @@ components:
               id:
                 type: string
                 description: The SBOM internal ID of a package
+              licenses:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LicenseInfo'
+                description: License info
               name:
                 type: string
                 description: The name of the package in the SBOM
@@ -4472,6 +4786,7 @@ components:
       - name
       - purl
       - cpe
+      - licenses
       properties:
         cpe:
           type: array
@@ -4486,6 +4801,11 @@ components:
         id:
           type: string
           description: The SBOM internal ID of a package
+        licenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseInfo'
+          description: License info
         name:
           type: string
           description: The name of the package in the SBOM

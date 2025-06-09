@@ -70,10 +70,38 @@ pub fn configure(
         .service(download)
         .service(label::set)
         .service(label::update)
+        .service(label::all)
+        .service(get_unique_licenses)
         .service(get_license_export);
 }
 
 const CONTENT_TYPE_GZIP: &str = "application/gzip";
+
+#[utoipa::path(
+    tag = "sbom",
+    operation_id = "listAllLicenseIds",
+    params(
+    ("id", Path, description = "ID of the SBOM to get the license IDs for"),
+    ),
+    responses(
+    (status = 200, description = "fetch all unique license id and license info id", body = Vec<String>),
+    (status = 400, description = "Invalid UUID format."),
+    ),
+)]
+#[get("/v2/sbom/{id}/all-license-ids")]
+pub async fn get_unique_licenses(
+    fetcher: web::Data<LicenseService>,
+    db: web::Data<Database>,
+    id: web::Path<String>,
+    _: Require<ReadSbom>,
+) -> actix_web::Result<impl Responder> {
+    let parsed_id = Id::from_str(&id).map_err(Error::IdKey)?;
+    let all_licenses_info = fetcher.get_all_license_info(parsed_id, db.as_ref()).await?;
+    match all_licenses_info {
+        Some(all_licenses) => Ok(HttpResponse::Ok().json(all_licenses)),
+        None => Ok(HttpResponse::NotFound().into()),
+    }
+}
 
 #[utoipa::path(
     tag = "sbom",

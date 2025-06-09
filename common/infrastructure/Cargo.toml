@@ -11,7 +11,6 @@ actix-tls = { workspace = true, features = ["openssl"] }
 actix-web = { workspace = true, features = ["openssl"] }
 actix-web-extras = { workspace = true }
 actix-web-httpauth = { workspace = true }
-actix-web-opentelemetry = { workspace = true, features = ["metrics"] }
 anyhow = { workspace = true }
 bytesize = { workspace = true }
 clap = { workspace = true, features = ["derive", "env", "string"] }
@@ -23,6 +22,7 @@ openssl = { workspace = true }
 opentelemetry = { workspace = true }
 opentelemetry-otlp = { workspace = true, features = ["grpc-tonic"] }
 opentelemetry_sdk = { workspace = true, features = ["metrics"] }
+opentelemetry-instrumentation-actix-web = { workspace = true, features = ["metrics"] }
 parking_lot = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true, features = ["derive", "rc"] }
