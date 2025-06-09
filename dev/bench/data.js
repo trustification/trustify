@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749479843941,
+  "lastUpdate": 1749480496059,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11130,6 +11130,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/1fbae314150178b46ea0d44ffcdafe674bb223e7"
         },
         "date": 1749479842912,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "1bb18f5e712c9eb7d56ee901b5e28d1eebd39489",
+          "message": "ci: set non-blocking codecov status checks (#1725)",
+          "timestamp": "2025-06-09T11:40:31-03:00",
+          "tree_id": "7cd0996a2500f1a5f1ede7c0f8ccb0c2cc206658",
+          "url": "https://github.com/trustification/trustify/commit/1bb18f5e712c9eb7d56ee901b5e28d1eebd39489"
+        },
+        "date": 1749480494297,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
