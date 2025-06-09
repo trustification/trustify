@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749475081438,
+  "lastUpdate": 1749479843941,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11101,6 +11101,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/1e8b246c1e10f1a88119450644efff9de3f95361"
         },
         "date": 1749475080374,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "1fbae314150178b46ea0d44ffcdafe674bb223e7",
+          "message": "ci: free more disk space",
+          "timestamp": "2025-06-09T13:51:36Z",
+          "tree_id": "5e7ec20039352d6f0c63e6a9c362aa3079f7d892",
+          "url": "https://github.com/trustification/trustify/commit/1fbae314150178b46ea0d44ffcdafe674bb223e7"
+        },
+        "date": 1749479842912,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
