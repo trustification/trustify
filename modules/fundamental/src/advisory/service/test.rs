@@ -379,7 +379,7 @@ async fn set_advisory_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         ]),
         "Labels were not set correctly"
     );
-    
+
     Ok(())
 }
 
