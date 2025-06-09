@@ -370,7 +370,7 @@ async fn set_advisory_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         .await?;
 
     let fetched_again = advisory_service.fetch_advisory(id.clone(), &ctx.db).await?;
-    if let Some(advisory) = fetched_again {
+    let advisory = fetched_again.expect("The advisory does not exist.");
         assert_eq!(
             advisory.head.labels.0,
             HashMap::from([
@@ -379,10 +379,7 @@ async fn set_advisory_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
             ]),
             "Labels were not set correctly"
         );
-    } else {
-        panic!("Can not find the advisory");
-    }
-    //assert_eq!(fetched_again.unwrap().head.labels.len(), 2);
+
 
     Ok(())
 }
