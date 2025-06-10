@@ -267,9 +267,14 @@ impl AnalysisService {
     where
         C: ConnectionTrait + Send + 'static,
     {
-        let graph_cache = Arc::new(GraphMap::new(config.max_cache_size.as_u64()));
-
         let meter = global::meter("AnalysisService");
+
+        let graph_cache = Arc::new(GraphMap::new(
+            config.max_cache_size.as_u64(),
+            meter.u64_counter("cache_evictions").build(),
+            meter.u64_counter("cache_evictions_size").build(),
+        ));
+
         {
             let graph_cache = graph_cache.clone();
             meter
