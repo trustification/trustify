@@ -1,6 +1,7 @@
 #[cfg(feature = "garage-door")]
 use crate::embedded_oidc;
 
+use crate::profile::spawn_db_check;
 use crate::{endpoints, sample_data};
 use actix_web::{
     HttpRequest, HttpResponse, Responder, Result,
@@ -252,15 +253,11 @@ impl InitData {
             sample_data(db.clone()).await?;
         }
 
-        let check = Local::spawn_periodic("no database connection", Duration::from_secs(1), {
-            let db = db.clone();
-            move || {
-                let db = db.clone();
-                async move { db.ping().await.is_ok() }
-            }
-        })?;
-
-        context.health.readiness.register("database", check).await;
+        context
+            .health
+            .readiness
+            .register("database", spawn_db_check(db.clone())?)
+            .await;
 
         let storage = match run.storage.storage_strategy {
             StorageStrategy::Fs => {
