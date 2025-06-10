@@ -20,6 +20,7 @@ use fixedbitset::FixedBitSet;
 use futures::{StreamExt, stream};
 
 use opentelemetry::global;
+use opentelemetry::metrics::Counter;
 use petgraph::{
     Direction,
     graph::{Graph, NodeIndex},
@@ -272,7 +273,10 @@ impl AnalysisService {
         let graph_cache = Arc::new(GraphMap::new(
             config.max_cache_size.as_u64(),
             meter.u64_counter("cache_evictions").build(),
-            meter.u64_counter("cache_evictions_size").build(),
+            meter
+                .u64_counter("cache_evictions_size")
+                .with_unit("b")
+                .build(),
         ));
 
         {
@@ -292,7 +296,11 @@ impl AnalysisService {
 
         let (tx, rx) = mpsc::unbounded_channel::<QueueEntry>();
 
-        let inner = InnerService { graph_cache };
+        let inner = InnerService {
+            graph_cache,
+            cache_hit: meter.u64_counter("cache_hits").build(),
+            cache_miss: meter.u64_counter("cache_miss").build(),
+        };
 
         let loader = {
             let inner = inner.clone();
@@ -637,4 +645,6 @@ fn acyclic(id: &str, graph: &Arc<PackageGraph>) -> bool {
 #[derive(Clone)]
 struct InnerService {
     graph_cache: Arc<GraphMap>,
+    cache_hit: Counter<u64>,
+    cache_miss: Counter<u64>,
 }
