@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749559627245,
+  "lastUpdate": 1749561479609,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11275,6 +11275,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/4d5fa9da07c8a3c6f3334c60492faf3b88d8b524"
         },
         "date": 1749559625644,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "9cce8b6ca4ba174f736d4346af159c489f4bf475",
+          "message": "Provide api_token as a field on the QuayImporter config\n\nTurns out a lot of SBOM's are available without the token!",
+          "timestamp": "2025-06-10T12:52:40Z",
+          "tree_id": "4b042da0711e211f2582919cb3c29cccf159d95b",
+          "url": "https://github.com/trustification/trustify/commit/9cce8b6ca4ba174f736d4346af159c489f4bf475"
+        },
+        "date": 1749561478439,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
