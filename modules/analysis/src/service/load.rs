@@ -461,9 +461,12 @@ impl InnerService {
         log::debug!("loading sbom: {:?}", distinct_sbom_id);
 
         if let Some(g) = self.graph_cache.get(distinct_sbom_id) {
+            self.cache_hit.add(1, &[]);
             // early return if we already loaded it
             return Ok(g);
         }
+
+        self.cache_miss.add(1, &[]);
 
         let distinct_sbom_id = match Uuid::parse_str(distinct_sbom_id) {
             Ok(uuid) => uuid,
@@ -568,6 +571,8 @@ impl InnerService {
         connection: &C,
         distinct_sbom_ids: &[impl AsRef<str> + Debug],
     ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
+        log::info!("loading {} SBOMs", distinct_sbom_ids.len());
+
         let mut results = Vec::new();
         for distinct_sbom_id in distinct_sbom_ids {
             let distinct_sbom_id = distinct_sbom_id.as_ref();
