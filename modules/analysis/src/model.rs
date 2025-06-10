@@ -133,6 +133,8 @@ impl From<RemovalCauseAttributeValue> for Value {
 impl GraphMap {
     // Create a new instance of GraphMap
     pub fn new(cap: u64, evictions: Counter<u64>, eviction_size: Counter<u64>) -> Self {
+        log::info!("Setting graph cache size to {cap} bytes");
+
         GraphMap {
             map: Cache::builder()
                 .weigher(size_of_graph_entry)
