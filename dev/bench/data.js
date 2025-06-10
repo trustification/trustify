@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749482140566,
+  "lastUpdate": 1749542030498,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11217,6 +11217,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/4b86c3fc827b32b73661312a071940d69e3a4975"
         },
         "date": 1749482138631,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "7e433a4092bf99fcbf70f62ae4fa2f6ee7caab71",
+          "message": "chore: Aligning the 404 messages",
+          "timestamp": "2025-06-10T07:29:08Z",
+          "tree_id": "92e0a22d5df315619a448fae79bff694a47c9419",
+          "url": "https://github.com/trustification/trustify/commit/7e433a4092bf99fcbf70f62ae4fa2f6ee7caab71"
+        },
+        "date": 1749542029460,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
