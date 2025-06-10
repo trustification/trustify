@@ -4,7 +4,8 @@ mod roots;
 pub use roots::*;
 
 use deepsize::{Context, DeepSizeOf};
-use moka::sync::Cache;
+use moka::{notification::RemovalCause, sync::Cache};
+use opentelemetry::{KeyValue, Value, metrics::Counter};
 use petgraph::Graph;
 use serde::Serialize;
 use std::{
@@ -115,18 +116,35 @@ impl DeepSizeOf for DeepSizeGraph<'_> {
     }
 }
 
+struct RemovalCauseAttributeValue(pub RemovalCause);
+
+impl From<RemovalCauseAttributeValue> for Value {
+    fn from(value: RemovalCauseAttributeValue) -> Self {
+        match value.0 {
+            RemovalCause::Expired => "expired",
+            RemovalCause::Explicit => "explicit",
+            RemovalCause::Replaced => "replaced",
+            RemovalCause::Size => "size",
+        }
+        .into()
+    }
+}
+
 impl GraphMap {
     // Create a new instance of GraphMap
-    pub fn new(cap: u64) -> Self {
+    pub fn new(cap: u64, evictions: Counter<u64>, eviction_size: Counter<u64>) -> Self {
         GraphMap {
             map: Cache::builder()
                 .weigher(size_of_graph_entry)
                 .max_capacity(cap)
-                .eviction_listener(|k, v, cause| {
-                    if log::log_enabled!(log::Level::Info) {
-                        let size = size_of_graph_entry(&k, &v);
-                        log::info!("Evicting {k}: {cause:?}: {size} bytes");
-                    }
+                .eviction_listener(move |k, v, cause| {
+                    let attrs = [KeyValue::new("cause", RemovalCauseAttributeValue(cause))];
+                    let size = size_of_graph_entry(&k, &v);
+
+                    evictions.add(1, &attrs);
+                    eviction_size.add(size as _, &attrs);
+
+                    log::info!("Evicting {k}: {cause:?}: {size} bytes");
                 })
                 .build(),
         }
