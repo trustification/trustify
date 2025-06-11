@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749629584396,
+  "lastUpdate": 1749640121028,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11333,6 +11333,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/251aac7a6f2c72c13c66e791d34fae6b91437c73"
         },
         "date": 1749629582648,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "3dac8f70e3840ad016bd0851ab064a4d0b30e0f6",
+          "message": "feat: start exctracting vulnerability scores from cvss v4 and v2\n\nCurrently we only extract base score and severity values. There's need to be more work done\nto properly save all scores of all versions for vulnerabilities and advisories.\nThe base score used for the vulnerability will be picked from the highest cvss version\navailable. Since base severity was not standardized in cvss v2.0 it is recalculated from\nthe score.",
+          "timestamp": "2025-06-11T10:44:37Z",
+          "tree_id": "c57f5ff69189138f268a94fc323d57abd1326dc3",
+          "url": "https://github.com/trustification/trustify/commit/3dac8f70e3840ad016bd0851ab064a4d0b30e0f6"
+        },
+        "date": 1749640119348,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
