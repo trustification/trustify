@@ -11,6 +11,8 @@ use ::cpe::{
     uri::OwnedUri,
 };
 use anyhow::anyhow;
+use futures::FutureExt;
+use opentelemetry::KeyValue;
 use petgraph::{Graph, prelude::NodeIndex};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
@@ -25,17 +27,21 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
+use tokio::sync::oneshot;
 use tracing::{Level, instrument};
 use trustify_common::{
     cpe::Cpe as TrustifyCpe,
     db::query::{Columns, Filtering, IntoColumns},
     purl::Purl,
 };
-use trustify_entity::qualified_purl::{self, CanonicalPurl};
 use trustify_entity::{
-    cpe, cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom,
-    sbom_external_node, sbom_external_node::ExternalType, sbom_node, sbom_package,
-    sbom_package_cpe_ref, sbom_package_purl_ref,
+    cpe::{self, CpeDto},
+    package_relates_to_package,
+    qualified_purl::{self, CanonicalPurl},
+    relationship::Relationship,
+    sbom, sbom_external_node,
+    sbom_external_node::ExternalType,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
 };
 use uuid::Uuid;
 
@@ -461,22 +467,92 @@ impl InnerService {
         log::debug!("loading sbom: {:?}", distinct_sbom_id);
 
         if let Some(g) = self.graph_cache.get(distinct_sbom_id) {
+            log::debug!("Cache hit");
             self.cache_hit.add(1, &[]);
             // early return if we already loaded it
             return Ok(g);
         }
 
-        self.cache_miss.add(1, &[]);
+        let distinct_sbom_id = Uuid::parse_str(distinct_sbom_id).map_err(|err| {
+            Error::Database(anyhow!("Unable to parse SBOM ID {distinct_sbom_id}: {err}"))
+        })?;
 
-        let distinct_sbom_id = match Uuid::parse_str(distinct_sbom_id) {
-            Ok(uuid) => uuid,
-            Err(err) => {
-                return Err(Error::Database(anyhow!(
-                    "Unable to parse SBOM ID {distinct_sbom_id}: {err}"
-                )));
+        // check if there is a loading operation pending
+
+        let tx = {
+            let mut lock = self.loading_ops.lock().await;
+
+            match lock.entry(distinct_sbom_id) {
+                Entry::Occupied(o) => {
+                    log::debug!("Cache miss, but loading in progress");
+
+                    self.cache_miss.add(1, &[KeyValue::new("type", "await")]);
+
+                    let rx = o.get().clone();
+
+                    // drop lock before awaiting
+                    drop(lock);
+
+                    // there is an operation in progress, await and return
+                    return rx
+                        .await
+                        // error awaiting
+                        .map_err(|_| Error::Internal("failed to await loading operation".into()))?
+                        // error from performing the loading operation
+                        .map_err(Error::Internal);
+                }
+                Entry::Vacant(v) => {
+                    log::debug!("Cache miss, need to load");
+
+                    self.cache_miss.add(1, &[KeyValue::new("type", "load")]);
+
+                    // we are the first, create and insert a channel and perform the work
+                    // we need to ensure: 1) we remove the entry from the map, 2) we send to the channel
+                    let (tx, rx) = oneshot::channel();
+                    v.insert(rx.shared());
+                    tx
+                }
             }
         };
 
+        // full cache miss, perform the work
+
+        let g = match Self::perform_load_graph(connection, distinct_sbom_id).await {
+            Ok(g) => g,
+            Err(err) => {
+                // failed to load, remove and notify
+                self.loading_ops.lock().await.remove(&distinct_sbom_id);
+                let _ = tx.send(Err(err.to_string()));
+                return Err(err);
+            }
+        };
+        let g = Arc::new(g);
+
+        self.graph_cache
+            .insert(distinct_sbom_id.to_string(), g.clone());
+
+        // remove the ops handle
+
+        self.loading_ops.lock().await.remove(&distinct_sbom_id);
+
+        // notify the waiting tasks
+
+        let _ = tx.send(Ok(g.clone()));
+
+        // done
+
+        Ok(g)
+    }
+
+    /// Perform the actual loading operation, returning the graph, but not adding to the cache.
+    #[instrument(skip(connection))]
+    async fn perform_load_graph<C>(
+        connection: &C,
+        distinct_sbom_id: Uuid,
+    ) -> Result<PackageGraph, Error>
+    where
+        C: ConnectionTrait,
+    {
         // lazy load graphs
 
         let mut g: PackageGraph = Graph::new();
@@ -555,12 +631,6 @@ impl InnerService {
             }
         }
 
-        // Set the result. A parallel call might have done the same. We wasted some time, but the
-        // state is still correct.
-
-        let g = Arc::new(g);
-        self.graph_cache
-            .insert(distinct_sbom_id.to_string(), g.clone());
         Ok(g)
     }
 
