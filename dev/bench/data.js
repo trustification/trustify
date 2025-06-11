@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749561479609,
+  "lastUpdate": 1749629584396,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11304,6 +11304,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/9cce8b6ca4ba174f736d4346af159c489f4bf475"
         },
         "date": 1749561478439,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "251aac7a6f2c72c13c66e791d34fae6b91437c73",
+          "message": "feat(analysis): log graph cache size during startup",
+          "timestamp": "2025-06-11T07:49:28Z",
+          "tree_id": "af5a6d7c4196a0fd5c11a1dfeca22b460b7965c1",
+          "url": "https://github.com/trustification/trustify/commit/251aac7a6f2c72c13c66e791d34fae6b91437c73"
+        },
+        "date": 1749629582648,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
