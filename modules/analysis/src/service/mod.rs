@@ -19,8 +19,8 @@ use crate::{
 use fixedbitset::FixedBitSet;
 use futures::{StreamExt, stream};
 
-use opentelemetry::global;
-use opentelemetry::metrics::Counter;
+use futures::future::Shared;
+use opentelemetry::{global, metrics::Counter};
 use petgraph::{
     Direction,
     graph::{Graph, NodeIndex},
@@ -33,14 +33,14 @@ use sea_orm::{
 };
 use sea_query::JoinType;
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     fmt::Debug,
     pin::Pin,
     sync::Arc,
     task::{Context, Poll},
 };
 use tokio::{
-    sync::{mpsc, oneshot, oneshot::error::RecvError},
+    sync::{Mutex, mpsc, oneshot, oneshot::error::RecvError},
     task::JoinHandle,
 };
 use tracing::instrument;
@@ -298,6 +298,7 @@ impl AnalysisService {
 
         let inner = InnerService {
             graph_cache,
+            loading_ops: Default::default(),
             cache_hit: meter.u64_counter("cache_hits").build(),
             cache_miss: meter.u64_counter("cache_miss").build(),
         };
@@ -642,9 +643,12 @@ fn acyclic(id: &str, graph: &Arc<PackageGraph>) -> bool {
     result.is_none()
 }
 
+type LoadingOp = Shared<oneshot::Receiver<Result<Arc<PackageGraph>, String>>>;
+
 #[derive(Clone)]
 struct InnerService {
     graph_cache: Arc<GraphMap>,
+    loading_ops: Arc<Mutex<HashMap<Uuid, LoadingOp>>>,
     cache_hit: Counter<u64>,
     cache_miss: Counter<u64>,
 }
