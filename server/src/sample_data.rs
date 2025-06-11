@@ -337,3 +337,25 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
 
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use test_context::test_context;
+    use test_log::test;
+    use trustify_test_context::TrustifyContext;
+
+    /// Ensure that examples can be added without failures
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(tokio::test)]
+    async fn add_samples(ctx: TrustifyContext) -> anyhow::Result<()> {
+        sample_data(ctx.db.clone()).await?;
+
+        let service = ImporterService::new(ctx.db.clone());
+        let result = service.list().await?;
+
+        assert_eq!(result.len(), 16);
+
+        Ok(())
+    }
+}
