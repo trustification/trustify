@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749640121028,
+  "lastUpdate": 1749645592568,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11362,6 +11362,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/3dac8f70e3840ad016bd0851ab064a4d0b30e0f6"
         },
         "date": 1749640119348,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "adbc7a4f2bb8375d503c775e92d55604e6693f61",
+          "message": "Revert \"ci: set non-blocking codecov status checks (#1725)\"\n\nThis reverts commit 1bb18f5e712c9eb7d56ee901b5e28d1eebd39489.",
+          "timestamp": "2025-06-11T12:15:18Z",
+          "tree_id": "78bfaed42e67ff657460a66a0bd28d848597a765",
+          "url": "https://github.com/trustification/trustify/commit/adbc7a4f2bb8375d503c775e92d55604e6693f61"
+        },
+        "date": 1749645591492,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
