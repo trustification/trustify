@@ -3,6 +3,7 @@ use crate::{
     model::*,
     test::{Node, *},
 };
+use futures::future::try_join_all;
 use std::{str::FromStr, time::SystemTime};
 use test_context::test_context;
 use test_log::test;
@@ -688,6 +689,59 @@ async fn load_performance(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         "Loading took: {}",
         humantime::format_duration(start.elapsed()?)
     );
+
+    Ok(())
+}
+
+/// Run a standard scenario with a larger file, loading in parallel, to check the performance.
+///
+/// This should have the same performance as [`load_performance`].
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn load_performance_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let (spdx, _) =
+        document::<serde_json::Value>("openshift-container-storage-4.8.z.json.xz").await?;
+    let (spdx, _) = fix_license(&(), spdx);
+    let spdx = fix_spdx_rels(serde_json::from_value(spdx)?);
+
+    log::info!("Start ingestion");
+
+    ctx.ingest_json(spdx).await?;
+
+    log::info!("Start populating graph");
+
+    let start = SystemTime::now();
+    let service = AnalysisService::new(AnalysisConfig::default(), ctx.db.clone());
+
+    let mut tasks = vec![];
+    for _ in 0..10 {
+        tasks.push(service.load_all_graphs(&ctx.db));
+    }
+
+    try_join_all(tasks).await?;
+
+    log::info!(
+        "Loading took: {}",
+        humantime::format_duration(start.elapsed()?)
+    );
+
+    // now that all are loaded, it should be instant
+
+    let start = SystemTime::now();
+
+    let mut tasks = vec![];
+    for _ in 0..10 {
+        tasks.push(service.load_all_graphs(&ctx.db));
+    }
+
+    try_join_all(tasks).await?;
+
+    log::info!(
+        "Loading (phase 2) took: {}",
+        humantime::format_duration(start.elapsed()?)
+    );
+
+    // done
 
     Ok(())
 }
