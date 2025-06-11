@@ -229,11 +229,11 @@ impl LicenseService {
                     connection.get_database_backend(),
                     r#"
                     (
-                        SELECT DISTINCT unnest(l.spdx_licenses) as license
+                        SELECT DISTINCT l.text as license
                         FROM sbom_package_license spl
                         JOIN license l ON spl.license_id = l.id
                         WHERE spl.sbom_id = $1
-                        AND l.spdx_licenses IS NOT NULL
+                        AND l.text IS NOT NULL
                     )
                     "#,
                     [sbom.sbom_id.into()],
