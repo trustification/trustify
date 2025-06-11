@@ -72,6 +72,18 @@ fn suppliers(sbom: &SPDX) -> Vec<String> {
     Vec::from_iter(result)
 }
 
+fn versions(sbom: &SPDX) -> Vec<String> {
+    let mut result = HashSet::new();
+
+    for p in &sbom.package_information {
+        if let Some(version) = &p.package_version {
+            result.insert(version.clone());
+        }
+    }
+
+    Vec::from_iter(result)
+}
+
 impl<'a> From<Information<'a>> for SbomInformation {
     fn from(value: Information<'a>) -> Self {
         let sbom = value.0;
@@ -96,6 +108,7 @@ impl<'a> From<Information<'a>> for SbomInformation {
                 .clone(),
             suppliers: suppliers(sbom),
             data_licenses: vec![value.0.document_creation_information.data_license.clone()],
+            versions: versions(sbom),
         }
     }
 }
