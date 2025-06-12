@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749713465998,
+  "lastUpdate": 1749736609385,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11420,6 +11420,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/4c43c7f495d940d439c472fb09d6b181401ee3a4"
         },
         "date": 1749713464761,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "f0008572e4f0ad2bbd201a6141af02a0af7fe3d0",
+          "message": "feat(analysis): ensure parallel loads await each other\n\nLoading the same SBOM twice is currently rather inefficient. As the work\nis done twice (nor more times), but then discarded in the final step.\n\nThis PR changes this in a way a load operation is registered and\nfollowing cache misses will await that operation, rather than starting\na new one.",
+          "timestamp": "2025-06-12T13:24:24Z",
+          "tree_id": "8ce3e2e97d3c7ed7844b18b08d0f753b4f18771f",
+          "url": "https://github.com/trustification/trustify/commit/f0008572e4f0ad2bbd201a6141af02a0af7fe3d0"
+        },
+        "date": 1749736607897,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
