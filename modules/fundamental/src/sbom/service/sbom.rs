@@ -965,6 +965,7 @@ mod test {
             .fetch_sboms(q("versions~2.13.8"), Paginated::default(), (), &ctx.db)
             .await?;
         log::debug!("Version substring search results: {:#?}", fetched.items);
+        assert_eq!(1, fetched.total);
 
         // Test all SBOMs without version filter
         let fetched = service
