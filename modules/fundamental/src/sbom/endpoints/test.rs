@@ -684,6 +684,8 @@ async fn query_sboms_by_array_values(ctx: &TrustifyContext) -> Result<(), anyhow
     query(1, "suppliers!=Organization: Red Hat&authors~syft").await;
     query(0, "authors<ZZZ").await;
     query(2, "authors>ZZZ").await;
+    query(2, "organization").await;
+    query(1, "tool: syft").await;
 
     Ok(())
 }

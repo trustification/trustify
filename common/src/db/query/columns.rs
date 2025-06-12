@@ -137,6 +137,9 @@ impl Columns {
                 ColumnType::String(_) | ColumnType::Text => {
                     Some(Expr::col(col_ref.clone()).ilike(like(v)))
                 }
+                ColumnType::Array(_) => {
+                    Some(array_to_string(SimpleExpr::Column(col_ref.clone())).ilike(like(v)))
+                }
                 _ => None,
             })
             .chain(self.exprs.iter().filter_map(|(_, (ex, ty))| match ty {
@@ -482,7 +485,7 @@ mod tests {
         );
         assert_eq!(
             clause(q("foo"))?,
-            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (("advisory"."purl" ->> 'name') ILIKE '%foo%') OR (("advisory"."purl" ->> 'type') ILIKE '%foo%') OR (("advisory"."purl" ->> 'version') ILIKE '%foo%')"#
+            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (array_to_string("advisory"."authors", '|') ILIKE '%foo%') OR (("advisory"."purl" ->> 'name') ILIKE '%foo%') OR (("advisory"."purl" ->> 'type') ILIKE '%foo%') OR (("advisory"."purl" ->> 'version') ILIKE '%foo%')"#
         );
         match clause(q("missing=gone")) {
             Ok(_) => panic!("field should be invalid"),
@@ -617,6 +620,10 @@ mod tests {
         assert_eq!(
             clause(q("authors!=FOO"))?,
             r#"'FOO' <> ALL("advisory"."authors")"#
+        );
+        assert_eq!(
+            clause(q("foo"))?,
+            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (array_to_string("advisory"."authors", '|') ILIKE '%foo%')"#
         );
 
         Ok(())
