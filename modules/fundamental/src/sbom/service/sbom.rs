@@ -139,7 +139,16 @@ impl SbomService {
                     .alias("sbom_node", "r0")
                     .translator(|f, op, v| match f.split_once(':') {
                         Some(("label", key)) => Some(format!("labels:{key}{op}{v}")),
-                        Some(("version", _)) => Some(format!("versions @> ARRAY[{v}]")),
+                        Some(("version", _key)) => match op {
+                            // Exact match for a version in the array
+                            "eq" => Some(format!("versions @> ARRAY[{}]::text[]", v)),
+                            // Substring search within any version in the array
+                            "like" => Some(format!(
+                                "EXISTS (SELECT 1 FROM unnest(versions) AS v WHERE v ILIKE '%' || {} || '%')",
+                                v
+                            )),
+                            _ => None,
+                        },
                         _ => None,
                     }),
             )?
