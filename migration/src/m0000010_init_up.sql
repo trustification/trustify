@@ -1897,7 +1897,7 @@ CREATE TABLE public.sbom (
     labels jsonb NOT NULL,
     source_document_id uuid,
     data_licenses text[] DEFAULT ARRAY[]::text[] NOT NULL,
-    versions text[] DEFAULT ARRAY[]::text[]
+    versions text[] DEFAULT ARRAY[]::text[] NOT NULL
 );
 
 
