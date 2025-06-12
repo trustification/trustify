@@ -144,8 +144,8 @@ impl SbomService {
                             "eq" => Some(format!("versions @> ARRAY[{}]::text[]", v)),
                             // Substring search within any version in the array
                             "like" => Some(format!(
-                                "EXISTS (SELECT 1 FROM unnest(versions) AS v WHERE v ILIKE '%' || {} || '%')",
-                                v
+                                "EXISTS (SELECT 1 FROM unnest(versions) AS v WHERE v ILIKE '%' || '{}' || '%')",
+                                v.replace('\'', "''")
                             )),
                             _ => None,
                         },
