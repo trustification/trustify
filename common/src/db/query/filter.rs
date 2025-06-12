@@ -303,39 +303,39 @@ pub(crate) mod tests {
 
         assert_eq!(
             where_clause("foo")?,
-            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')"#
+            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (array_to_string("advisory"."authors", '|') ILIKE '%foo%')"#
         );
         assert_eq!(
             where_clause(r"type\=jar")?,
-            r#"("advisory"."location" ILIKE '%type=jar%') OR ("advisory"."title" ILIKE '%type=jar%')"#
+            r#"("advisory"."location" ILIKE '%type=jar%') OR ("advisory"."title" ILIKE '%type=jar%') OR (array_to_string("advisory"."authors", '|') ILIKE '%type=jar%')"#
         );
         assert_eq!(
             where_clause(r"type\~\=\!\>\<jar")?,
-            r#"("advisory"."location" ILIKE '%type~=!><jar%') OR ("advisory"."title" ILIKE '%type~=!><jar%')"#
+            r#"("advisory"."location" ILIKE '%type~=!><jar%') OR ("advisory"."title" ILIKE '%type~=!><jar%') OR (array_to_string("advisory"."authors", '|') ILIKE '%type~=!><jar%')"#
         );
         assert_eq!(
             where_clause("foo&location=bar")?,
-            r#"(("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')) AND "advisory"."location" = 'bar'"#
+            r#"(("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (array_to_string("advisory"."authors", '|') ILIKE '%foo%')) AND "advisory"."location" = 'bar'"#
         );
         assert_eq!(
             where_clause(r"m\&m's&location=f\&oo&id=0e840505-e29b-41d4-a716-665544004400")?,
-            r#"(("advisory"."location" ILIKE E'%m&m\'s%') OR ("advisory"."title" ILIKE E'%m&m\'s%')) AND "advisory"."location" = 'f&oo' AND "advisory"."id" = '0e840505-e29b-41d4-a716-665544004400'"#
+            r#"(("advisory"."location" ILIKE E'%m&m\'s%') OR ("advisory"."title" ILIKE E'%m&m\'s%') OR (array_to_string("advisory"."authors", '|') ILIKE E'%m&m\'s%')) AND "advisory"."location" = 'f&oo' AND "advisory"."id" = '0e840505-e29b-41d4-a716-665544004400'"#
         );
         assert_eq!(
             where_clause("a|b|c")?,
-            r#"("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%') OR ("advisory"."location" ILIKE '%c%') OR ("advisory"."title" ILIKE '%c%')"#
+            r#"("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR (array_to_string("advisory"."authors", '|') ILIKE '%a%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%') OR (array_to_string("advisory"."authors", '|') ILIKE '%b%') OR ("advisory"."location" ILIKE '%c%') OR ("advisory"."title" ILIKE '%c%') OR (array_to_string("advisory"."authors", '|') ILIKE '%c%')"#
         );
         assert_eq!(
             where_clause("a|b&id=0e840505-e29b-41d4-a716-665544004400")?,
-            r#"(("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%')) AND "advisory"."id" = '0e840505-e29b-41d4-a716-665544004400'"#
+            r#"(("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR (array_to_string("advisory"."authors", '|') ILIKE '%a%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%') OR (array_to_string("advisory"."authors", '|') ILIKE '%b%')) AND "advisory"."id" = '0e840505-e29b-41d4-a716-665544004400'"#
         );
         assert_eq!(
             where_clause("a&b")?,
-            r#"(("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%')) AND (("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%'))"#
+            r#"(("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR (array_to_string("advisory"."authors", '|') ILIKE '%a%')) AND (("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%') OR (array_to_string("advisory"."authors", '|') ILIKE '%b%'))"#
         );
         assert_eq!(
             where_clause("here&location!~there|hereford")?,
-            r#"(("advisory"."location" ILIKE '%here%') OR ("advisory"."title" ILIKE '%here%')) AND (("advisory"."location" NOT ILIKE '%there%') AND ("advisory"."location" NOT ILIKE '%hereford%'))"#
+            r#"(("advisory"."location" ILIKE '%here%') OR ("advisory"."title" ILIKE '%here%') OR (array_to_string("advisory"."authors", '|') ILIKE '%here%')) AND (("advisory"."location" NOT ILIKE '%there%') AND ("advisory"."location" NOT ILIKE '%hereford%'))"#
         );
 
         Ok(())
