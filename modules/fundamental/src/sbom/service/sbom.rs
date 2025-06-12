@@ -936,4 +936,42 @@ mod test {
 
         Ok(())
     }
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn versions_filtering(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let _sbom1 = ctx
+            .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
+            .await?;
+
+        let _sbom2 = ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
+
+        let service = SbomService::new(ctx.db.clone());
+
+        // Test exact version match
+        let fetched = service
+            .fetch_sboms(
+                q("versions=2.13.8.Final-redhat-00004"),
+                Paginated::default(),
+                (),
+                &ctx.db,
+            )
+            .await?;
+        log::debug!("Exact version match results: {:#?}", fetched.items);
+        assert_eq!(1, fetched.total);
+
+        // Test version substring search
+        let fetched = service
+            .fetch_sboms(q("versions~2.13.8"), Paginated::default(), (), &ctx.db)
+            .await?;
+        log::debug!("Version substring search results: {:#?}", fetched.items);
+
+        // Test all SBOMs without version filter
+        let fetched = service
+            .fetch_sboms(Query::default(), Paginated::default(), (), &ctx.db)
+            .await?;
+        assert_eq!(2, fetched.total);
+
+        Ok(())
+    }
 }
