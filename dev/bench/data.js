@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749736609385,
+  "lastUpdate": 1749738169184,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11449,6 +11449,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/f0008572e4f0ad2bbd201a6141af02a0af7fe3d0"
         },
         "date": 1749736607897,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "c36373270ac9304a745739623f740822c5fa8bcc",
+          "message": "fix: timeout the DB ping and return \"false\"",
+          "timestamp": "2025-06-12T13:44:00Z",
+          "tree_id": "982e50a960637ed09222c704005db496a01eaedb",
+          "url": "https://github.com/trustification/trustify/commit/c36373270ac9304a745739623f740822c5fa8bcc"
+        },
+        "date": 1749738168493,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
