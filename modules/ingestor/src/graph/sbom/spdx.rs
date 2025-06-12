@@ -72,10 +72,17 @@ fn suppliers(sbom: &SPDX) -> Vec<String> {
     Vec::from_iter(result)
 }
 
+/// Extract versions for a SPDX SBOM by collecting versions of describing packages
 fn versions(sbom: &SPDX) -> Vec<String> {
-    let mut result = HashSet::new();
+    // packages describing the SBOM
+    let describing = describing_packages(sbom);
 
+    // collect versions for matching packages
+    let mut result = HashSet::new();
     for p in &sbom.package_information {
+        if !describing.contains(p.package_spdx_identifier.as_str()) {
+            continue;
+        }
         if let Some(version) = &p.package_version {
             result.insert(version.clone());
         }
