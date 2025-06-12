@@ -373,6 +373,15 @@ async fn quarkus_component_by_cpe(ctx: &TrustifyContext) -> Result<(), anyhow::E
     Ok(())
 }
 
+async fn query(ctx: &TrustifyContext, query: &str) -> Value {
+    let app = caller(ctx).await.unwrap();
+    let uri = format!("/api/v2/analysis/component?q={}&limit=0", encode(query));
+    let request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    tracing::debug!(test = "", "{response:#?}");
+    response
+}
+
 /// find a component by query
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
@@ -381,15 +390,6 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
         .await?;
 
     const PURL: &str = "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom";
-
-    let query = async |query| {
-        let app = caller(ctx).await.unwrap();
-        let uri = format!("/api/v2/analysis/component?q={}&limit=0", encode(query));
-        let request = TestRequest::get().uri(&uri).to_request();
-        let response: Value = app.call_and_read_body_json(request).await;
-        tracing::debug!(test = "", "{response:#?}");
-        response
-    };
 
     for each in [
         r"purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/\&type=pom",
@@ -408,7 +408,7 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
         "purl~quarkus&cpe~cpe:/a:redhat", // valid CPE, invalid PURL so full-text search
     ] {
         assert!(
-            query(each).await.contains_subset(json!({
+            query(ctx, each).await.contains_subset(json!({
                 "items": [{
                     "purl": [ PURL ],
                     "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
@@ -428,15 +428,6 @@ async fn find_components_without_namespace(ctx: &TrustifyContext) -> Result<(), 
 
     const PURL: &str = "pkg:nuget/NGX@31.0.15.5356";
 
-    let query = async |query| {
-        let app = caller(ctx).await.unwrap();
-        let uri = format!("/api/v2/analysis/component?q={}&limit=0", encode(query));
-        let request = TestRequest::get().uri(&uri).to_request();
-        let response: Value = app.call_and_read_body_json(request).await;
-        tracing::debug!(test = "", "{response:#?}");
-        response
-    };
-
     for each in [
         "purl~pkg:nuget/NGX",
         // "purl~pkg:nuget/NGX@",
@@ -444,7 +435,7 @@ async fn find_components_without_namespace(ctx: &TrustifyContext) -> Result<(), 
         // "pkg:nuget/NGX@31.0.15.5356",
     ] {
         assert!(
-            query(each).await.contains_subset(json!({
+            query(ctx, each).await.contains_subset(json!({
                 "items": [{
                     "purl": [ PURL ],
                 }]
