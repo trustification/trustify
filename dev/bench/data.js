@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749742440443,
+  "lastUpdate": 1749809939793,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11507,6 +11507,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/60ff46581c36ec09814f1b64067ab0d92d3fce39"
         },
         "date": 1749742439263,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "74cecf87421627353ea12a7e99eec48d90b142e3",
+          "message": "refactor(test): Extracts code block to a function",
+          "timestamp": "2025-06-13T09:55:37Z",
+          "tree_id": "987f08394686017e0f659bc375086fae993805d4",
+          "url": "https://github.com/trustification/trustify/commit/74cecf87421627353ea12a7e99eec48d90b142e3"
+        },
+        "date": 1749809938981,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
