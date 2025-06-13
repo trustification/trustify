@@ -268,7 +268,7 @@ impl InnerService {
             GraphQuery::Component(ComponentReference::Name(name)) => sbom_node::Entity::find()
                 .filter(sbom_node::Column::Name.eq(name))
                 .select_only()
-                .column(sbom::Column::SbomId)
+                .column(sbom_node::Column::SbomId)
                 .distinct()
                 .into_query(),
             GraphQuery::Component(ComponentReference::Purl(purl)) => sbom_node::Entity::find()
