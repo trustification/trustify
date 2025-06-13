@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749816230361,
+  "lastUpdate": 1749824479244,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11565,6 +11565,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/c984addb2166971c4e54e594e1df70f6b94dec01"
         },
         "date": 1749816228746,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "gdubreui@redhat.com",
+            "name": "Gilles Dubreuil",
+            "username": "gildub"
+          },
+          "distinct": true,
+          "id": "64e6e903a2345a01ab80e49fdbf3258282203ae9",
+          "message": "fix: include array fields in full-text searches\n\nfixes: #1746",
+          "timestamp": "2025-06-13T13:56:26Z",
+          "tree_id": "4dd7ac36e5674ff0caff607d6783663400db55f3",
+          "url": "https://github.com/trustification/trustify/commit/64e6e903a2345a01ab80e49fdbf3258282203ae9"
+        },
+        "date": 1749824477605,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
