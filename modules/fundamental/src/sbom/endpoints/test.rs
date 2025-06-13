@@ -872,7 +872,7 @@ async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let result = query(&app, &id, "version=4.1.105.Final").await;
     assert_eq!(result.total, 9);
 
-    let result = query(&app, &id, "license~Apache-2.0").await;
+    let result = query(&app, &id, "license=Apache-2.0").await;
     assert_eq!(result.total, 35);
 
     let result = query(&app, &id, "license~GNU Lesser General Public License").await;

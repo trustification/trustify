@@ -1,3 +1,4 @@
+use crate::sbom::model::LicenseRefMapping;
 use crate::{
     Error,
     license::model::{
@@ -8,8 +9,8 @@ use crate::{
     },
 };
 use sea_orm::{
-    ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, JsonValue, QueryFilter,
-    QuerySelect, RelationTrait, Statement,
+    ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
+    RelationTrait, Statement,
 };
 use sea_query::{Condition, JoinType};
 use trustify_common::{
@@ -214,7 +215,7 @@ impl LicenseService {
         &self,
         id: Id,
         connection: &C,
-    ) -> Result<Option<Vec<JsonValue>>, Error> {
+    ) -> Result<Option<Vec<LicenseRefMapping>>, Error> {
         // check the SBOM exists searching by the provided Id
         let sbom = sbom::Entity::find()
             .join(JoinType::LeftJoin, sbom::Relation::SourceDocument.def())
@@ -224,7 +225,7 @@ impl LicenseService {
 
         match sbom {
             Some(sbom) => {
-                let result: Vec<JsonValue> = JsonValue::find_by_statement(Statement::from_sql_and_values(
+                let result: Vec<LicenseRefMapping> = LicenseRefMapping::find_by_statement(Statement::from_sql_and_values(
                     connection.get_database_backend(),
                     r#"
                     (
