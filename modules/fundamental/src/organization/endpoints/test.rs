@@ -8,56 +8,53 @@ use test_log::test;
 use trustify_common::db::query::Query;
 use trustify_common::hashing::Digests;
 use trustify_common::model::Paginated;
-use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
+use trustify_module_ingestor::graph::{
+    Outcome,
+    advisory::{AdvisoryContext, AdvisoryInformation},
+};
 use trustify_test_context::{TrustifyContext, call::CallService};
+
+async fn ingest_advisory<'ctx>(
+    ctx: &'ctx TrustifyContext,
+    id: &str,
+    issuer: &str,
+) -> Result<Outcome<AdvisoryContext<'ctx>>, anyhow::Error> {
+    let advisory = ctx
+        .graph
+        .ingest_advisory(
+            id,
+            ("source", "http://captpickles.com/"),
+            &Digests::digest(id),
+            AdvisoryInformation {
+                id: id.to_string(),
+                title: Some(id.to_string()),
+                version: None,
+                issuer: Some(issuer.to_string()),
+                published: Some(OffsetDateTime::now_utc()),
+                modified: None,
+                withdrawn: None,
+            },
+            &ctx.db,
+        )
+        .await?;
+
+    Ok(advisory)
+}
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn organization_tests(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    // test all organizations
+
+    let db = &ctx.db;
     let app = caller(ctx).await?;
 
-    ctx.graph
-        .ingest_advisory(
-            "CAPT-1",
-            ("source", "http://captpickles.com/"),
-            &Digests::digest("CAPT-1"),
-            AdvisoryInformation {
-                id: "CAPT-1".to_string(),
-                title: Some("CAPT-1".to_string()),
-                version: None,
-                issuer: Some("Capt Pickles Industrial Conglomerate".to_string()),
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            &ctx.db,
-        )
-        .await?;
-
-    ctx.graph
-        .ingest_advisory(
-            "EMPORIUM-1",
-            ("source", "http://captpickles.com/"),
-            &Digests::digest("EMPORIUM-1"),
-            AdvisoryInformation {
-                id: "EMPORIUM-1".to_string(),
-                title: Some("EMPORIUM-1".to_string()),
-                version: None,
-                issuer: Some("Capt Pickles Boutique Emporium".to_string()),
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            &ctx.db,
-        )
-        .await?;
+    ingest_advisory(ctx, "CAPT-1", "Capt Pickles Industrial Conglomerate").await?;
+    ingest_advisory(ctx, "EMPORIUM-1", "Capt Pickles Boutique Emporium").await?;
 
     let uri = "/api/v2/organization?sort=name";
-
     let request = TestRequest::get().uri(uri).to_request();
-
     let response: Value = app.call_and_read_body_json(request).await;
-
     let names = response.query("$.items[*].name").unwrap();
 
     assert_eq!(
@@ -68,33 +65,11 @@ async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ]
     );
 
-    Ok(())
-}
+    db.refresh().await?;
 
-#[test_context(TrustifyContext)]
-#[test(actix_web::test)]
-async fn one_organization(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(ctx).await?;
+    // test one organization
 
-    let advisory = ctx
-        .graph
-        .ingest_advisory(
-            "CAPT-1",
-            ("source", "http://captpickles.com/"),
-            &Digests::digest("CAPT-1"),
-            AdvisoryInformation {
-                id: "CAPT-1".to_string(),
-                title: Some("Pickles can experience a buffer overflow".to_string()),
-                version: None,
-                issuer: Some("Capt Pickles Industrial Conglomerate".to_string()),
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            &ctx.db,
-        )
-        .await?;
-
+    let advisory = ingest_advisory(ctx, "CAPT-9", "Foo Bar").await?;
     advisory
         .link_to_vulnerability("CVE-123", None, &ctx.db)
         .await?;
@@ -111,14 +86,11 @@ async fn one_organization(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let org_id = first_org.head.id;
 
     let uri = format!("/api/v2/organization/{}", org_id);
-
     let request = TestRequest::get().uri(&uri).to_request();
-
     let response: Value = app.call_and_read_body_json(request).await;
-
     let name = response.query("$.name")?;
 
-    assert_eq!(name, [&json!("Capt Pickles Industrial Conglomerate")]);
+    assert_eq!(name, [&json!("Foo Bar")]);
 
     Ok(())
 }
