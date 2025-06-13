@@ -664,6 +664,7 @@ async fn query_sboms_by_array_values(ctx: &TrustifyContext) -> Result<(), anyhow
     ctx.ingest_documents([
         "quarkus-bom-2.13.8.Final-redhat-00004.json",
         "spdx/rhelai1_binary.json",
+        "cyclonedx/container.json",
     ])
     .await?;
 
@@ -686,6 +687,15 @@ async fn query_sboms_by_array_values(ctx: &TrustifyContext) -> Result<(), anyhow
     query(2, "authors>ZZZ").await;
     query(2, "organization").await;
     query(1, "tool: syft").await;
+    query(1, "versions=2.13.8.Final-redhat-00004").await;
+    query(1, "versions~2.13.8").await;
+    query(
+        1,
+        "versions=sha256:fbf470d8b5b84606f797d78775b9de88e14fdb43cc47b2db6ff3747b46df323e",
+    )
+    .await;
+    query(1, "versions~fbf470d8").await;
+    query(3, "").await;
 
     Ok(())
 }
@@ -774,37 +784,6 @@ async fn all_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ]),
     )
     .await?;
-
-    Ok(())
-}
-
-#[test_context(TrustifyContext)]
-#[test(actix_web::test)]
-async fn query_sboms_by_version_value(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    ctx.ingest_documents([
-        "quarkus-bom-2.13.8.Final-redhat-00004.json",
-        "cyclonedx/container.json",
-    ])
-    .await?;
-
-    let query = async |expected_count, q| {
-        let app = caller(ctx).await.unwrap();
-        let uri = format!("/api/v2/sbom?q={}", encode(q));
-        let req = TestRequest::get().uri(&uri).to_request();
-        let response: Value = app.call_and_read_body_json(req).await;
-        tracing::debug!(test = "", "{response:#?}");
-        assert_eq!(expected_count, response["total"], "for {q}");
-    };
-
-    query(1, "versions=2.13.8.Final-redhat-00004").await;
-    query(1, "versions~2.13.8").await;
-    query(
-        1,
-        "versions=sha256:fbf470d8b5b84606f797d78775b9de88e14fdb43cc47b2db6ff3747b46df323e",
-    )
-    .await;
-    query(1, "versions~fbf470d8").await;
-    query(2, "").await;
 
     Ok(())
 }
