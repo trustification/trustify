@@ -48,9 +48,9 @@ impl Serialize for BinaryByteSize {
 }
 
 // This is a copy of [`bytesize::ByteSize`] to generate a schema for it.
-#[derive(schemars::JsonSchema)]
+#[derive(schemars::JsonSchema, utoipa::ToSchema)]
 #[schemars(remote = "ByteSize")]
-struct ByteSizeDef(#[allow(unused)] pub String);
+pub struct ByteSizeDef(#[allow(unused)] pub String);
 
 impl From<ByteSize> for BinaryByteSize {
     fn from(value: ByteSize) -> Self {

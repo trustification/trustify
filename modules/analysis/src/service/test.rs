@@ -340,9 +340,11 @@ async fn test_status_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let all_graphs = service.load_all_graphs(&ctx.db).await?;
     assert_eq!(all_graphs.len(), 1);
 
-    let analysis_status = service.status(&ctx.db).await?;
+    let analysis_status = service.status(&ctx.db, false).await?;
     assert_eq!(analysis_status.sbom_count, 1);
     assert_eq!(analysis_status.graph_count, 1);
+    assert_eq!(analysis_status.graph_memory, 6894);
+    assert!(analysis_status.details.is_none());
 
     service.clear_all_graphs()?;
 
@@ -352,10 +354,12 @@ async fn test_status_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     ])
     .await?;
 
-    let analysis_status = service.status(&ctx.db).await?;
+    let analysis_status = service.status(&ctx.db, false).await?;
 
     assert_eq!(analysis_status.sbom_count, 3);
     assert_eq!(analysis_status.graph_count, 0);
+    assert_eq!(analysis_status.graph_memory, 0);
+    assert!(analysis_status.details.is_none());
 
     Ok(())
 }

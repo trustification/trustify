@@ -35,9 +35,18 @@ pub fn configure(config: &mut ServiceConfig, db: Database, analysis: AnalysisSer
         .service(get_latest_component);
 }
 
+#[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams)]
+struct StatusQuery {
+    #[serde(default)]
+    pub details: bool,
+}
+
 #[utoipa::path(
     tag = "analysis",
     operation_id = "status",
+    params(
+        StatusQuery
+    ),
     responses(
         AuthResponse,
         (status = 200, description = "Analysis status", body = AnalysisStatus),
@@ -50,11 +59,12 @@ pub async fn analysis_status(
     db: web::Data<Database>,
     user: UserInformation,
     authorizer: web::Data<Authorizer>,
+    web::Query(StatusQuery { details }): web::Query<StatusQuery>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     // TODO: Replace with a more "admin" style permission when revisiting the permission system
     authorizer.require(&user, Permission::CreateSbom)?;
-    Ok(HttpResponse::Ok().json(service.status(db.as_ref()).await?))
+    Ok(HttpResponse::Ok().json(service.status(db.as_ref(), details).await?))
 }
 
 #[utoipa::path(

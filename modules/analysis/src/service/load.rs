@@ -1,3 +1,4 @@
+use crate::service::LoadingOp;
 use crate::{
     Error,
     model::{PackageGraph, graph},
@@ -479,39 +480,47 @@ impl InnerService {
 
         // check if there is a loading operation pending
 
-        let tx = {
-            let mut lock = self.loading_ops.lock().await;
+        enum Ops {
+            /// existing operation to await
+            Existing(LoadingOp),
+            /// new operation to report back to
+            New(oneshot::Sender<Result<Arc<PackageGraph>, String>>),
+        }
 
-            match lock.entry(distinct_sbom_id) {
-                Entry::Occupied(o) => {
-                    log::debug!("Cache miss, but loading in progress");
+        // Evaluate if we need a new operation or have an existing one
+        //
+        // This locks the map, so we need to just extract, not await anything.
 
-                    self.cache_miss.add(1, &[KeyValue::new("type", "await")]);
+        let ops = match self.loading_ops.lock().entry(distinct_sbom_id) {
+            Entry::Occupied(o) => Ops::Existing(o.get().clone()),
+            Entry::Vacant(v) => {
+                let (tx, rx) = oneshot::channel();
+                v.insert(rx.shared());
+                Ops::New(tx)
+            }
+        };
 
-                    let rx = o.get().clone();
+        // Act on operation (await or proceed)
 
-                    // drop lock before awaiting
-                    drop(lock);
+        let tx = match ops {
+            Ops::Existing(rx) => {
+                log::debug!("Cache miss, but loading in progress");
 
-                    // there is an operation in progress, await and return
-                    return rx
-                        .await
-                        // error awaiting
-                        .map_err(|_| Error::Internal("failed to await loading operation".into()))?
-                        // error from performing the loading operation
-                        .map_err(Error::Internal);
-                }
-                Entry::Vacant(v) => {
-                    log::debug!("Cache miss, need to load");
+                self.cache_miss.add(1, &[KeyValue::new("type", "await")]);
 
-                    self.cache_miss.add(1, &[KeyValue::new("type", "load")]);
+                // there is an operation in progress, await and return
 
-                    // we are the first, create and insert a channel and perform the work
-                    // we need to ensure: 1) we remove the entry from the map, 2) we send to the channel
-                    let (tx, rx) = oneshot::channel();
-                    v.insert(rx.shared());
-                    tx
-                }
+                return rx
+                    .await
+                    // error awaiting
+                    .map_err(|_| Error::Internal("failed to await loading operation".into()))?
+                    // error from performing the loading operation
+                    .map_err(Error::Internal);
+            }
+            Ops::New(tx) => {
+                log::debug!("Cache miss, need to load");
+                self.cache_miss.add(1, &[KeyValue::new("type", "load")]);
+                tx
             }
         };
 
@@ -521,7 +530,7 @@ impl InnerService {
             Ok(g) => g,
             Err(err) => {
                 // failed to load, remove and notify
-                self.loading_ops.lock().await.remove(&distinct_sbom_id);
+                self.loading_ops.lock().remove(&distinct_sbom_id);
                 let _ = tx.send(Err(err.to_string()));
                 return Err(err);
             }
@@ -531,12 +540,9 @@ impl InnerService {
         self.graph_cache
             .insert(distinct_sbom_id.to_string(), g.clone());
 
-        // remove the ops handle
+        // remove the ops handle and notify the waiting tasks
 
-        self.loading_ops.lock().await.remove(&distinct_sbom_id);
-
-        // notify the waiting tasks
-
+        self.loading_ops.lock().remove(&distinct_sbom_id);
         let _ = tx.send(Ok(g.clone()));
 
         // done
@@ -635,7 +641,11 @@ impl InnerService {
     }
 
     /// Load all SBOMs by the provided IDs
-    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    #[instrument(
+        skip(self, connection, distinct_sbom_ids),
+        fields(distinct_sbom_ids_len = distinct_sbom_ids.len()),
+        err(level=tracing::Level::INFO))
+    ]
     pub async fn load_graphs<C: ConnectionTrait>(
         &self,
         connection: &C,

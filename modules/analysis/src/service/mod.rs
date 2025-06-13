@@ -19,8 +19,10 @@ use crate::{
 use fixedbitset::FixedBitSet;
 use futures::{StreamExt, stream};
 
+use crate::model::AnalysisStatusDetails;
 use futures::future::Shared;
 use opentelemetry::{global, metrics::Counter};
+use parking_lot::Mutex;
 use petgraph::{
     Direction,
     graph::{Graph, NodeIndex},
@@ -40,7 +42,7 @@ use std::{
     task::{Context, Poll},
 };
 use tokio::{
-    sync::{Mutex, mpsc, oneshot, oneshot::error::RecvError},
+    sync::{mpsc, oneshot, oneshot::error::RecvError},
     task::JoinHandle,
 };
 use tracing::instrument;
@@ -279,10 +281,13 @@ impl AnalysisService {
                 .build(),
         ));
 
+        let loading_ops = Arc::new(Mutex::new(HashMap::new()));
+
         {
             let graph_cache = graph_cache.clone();
             meter
                 .u64_observable_gauge("cache_size")
+                .with_unit("b")
                 .with_callback(move |inst| inst.observe(graph_cache.size_used(), &[]))
                 .build();
         };
@@ -293,12 +298,19 @@ impl AnalysisService {
                 .with_callback(move |inst| inst.observe(graph_cache.len(), &[]))
                 .build();
         };
+        {
+            let loading_ops = loading_ops.clone();
+            meter
+                .u64_observable_gauge("loading_operations")
+                .with_callback(move |inst| inst.observe(loading_ops.lock().len() as _, &[]))
+                .build();
+        };
 
         let (tx, rx) = mpsc::unbounded_channel::<QueueEntry>();
 
         let inner = InnerService {
             graph_cache,
-            loading_ops: Default::default(),
+            loading_ops,
             cache_hit: meter.u64_counter("cache_hits").build(),
             cache_miss: meter.u64_counter("cache_miss").build(),
         };
@@ -388,12 +400,16 @@ impl AnalysisService {
     pub async fn status<C: ConnectionTrait>(
         &self,
         connection: &C,
+        details: bool,
     ) -> Result<AnalysisStatus, Error> {
         let distinct_sbom_ids = sbom::Entity::find().count(connection).await?;
 
         Ok(AnalysisStatus {
             sbom_count: distinct_sbom_ids as u32,
             graph_count: self.inner.graph_cache.len() as u32,
+            graph_memory: self.inner.graph_cache.size_used(),
+            loading_operations: self.inner.loading_ops.lock().len() as u32,
+            details: details.then(|| self.inner.status_details()),
         })
     }
 
@@ -651,4 +667,13 @@ struct InnerService {
     loading_ops: Arc<Mutex<HashMap<Uuid, LoadingOp>>>,
     cache_hit: Counter<u64>,
     cache_miss: Counter<u64>,
+}
+
+impl InnerService {
+    /// Get detailed information of the status
+    pub fn status_details(&self) -> AnalysisStatusDetails {
+        AnalysisStatusDetails {
+            cache: self.graph_cache.status(),
+        }
+    }
 }
