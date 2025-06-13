@@ -127,7 +127,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                 let ResolvedSbom {
                     sbom_id: external_sbom_id,
                     node_id: external_node_id,
-                } = resolve_external_sbom(external_node.node_id.clone(), self.connection).await?;
+                } = resolve_external_sbom(&external_node.node_id, self.connection).await?;
 
                 // retrieve external sbom graph from graph_cache
                 let Some(external_graph) = self.graph_cache.get(&external_sbom_id.to_string())
@@ -195,7 +195,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                                 self.graph_cache.clone().get(&matched.sbom_id.to_string())
                             else {
                                 log::warn!(
-                                    "external sbom graph {:?} not found in graph cache.",
+                                    "external sbom graph {:?} not found in graph cache",
                                     &matched.sbom_id.to_string()
                                 );
                                 return None;
@@ -222,7 +222,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                             );
                         }
                         Err(_) => {
-                            log::warn!("Problem looking up sbom external node.");
+                            log::warn!("Problem looking up sbom external node");
                             continue;
                         }
                         _ => {
