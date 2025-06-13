@@ -2483,7 +2483,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
+                  $ref: '#/components/schemas/LicenseRefMapping'
         '400':
           description: Invalid UUID format.
   /api/v2/sbom/{id}/label:
