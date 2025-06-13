@@ -139,9 +139,10 @@ impl SbomService {
                     .alias("sbom_node", "r0")
                     .translator(|f, op, v| match f.split_once(':') {
                         Some(("label", key)) => Some(format!("labels:{key}{op}{v}")),
-                        Some(("version", _key)) => {
-                            Some(format!("versions @> ARRAY[{}]::text[]", v))
-                        }
+                        None => match f {
+                            "version" => Some(format!("versions{op}{v}")),
+                            _ => None,
+                        },
                         _ => None,
                     }),
             )?
