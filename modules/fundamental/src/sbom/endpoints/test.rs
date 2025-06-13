@@ -29,34 +29,227 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
     let uri = format!("/api/v2/sbom/{id}/all-license-ids");
     let req = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(req).await;
-    let expected_result = &vec![
-        "Apache-2.0".to_string(),
-        "BSD-2-Clause".to_string(),
-        "BSD-2-Clause-Views".to_string(),
-        "BSD-3-Clause".to_string(),
-        "BSD-3-Clause-Clear".to_string(),
-        "CC-BY-SA-4.0".to_string(),
-        "CC0-1.0".to_string(),
-        "CDDL-1.0".to_string(),
-        "CDDL-1.1".to_string(),
-        "EPL-1.0".to_string(),
-        "GPL-2.0-only".to_string(),
-        "ISC".to_string(),
-        "JSON".to_string(),
-        "LGPL-3.0-or-later".to_string(),
-        "MIT".to_string(),
-        "MPL-1.0".to_string(),
-        "MPL-2.0".to_string(),
-        "NOASSERTION".to_string(),
-        "Python-2.0".to_string(),
-        "Sendmail".to_string(),
-        "Unlicense".to_string(),
-        "WTFPL".to_string(),
-        "Zlib".to_string(),
-    ];
+    let expected_result = json!([
+      {
+        "license_name": "(FTL or GPLv2+) and BSD and MIT and Public Domain and zlib with acknowledgement",
+        "license_id": "LicenseRef-13"
+      },
+      {
+        "license_name": "AFL",
+        "license_id": "LicenseRef-AFL"
+      },
+      {
+        "license_name": "ASL 2.0",
+        "license_id": "LicenseRef-2"
+      },
+      {
+        "license_name": "Apache-2.0",
+        "license_id": "Apache-2.0"
+      },
+      {
+        "license_name": "Artistic",
+        "license_id": "LicenseRef-Artistic"
+      },
+      {
+        "license_name": "Artistic 2.0",
+        "license_id": "LicenseRef-5"
+      },
+      {
+        "license_name": "BSD",
+        "license_id": "LicenseRef-BSD"
+      },
+      {
+        "license_name": "BSD-2-Clause",
+        "license_id": "BSD-2-Clause"
+      },
+      {
+        "license_name": "BSD-2-Clause-Views",
+        "license_id": "BSD-2-Clause-Views"
+      },
+      {
+        "license_name": "BSD-3-Clause",
+        "license_id": "BSD-3-Clause"
+      },
+      {
+        "license_name": "BSD-3-Clause-Clear",
+        "license_id": "BSD-3-Clause-Clear"
+      },
+      {
+        "license_name": "Boost",
+        "license_id": "LicenseRef-Boost"
+      },
+      {
+        "license_name": "CC-BY",
+        "license_id": "LicenseRef-CC-BY"
+      },
+      {
+        "license_name": "CC-BY-SA-4.0",
+        "license_id": "CC-BY-SA-4.0"
+      },
+      {
+        "license_name": "CC0-1.0",
+        "license_id": "CC0-1.0"
+      },
+      {
+        "license_name": "CDDL-1.0",
+        "license_id": "CDDL-1.0"
+      },
+      {
+        "license_name": "CDDL-1.1",
+        "license_id": "CDDL-1.1"
+      },
+      {
+        "license_name": "Copyright only",
+        "license_id": "LicenseRef-7"
+      },
+      {
+        "license_name": "EPL-1.0",
+        "license_id": "EPL-1.0"
+      },
+      {
+        "license_name": "EPL-2.0 OR GNU General Public License, version 2 with the GNU Classpath Exception",
+        "license_id": "LicenseRef-14"
+      },
+      {
+        "license_name": "GFDL",
+        "license_id": "LicenseRef-GFDL"
+      },
+      {
+        "license_name": "GPL+",
+        "license_id": "LicenseRef-4"
+      },
+      {
+        "license_name": "GPL-2.0-only",
+        "license_id": "GPL-2.0-only"
+      },
+      {
+        "license_name": "GPL-2.0-with-classpath-exception",
+        "license_id": "LicenseRef-GPL-2.0-with-classpath-exception"
+      },
+      {
+        "license_name": "GPLv2",
+        "license_id": "LicenseRef-GPLv2"
+      },
+      {
+        "license_name": "GPLv2+",
+        "license_id": "LicenseRef-0"
+      },
+      {
+        "license_name": "GPLv3",
+        "license_id": "LicenseRef-GPLv3"
+      },
+      {
+        "license_name": "GPLv3+",
+        "license_id": "LicenseRef-6"
+      },
+      {
+        "license_name": "GPLv3+ and GPLv3+ with exceptions and GPLv2+ and GPLv2+ with exceptions and GPL+ and LGPLv2+ and LGPLv3+ and BSD and Public Domain and GFDL",
+        "license_id": "LicenseRef-11"
+      },
+      {
+        "license_name": "HSRL",
+        "license_id": "LicenseRef-HSRL"
+      },
+      {
+        "license_name": "ISC",
+        "license_id": "ISC"
+      },
+      {
+        "license_name": "JSON",
+        "license_id": "JSON"
+      },
+      {
+        "license_name": "JasPer",
+        "license_id": "LicenseRef-JasPer"
+      },
+      {
+        "license_name": "LGPL-3.0-or-later",
+        "license_id": "LGPL-3.0-or-later"
+      },
+      {
+        "license_name": "LGPLv2",
+        "license_id": "LicenseRef-LGPLv2"
+      },
+      {
+        "license_name": "LGPLv2+",
+        "license_id": "LicenseRef-8"
+      },
+      {
+        "license_name": "LGPLv3+",
+        "license_id": "LicenseRef-10"
+      },
+      {
+        "license_name": "MIT",
+        "license_id": "MIT"
+      },
+      {
+        "license_name": "MIT/X License, GPL/CDDL, ASL2",
+        "license_id": "LicenseRef-1"
+      },
+      {
+        "license_name": "MPL",
+        "license_id": "LicenseRef-MPL"
+      },
+      {
+        "license_name": "MPL-1.0",
+        "license_id": "MPL-1.0"
+      },
+      {
+        "license_name": "MPL-2.0",
+        "license_id": "MPL-2.0"
+      },
+      {
+        "license_name": "MPLv1.1",
+        "license_id": "LicenseRef-MPLv1.1"
+      },
+      {
+        "license_name": "NOASSERTION",
+        "license_id": "NOASSERTION"
+      },
+      {
+        "license_name": "Netscape",
+        "license_id": "LicenseRef-Netscape"
+      },
+      {
+        "license_name": "Public Domain",
+        "license_id": "LicenseRef-12"
+      },
+      {
+        "license_name": "Python-2.0",
+        "license_id": "Python-2.0"
+      },
+      {
+        "license_name": "Sendmail",
+        "license_id": "Sendmail"
+      },
+      {
+        "license_name": "UCD",
+        "license_id": "LicenseRef-UCD"
+      },
+      {
+        "license_name": "Unlicense",
+        "license_id": "Unlicense"
+      },
+      {
+        "license_name": "WTFPL",
+        "license_id": "WTFPL"
+      },
+      {
+        "license_name": "Zlib",
+        "license_id": "Zlib"
+      },
+      {
+        "license_name": "[{'license': {'id': 'Apache-2.0'}}]",
+        "license_id": "LicenseRef-9"
+      },
+      {
+        "license_name": "[{'license': {'id': None}}]",
+        "license_id": "LicenseRef-3"
+      }
+    ]);
     match response {
         Value::Array(ref list) => {
-            assert_eq!(expected_result, list);
+            assert_eq!(expected_result.as_array().unwrap(), list);
         }
         _ => panic!("Incorrect response"),
     }
@@ -71,22 +264,67 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
     let uri = format!("/api/v2/sbom/{id}/all-license-ids");
     let req = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(req).await;
-    let expected_result = &vec![
-        "Apache-2.0".to_string(),
-        "BSD-2-Clause".to_string(),
-        "BSD-3-Clause".to_string(),
-        "CC0-1.0".to_string(),
-        "EPL-1.0".to_string(),
-        "EPL-2.0".to_string(),
-        "GPL-2.0-with-classpath-exception".to_string(),
-        "LGPL-2.1-only".to_string(),
-        "MIT".to_string(),
-        "MPL-2.0".to_string(),
-        "Openfont-1.1".to_string(),
-    ];
+    let expected_result = json!([
+      {
+        "license_name": "Apache-2.0",
+        "license_id": "Apache-2.0"
+      },
+      {
+        "license_name": "BSD-2-Clause",
+        "license_id": "BSD-2-Clause"
+      },
+      {
+        "license_name": "BSD-3-Clause",
+        "license_id": "BSD-3-Clause"
+      },
+      {
+        "license_name": "CC0-1.0",
+        "license_id": "CC0-1.0"
+      },
+      {
+        "license_name": "EPL 1.0",
+        "license_id": "EPL 1.0"
+      },
+      {
+        "license_name": "EPL-1.0",
+        "license_id": "EPL-1.0"
+      },
+      {
+        "license_name": "EPL-2.0",
+        "license_id": "EPL-2.0"
+      },
+      {
+        "license_name": "GNU Lesser General Public License",
+        "license_id": "GNU Lesser General Public License"
+      },
+      {
+        "license_name": "GPL-2.0-with-classpath-exception",
+        "license_id": "GPL-2.0-with-classpath-exception"
+      },
+      {
+        "license_name": "LGPL-2.1-only",
+        "license_id": "LGPL-2.1-only"
+      },
+      {
+        "license_name": "MIT",
+        "license_id": "MIT"
+      },
+      {
+        "license_name": "MPL-2.0",
+        "license_id": "MPL-2.0"
+      },
+      {
+        "license_name": "Openfont-1.1",
+        "license_id": "Openfont-1.1"
+      },
+      {
+        "license_name": "The GNU General Public License, v2 with Universal FOSS Exception, v1.0",
+        "license_id": "The GNU General Public License, v2 with Universal FOSS Exception, v1.0"
+      }
+    ]);
     match response {
         Value::Array(ref list) => {
-            assert_eq!(expected_result, list);
+            assert_eq!(expected_result.as_array().unwrap(), list);
         }
         _ => panic!("Incorrect response"),
     }
@@ -152,7 +390,8 @@ async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow:
                 "licenses": [
                     {"license_type": "declared", "license_name": "EPL-1.0"},
                     {"license_type": "declared", "license_name": "GNU Lesser General Public License"}
-                ]
+                ],
+                "licenses_ref_mapping": []
             }
         ],
         "total": 1
@@ -188,7 +427,8 @@ async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow:
                 "cpe": [],
                 "licenses": [
                     {"license_type": "declared", "license_name": "EPL-1.0"}
-                ]
+                ],
+                "licenses_ref_mapping": []
             }
         ],
         "total": 1
@@ -231,7 +471,8 @@ async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow:
                 "licenses": [
                     {"license_type": "declared", "license_name": "MIT"},
                     {"license_type": "concluded", "license_name": "MIT"}
-                ]
+                ],
+                "licenses_ref_mapping": []
             },
             {
                 "id": "SPDXRef-9fe51d0d-aec8-4a70-9bf0-70b60606632d",
@@ -266,12 +507,266 @@ async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow:
                 "licenses": [
                     {"license_type": "declared", "license_name": "MIT"},
                     {"license_type": "concluded", "license_name": "MIT"}
-                ]
+                ],
+                "licenses_ref_mapping": []
             }
         ],
         "total": 2
     });
     assert!(result.contains_subset(expected_result));
+
+    // Multiple LicenseRefs license expression
+    let result = query_value(&app, &id, "name=foreman-bootloaders-redhat").await;
+    let expected_result = json!({
+      "items": [
+        {
+          "id": "SPDXRef-2a02a923-8a04-489d-9cbc-80f2d23de5ea",
+          "name": "foreman-bootloaders-redhat",
+          "group": null,
+          "version": "202102220000-1.el8sat",
+          "purl": [
+            {
+              "uuid": "7cd96c1d-391c-5e34-94be-ff48e5ae6b8c",
+              "purl": "pkg:rpm/redhat/foreman-bootloaders-redhat@202102220000-1.el8sat?arch=src",
+              "base": {
+                "uuid": "2294dff1-103b-5cfc-9095-0c9c52e48445",
+                "purl": "pkg:rpm/redhat/foreman-bootloaders-redhat"
+              },
+              "version": {
+                "uuid": "a2257c48-57fa-52cb-8ac8-a721706cffaf",
+                "purl": "pkg:rpm/redhat/foreman-bootloaders-redhat@202102220000-1.el8sat",
+                "version": "202102220000-1.el8sat"
+              },
+              "qualifiers": {
+                "arch": "src"
+              }
+            }
+          ],
+          "cpe": [
+            "cpe:/a:redhat:satellite:6.15:*:el8:*",
+            "cpe:/a:redhat:satellite_capsule:6.14:*:el8:*",
+            "cpe:/a:redhat:satellite_capsule:6.13:*:el8:*",
+            "cpe:/a:redhat:satellite_capsule:6.15:*:el8:*",
+            "cpe:/a:redhat:satellite_capsule:6.12:*:el8:*",
+            "cpe:/a:redhat:satellite:6.14:*:el8:*",
+            "cpe:/a:redhat:satellite:6.12:*:el8:*",
+            "cpe:/a:redhat:satellite:6.13:*:el8:*"
+          ],
+          "licenses": [
+            {
+              "license_name": "LicenseRef-2 AND LicenseRef-11 AND LicenseRef-BSD",
+              "license_type": "declared"
+            },
+            {
+              "license_name": "NOASSERTION",
+              "license_type": "concluded"
+            }
+          ],
+          "licenses_ref_mapping": [
+            {
+              "license_id": "LicenseRef-2",
+              "license_name": "GPLv2+"
+            },
+            {
+              "license_id": "LicenseRef-11",
+              "license_name": "GPLv3+"
+            },
+            {
+              "license_id": "LicenseRef-BSD",
+              "license_name": "BSD"
+            }
+          ]
+        },
+        {
+          "id": "SPDXRef-bad734a4-0235-478e-a95b-b20c48aa39a8",
+          "name": "foreman-bootloaders-redhat",
+          "group": null,
+          "version": "202102220000-1.el8sat",
+          "purl": [
+            {
+              "uuid": "610503a6-668b-5f02-9b11-435ee099bf61",
+              "purl": "pkg:rpm/redhat/foreman-bootloaders-redhat@202102220000-1.el8sat?arch=noarch",
+              "base": {
+                "uuid": "2294dff1-103b-5cfc-9095-0c9c52e48445",
+                "purl": "pkg:rpm/redhat/foreman-bootloaders-redhat"
+              },
+              "version": {
+                "uuid": "a2257c48-57fa-52cb-8ac8-a721706cffaf",
+                "purl": "pkg:rpm/redhat/foreman-bootloaders-redhat@202102220000-1.el8sat",
+                "version": "202102220000-1.el8sat"
+              },
+              "qualifiers": {
+                "arch": "noarch"
+              }
+            }
+          ],
+          "cpe": [],
+          "licenses": [
+            {
+              "license_name": "LicenseRef-2 AND LicenseRef-11 AND LicenseRef-BSD",
+              "license_type": "declared"
+            },
+            {
+              "license_name": "NOASSERTION",
+              "license_type": "concluded"
+            }
+          ],
+          "licenses_ref_mapping": [
+            {
+              "license_id": "LicenseRef-BSD",
+              "license_name": "BSD"
+            },
+            {
+              "license_id": "LicenseRef-2",
+              "license_name": "GPLv2+"
+            },
+            {
+              "license_id": "LicenseRef-11",
+              "license_name": "GPLv3+"
+            }
+          ]
+        }
+      ],
+      "total": 2
+    });
+    assert!(result.contains_subset(expected_result));
+
+    // Mixed License ID and LicenseRef license expression
+    let result = query_value(&app, &id, "name=rubygem-apipie-rails").await;
+    let expected_result = json!({
+      "items": [
+        {
+          "id": "SPDXRef-2ac8cdfc-cb74-498e-90b7-cd9455736bc4",
+          "name": "rubygem-apipie-rails",
+          "group": null,
+          "version": "1.2.3-1.el8sat",
+          "purl": [
+            {
+              "uuid": "7aaa8d16-64c9-595d-94d0-9764ced4c6f4",
+              "purl": "pkg:rpm/redhat/rubygem-apipie-rails@1.2.3-1.el8sat?arch=src",
+              "base": {
+                "uuid": "297c9bf5-4347-51e7-965f-5d084765157c",
+                "purl": "pkg:rpm/redhat/rubygem-apipie-rails"
+              },
+              "version": {
+                "uuid": "49f2973d-23fe-531e-8180-84065a0b1db2",
+                "purl": "pkg:rpm/redhat/rubygem-apipie-rails@1.2.3-1.el8sat",
+                "version": "1.2.3-1.el8sat"
+              },
+              "qualifiers": {
+                "arch": "src"
+              }
+            }
+          ],
+          "cpe": [
+            "cpe:/a:redhat:satellite:6.15:*:el8:*"
+          ],
+          "licenses": [
+            {
+              "license_name": "MIT AND LicenseRef-0",
+              "license_type": "declared"
+            },
+            {
+              "license_name": "NOASSERTION",
+              "license_type": "concluded"
+            }
+          ],
+          "licenses_ref_mapping": [
+            {
+              "license_id": "LicenseRef-0",
+              "license_name": "ASL 2.0"
+            }
+          ]
+        },
+        {
+          "id": "SPDXRef-ddce7aa4-9b82-42a5-bbc7-355d963ca2d8",
+          "name": "rubygem-apipie-rails",
+          "group": null,
+          "version": "1.2.3-1.el8sat",
+          "purl": [
+            {
+              "uuid": "abeef7ab-361c-5234-a27d-d016114dd3d5",
+              "purl": "pkg:rpm/redhat/rubygem-apipie-rails@1.2.3-1.el8sat?arch=noarch",
+              "base": {
+                "uuid": "297c9bf5-4347-51e7-965f-5d084765157c",
+                "purl": "pkg:rpm/redhat/rubygem-apipie-rails"
+              },
+              "version": {
+                "uuid": "49f2973d-23fe-531e-8180-84065a0b1db2",
+                "purl": "pkg:rpm/redhat/rubygem-apipie-rails@1.2.3-1.el8sat",
+                "version": "1.2.3-1.el8sat"
+              },
+              "qualifiers": {
+                "arch": "noarch"
+              }
+            }
+          ],
+          "cpe": [],
+          "licenses": [
+            {
+              "license_name": "NOASSERTION",
+              "license_type": "declared"
+            },
+            {
+              "license_name": "NOASSERTION",
+              "license_type": "concluded"
+            }
+          ],
+          "licenses_ref_mapping": []
+        }
+      ],
+      "total": 2
+    });
+    assert!(result.contains_subset(expected_result));
+
+    // License ID only as license
+    let result = query_value(&app, &id, "name=python-diff-match-patch").await;
+    let expected_result = json!({
+      "items": [
+        {
+          "id": "SPDXRef-2e34eff2-f039-4446-bf45-8e81e2c78346",
+          "name": "python-diff-match-patch",
+          "group": null,
+          "version": "20200713-6.el8pc",
+          "purl": [
+            {
+              "uuid": "97714c37-dd46-52dc-accb-73dc8084a10f",
+              "purl": "pkg:rpm/redhat/python-diff-match-patch@20200713-6.el8pc?arch=src",
+              "base": {
+                "uuid": "246bc41b-3238-532d-8b82-db071dd33d3a",
+                "purl": "pkg:rpm/redhat/python-diff-match-patch"
+              },
+              "version": {
+                "uuid": "974a26ca-c417-55d9-8a5b-16adca100c53",
+                "purl": "pkg:rpm/redhat/python-diff-match-patch@20200713-6.el8pc",
+                "version": "20200713-6.el8pc"
+              },
+              "qualifiers": {
+                "arch": "src"
+              }
+            }
+          ],
+          "cpe": [
+            "cpe:/a:redhat:satellite:6.15:*:el8:*",
+            "cpe:/a:redhat:satellite_capsule:6.15:*:el8:*"
+          ],
+          "licenses": [
+            {
+              "license_name": "Apache-2.0",
+              "license_type": "declared"
+            },
+            {
+              "license_name": "NOASSERTION",
+              "license_type": "concluded"
+            }
+          ],
+          "licenses_ref_mapping": []
+        }
+      ],
+      "total": 1
+    });
+    assert!(result.contains_subset(expected_result));
+
     Ok(())
 }
 
@@ -376,6 +871,28 @@ async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result = query(&app, &id, "version=4.1.105.Final").await;
     assert_eq!(result.total, 9);
+
+    let result = query(&app, &id, "license~Apache-2.0").await;
+    assert_eq!(result.total, 35);
+
+    let result = query(&app, &id, "license~GNU Lesser General Public License").await;
+    assert_eq!(result.total, 2);
+
+    let result = query(
+        &app,
+        &id,
+        "license~Apache-2.0|GNU Lesser General Public License",
+    )
+    .await;
+    assert_eq!(result.total, 37);
+
+    let result = query(
+        &app,
+        &id,
+        "license~EPL-1.0|GNU Lesser General Public License",
+    )
+    .await;
+    assert_eq!(result.total, 10);
 
     Ok(())
 }
