@@ -2489,7 +2489,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
+                  $ref: '#/components/schemas/LicenseRefMapping'
         '400':
           description: Invalid UUID format.
   /api/v2/sbom/{id}/label:
@@ -3939,6 +3939,16 @@ components:
           type: string
         license_type:
           $ref: '#/components/schemas/LicenseCategory'
+    LicenseRefMapping:
+      type: object
+      required:
+      - license_id
+      - license_name
+      properties:
+        license_id:
+          type: string
+        license_name:
+          type: string
     LicenseSummary:
       type: object
       required:
@@ -4320,6 +4330,7 @@ components:
             - purl
             - cpe
             - licenses
+            - licenses_ref_mapping
             properties:
               cpe:
                 type: array
@@ -4339,6 +4350,11 @@ components:
                 items:
                   $ref: '#/components/schemas/LicenseInfo'
                 description: License info
+              licenses_ref_mapping:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LicenseRefMapping'
+                description: LicenseRef mappings
               name:
                 type: string
                 description: The name of the package in the SBOM
@@ -4889,6 +4905,7 @@ components:
       - purl
       - cpe
       - licenses
+      - licenses_ref_mapping
       properties:
         cpe:
           type: array
@@ -4908,6 +4925,11 @@ components:
           items:
             $ref: '#/components/schemas/LicenseInfo'
           description: License info
+        licenses_ref_mapping:
+          type: array
+          items:
+            $ref: '#/components/schemas/LicenseRefMapping'
+          description: LicenseRef mappings
         name:
           type: string
           description: The name of the package in the SBOM

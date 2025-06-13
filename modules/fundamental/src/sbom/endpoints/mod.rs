@@ -6,6 +6,7 @@ mod test;
 
 pub use query::*;
 
+use crate::sbom::model::LicenseRefMapping;
 use crate::{
     Error::{self, Internal},
     license::{
@@ -84,7 +85,7 @@ const CONTENT_TYPE_GZIP: &str = "application/gzip";
     ("id", Path, description = "ID of the SBOM to get the license IDs for"),
     ),
     responses(
-    (status = 200, description = "fetch all unique license id and license info id", body = Vec<String>),
+    (status = 200, description = "fetch all unique license id and license info id", body = Vec<LicenseRefMapping>),
     (status = 400, description = "Invalid UUID format."),
     ),
 )]
