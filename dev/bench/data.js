@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749809939793,
+  "lastUpdate": 1749816230361,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11536,6 +11536,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/74cecf87421627353ea12a7e99eec48d90b142e3"
         },
         "date": 1749809938981,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "c984addb2166971c4e54e594e1df70f6b94dec01",
+          "message": "feat(analysis): provide for status details\n\nOptionall, using details=true, it is now possible to\nrequest more details on the internal state of things.",
+          "timestamp": "2025-06-13T11:39:58Z",
+          "tree_id": "fad0f4101d8263cde8082f00f1ba28e46b135aec",
+          "url": "https://github.com/trustification/trustify/commit/c984addb2166971c4e54e594e1df70f6b94dec01"
+        },
+        "date": 1749816228746,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
