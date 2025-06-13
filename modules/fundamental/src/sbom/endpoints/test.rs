@@ -689,12 +689,20 @@ async fn query_sboms_by_array_values(ctx: &TrustifyContext) -> Result<(), anyhow
     query(1, "tool: syft").await;
     query(1, "versions=2.13.8.Final-redhat-00004").await;
     query(1, "versions~2.13.8").await;
+    query(1, "2.13.8.Final-redhat-00004").await;
+    query(1, ".8.Final-redhat").await;
     query(
         1,
         "versions=sha256:fbf470d8b5b84606f797d78775b9de88e14fdb43cc47b2db6ff3747b46df323e",
     )
     .await;
-    query(1, "versions~fbf470d8").await;
+    query(1, "versions~fbf470d8b5").await;
+    query(
+        1,
+        "sha256:fbf470d8b5b84606f797d78775b9de88e14fdb43cc47b2db6ff3747b46df323e",
+    )
+    .await;
+    query(1, "fbf470d8b5").await;
     query(3, "").await;
 
     Ok(())
