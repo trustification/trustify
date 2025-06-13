@@ -40,6 +40,7 @@ async fn ingest_spdx_medium(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
                             license_type: LicenseCategory::Concluded
                         }
                     ],
+                    licenses_ref_mapping: vec![],
                 }
             );
 
@@ -121,6 +122,7 @@ async fn ingest_spdx_medium_cpes(ctx: &TrustifyContext) -> Result<(), anyhow::Er
                             license_type: LicenseCategory::Concluded
                         }
                     ],
+                    licenses_ref_mapping: vec![],
                 }
             );
 
