@@ -97,12 +97,12 @@ struct ResolvedSbom {
 }
 
 async fn resolve_external_sbom<C: ConnectionTrait>(
-    node_id: String,
+    node_id: &str,
     connection: &C,
 ) -> Option<ResolvedSbom> {
     // we first lookup in sbom_external_node
     let sbom_external_node = match sbom_external_node::Entity::find()
-        .filter(sbom_external_node::Column::NodeId.eq(node_id.as_str()))
+        .filter(sbom_external_node::Column::NodeId.eq(node_id))
         .one(connection)
         .await
     {

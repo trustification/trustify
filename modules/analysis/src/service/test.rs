@@ -751,19 +751,13 @@ async fn load_performance_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::
 async fn resolve_sbom_cdx_external_node_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // ingest cdx example
     ctx.ingest_document("cyclonedx/simple-ext-a.json").await?;
-    let get_external_sbom = resolve_external_sbom(
-        "urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a".to_string(),
-        &ctx.db,
-    )
-    .await;
+    let get_external_sbom =
+        resolve_external_sbom("urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a", &ctx.db).await;
     assert_eq!(get_external_sbom, None);
     // now ingest cdx sbom referred in "cyclonedx/simple-ext-b.json"
     ctx.ingest_document("cyclonedx/simple-ext-b.json").await?;
-    let get_external_sbom = resolve_external_sbom(
-        "urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a".to_string(),
-        &ctx.db,
-    )
-    .await;
+    let get_external_sbom =
+        resolve_external_sbom("urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a", &ctx.db).await;
     assert!(get_external_sbom.is_some());
     if let Some(ResolvedSbom {
         sbom_id: _,
@@ -782,13 +776,11 @@ async fn resolve_sbom_cdx_external_node_sbom(ctx: &TrustifyContext) -> Result<()
 async fn resolve_sbom_spdx_external_node_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // now try spdx example
     ctx.ingest_document("spdx/simple-ext-a.json").await?;
-    let get_external_sbom =
-        resolve_external_sbom("DocumentRef-ext-b:SPDXRef-A".to_string(), &ctx.db).await;
+    let get_external_sbom = resolve_external_sbom("DocumentRef-ext-b:SPDXRef-A", &ctx.db).await;
     assert_eq!(get_external_sbom, None);
     // now ingest spdx sbom referred in "spdx/simple-ext-b.json"
     ctx.ingest_document("spdx/simple-ext-b.json").await?;
-    let get_external_sbom =
-        resolve_external_sbom("DocumentRef-ext-b:SPDXRef-A".to_string(), &ctx.db).await;
+    let get_external_sbom = resolve_external_sbom("DocumentRef-ext-b:SPDXRef-A", &ctx.db).await;
     assert!(get_external_sbom.is_some());
     if let Some(ResolvedSbom {
         sbom_id: _,
@@ -811,7 +803,7 @@ async fn resolve_sbom_spdx_rh_variant_external_node_sbom(
     ctx.ingest_document("spdx/rh/product_component/rhel-9.2-eus.spdx.json")
         .await?;
     let get_external_sbom = resolve_external_sbom(
-        "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2".to_string(),
+        "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2",
         &ctx.db,
     )
     .await;
@@ -821,7 +813,7 @@ async fn resolve_sbom_spdx_rh_variant_external_node_sbom(
     ctx.ingest_document("spdx/rh/product_component/openssl-3.0.7-18.el9_2.spdx.json")
         .await?;
     let get_external_sbom = resolve_external_sbom(
-        "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2".to_string(),
+        "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2",
         &ctx.db,
     )
     .await;
@@ -856,8 +848,7 @@ async fn resolve_sbom_cdx_rh_variant_external_node_sbom(
     ctx.ingest_document("cyclonedx/rh/product_component/rhel-9.2-eus.cdx.json")
         .await?;
     let get_external_sbom = resolve_external_sbom(
-        "Red Hat Enterprise Linux 9.2 EUS:pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-            .to_string(),
+        "Red Hat Enterprise Linux 9.2 EUS:pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
         &ctx.db,
     )
     .await;
@@ -867,8 +858,7 @@ async fn resolve_sbom_cdx_rh_variant_external_node_sbom(
     ctx.ingest_document("cyclonedx/rh/product_component/openssl-3.0.7-18.el9_2.cdx.json")
         .await?;
     let get_external_sbom = resolve_external_sbom(
-        "Red Hat Enterprise Linux 9.2 EUS:pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-            .to_string(),
+        "Red Hat Enterprise Linux 9.2 EUS:pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
         &ctx.db,
     )
     .await;
