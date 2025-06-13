@@ -213,6 +213,7 @@ impl SbomAdvisory {
                 purl: vec![PurlSummary::from_entity(&each.qualified_purl)],
                 cpe: vec![],
                 licenses: vec![],
+                licenses_ref_mapping: vec![],
             });
         }
 
