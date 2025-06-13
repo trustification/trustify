@@ -697,7 +697,7 @@ fn package_from_row(row: PackageCatcher, licensing_infos: BTreeMap<String, Strin
                     .into_iter()
                     .filter(|license| license.license_ref)
                     .for_each(|license| {
-                        let license_id = format!("LicenseRef-{}", license.identifier);
+                        let license_id = license.to_string();
                         let license_name = licensing_infos
                             .get(&license_id)
                             .cloned()
