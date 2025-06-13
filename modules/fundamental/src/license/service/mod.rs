@@ -8,11 +8,10 @@ use crate::{
     },
 };
 use sea_orm::{
-    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, QueryFilter, QuerySelect, RelationTrait,
-    Statement,
+    ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, JsonValue, QueryFilter,
+    QuerySelect, RelationTrait, Statement,
 };
 use sea_query::{Condition, JoinType};
-use std::collections::BTreeSet;
 use trustify_common::{
     db::query::Query,
     id::{Id, TrySelectForId},
@@ -215,7 +214,7 @@ impl LicenseService {
         &self,
         id: Id,
         connection: &C,
-    ) -> Result<Option<BTreeSet<String>>, Error> {
+    ) -> Result<Option<Vec<JsonValue>>, Error> {
         // check the SBOM exists searching by the provided Id
         let sbom = sbom::Entity::find()
             .join(JoinType::LeftJoin, sbom::Relation::SourceDocument.def())
@@ -225,28 +224,43 @@ impl LicenseService {
 
         match sbom {
             Some(sbom) => {
-                let stmt = Statement::from_sql_and_values(
+                let result: Vec<JsonValue> = JsonValue::find_by_statement(Statement::from_sql_and_values(
                     connection.get_database_backend(),
                     r#"
                     (
-                        SELECT DISTINCT unnest(l.spdx_licenses) as license
+                        -- Successfully parsed (during SBOM ingestion) license ID values can be
+                        -- retrieved from the spdx_licenses column
+                        SELECT DISTINCT unnest(l.spdx_licenses) as license_name, unnest(l.spdx_licenses) as license_id
                         FROM sbom_package_license spl
                         JOIN license l ON spl.license_id = l.id
                         WHERE spl.sbom_id = $1
                         AND l.spdx_licenses IS NOT NULL
+                        UNION
+                        -- CycloneDX SBOMs has NO "LicenseRef" by specifications (hence
+                        -- the above condition 'licensing_infos.license_id IS NULL')  so
+                        -- all the values in the license.text whose spdx_licenses is null
+                        -- must be added to the result set
+                        SELECT DISTINCT l.text as license_name, l.text as license_id
+                        FROM sbom_package_license spl
+                        JOIN license l ON spl.license_id = l.id
+                        LEFT JOIN licensing_infos ON licensing_infos.sbom_id = spl.sbom_id
+                        WHERE spl.sbom_id = $1
+                        AND l.spdx_licenses IS NULL
+                        AND licensing_infos.license_id IS NULL
+                        UNION
+                        -- SPDX SBOMs has "LicenseRef" by specifications and they're stored in
+                        -- licensing_infos and so their names have to be added as well
+                        SELECT DISTINCT name as license_name, license_id
+                        FROM licensing_infos
+                        WHERE sbom_id = $1
+                        ORDER BY license_name
                     )
                     "#,
                     [sbom.sbom_id.into()],
-                );
-
-                let result: Vec<String> = connection
-                    .query_all(stmt)
-                    .await?
-                    .into_iter()
-                    .map(|row| row.try_get_by_index::<String>(0))
-                    .collect::<Result<Vec<String>, DbErr>>()?;
-
-                Ok(Some(result.into_iter().collect()))
+                ))
+                    .all(connection)
+                    .await?;
+                Ok(Some(result))
             }
             None => Ok(None),
         }

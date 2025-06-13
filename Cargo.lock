@@ -9290,6 +9290,7 @@ dependencies = [
  "serde_yaml_ng",
  "sha2",
  "spdx",
+ "spdx-expression",
  "spdx-rs",
  "strum 0.27.1",
  "tar",

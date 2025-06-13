@@ -1,4 +1,5 @@
 use super::SbomService;
+use crate::sbom::model::LicenseRefMapping;
 use crate::{
     Error,
     sbom::model::{
@@ -15,6 +16,7 @@ use sea_orm::{
 use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::BTreeMap;
 use std::{collections::HashMap, fmt::Debug};
 use tracing::instrument;
 use trustify_common::{
@@ -32,7 +34,7 @@ use trustify_entity::{
     advisory, advisory_vulnerability, base_purl,
     cpe::{self, CpeDto},
     labels::Labels,
-    license, organization, package_relates_to_package,
+    license, licensing_infos, organization, package_relates_to_package,
     qualified_purl::{self, CanonicalPurl},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
@@ -192,7 +194,14 @@ impl SbomService {
                     .add_columns(sbom_package_cpe_ref::Entity)
                     .add_columns(sbom_package_license::Entity)
                     .add_columns(license::Entity)
-                    .add_columns(sbom_package_purl_ref::Entity),
+                    .add_columns(sbom_package_purl_ref::Entity)
+                    .translator(|field, operator, value| {
+                        if field == "license" {
+                            Some(format!("text{operator}{value}"))
+                        } else {
+                            None
+                        }
+                    }),
             )?
             // default order
             .order_by_asc(sbom_node::Column::Name)
@@ -214,11 +223,29 @@ impl SbomService {
 
         let mut items = Vec::new();
 
+        let licensing_infos = Self::get_licensing_infos(connection, sbom_id).await?;
+
         for row in packages {
-            items.push(package_from_row(row));
+            items.push(package_from_row(row, licensing_infos.clone()));
         }
 
         Ok(PaginatedResults { items, total })
+    }
+
+    /// Get all the tuples License ID, License Name from the licensing_infos table for a single SBOM
+    async fn get_licensing_infos<C: ConnectionTrait>(
+        connection: &C,
+        sbom_id: Uuid,
+    ) -> Result<BTreeMap<String, String>, Error> {
+        let licensing_infos_result: Vec<(String, String)> = licensing_infos::Entity::find()
+            .select_only()
+            .column(licensing_infos::Column::LicenseId)
+            .column(licensing_infos::Column::Name)
+            .filter(licensing_infos::Column::SbomId.eq(sbom_id))
+            .into_tuple()
+            .all(connection)
+            .await?;
+        Ok(licensing_infos_result.into_iter().collect())
     }
 
     /// Get all packages describing the SBOM.
@@ -466,11 +493,13 @@ impl SbomService {
 
         let mut items = Vec::new();
 
+        let licensing_infos = Self::get_licensing_infos(db, sbom_id).await?;
+
         for row in packages {
             if let Some(relationship) = row.relationship {
                 items.push(SbomPackageRelation {
                     relationship,
-                    package: package_from_row(row),
+                    package: package_from_row(row, licensing_infos.clone()),
                 });
             }
         }
@@ -617,7 +646,7 @@ pub struct LicenseBasicInfo {
 }
 
 /// Convert values from a "package row" into an SBOM package
-fn package_from_row(row: PackageCatcher) -> SbomPackage {
+fn package_from_row(row: PackageCatcher, licensing_infos: BTreeMap<String, String>) -> SbomPackage {
     let purl = row
         .purls
         .into_iter()
@@ -654,10 +683,33 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
         .map(|cpe| cpe.to_string())
         .collect();
 
+    let mut licenses_ref_mapping = vec![];
     let licenses = row
         .licenses
         .into_iter()
-        .map(|license| license.into())
+        .map(|license| {
+            // if the license contains a LicenseRef, its mapping must be added to the licenses_ref_mapping
+            if let Ok(parsed) =
+                spdx_expression::SpdxExpression::parse(&license.license_name.clone())
+            {
+                parsed
+                    .licenses()
+                    .into_iter()
+                    .filter(|license| license.license_ref)
+                    .for_each(|license| {
+                        let license_id = format!("LicenseRef-{}", license.identifier);
+                        let license_name = licensing_infos
+                            .get(&license_id)
+                            .cloned()
+                            .unwrap_or_default();
+                        licenses_ref_mapping.push(LicenseRefMapping {
+                            license_id,
+                            license_name,
+                        });
+                    });
+            };
+            license.into()
+        })
         .collect();
 
     SbomPackage {
@@ -668,6 +720,7 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
         purl,
         cpe,
         licenses,
+        licenses_ref_mapping,
     }
 }
 

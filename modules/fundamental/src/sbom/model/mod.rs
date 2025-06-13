@@ -126,6 +126,9 @@ pub struct SbomPackage {
     /// License info
     #[cfg_attr(feature = "async-graphql", graphql(skip))]
     pub licenses: Vec<LicenseInfo>,
+    /// LicenseRef mappings
+    #[cfg_attr(feature = "async-graphql", graphql(skip))]
+    pub licenses_ref_mapping: Vec<LicenseRefMapping>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema)]
@@ -141,6 +144,12 @@ impl From<LicenseBasicInfo> for LicenseInfo {
             license_type: LicenseCategory::from_value_tuple(license_basic_info.license_type),
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema)]
+pub struct LicenseRefMapping {
+    pub license_id: String,
+    pub license_name: String,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
