@@ -736,7 +736,7 @@ mod test {
     use trustify_common::db::query::q;
     use trustify_common::hashing::Digests;
     use trustify_entity::labels::Labels;
-    use trustify_test_context::TrustifyContext;
+    use trustify_test_context::{TrustifyContext, call::CallService};
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
@@ -938,40 +938,30 @@ mod test {
     }
 
     #[test_context(TrustifyContext)]
-    #[test(tokio::test)]
-    async fn versions_filtering(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-        let _sbom1 = ctx
-            .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
-            .await?;
+    #[test(actix_web::test)]
+    async fn query_sboms_by_versions(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        use crate::test::caller;
+        use actix_web::test::TestRequest;
+        use urlencoding::encode;
 
-        let _sbom2 = ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
+        ctx.ingest_documents([
+            "quarkus-bom-2.13.8.Final-redhat-00004.json",
+            "ubi9-9.2-755.1697625012.json",
+        ])
+        .await?;
 
-        let service = SbomService::new(ctx.db.clone());
+        let query = async |expected_count, q| {
+            let app = caller(ctx).await.unwrap();
+            let uri = format!("/api/v2/sbom?q={}", encode(q));
+            let req = TestRequest::get().uri(&uri).to_request();
+            let response: Value = app.call_and_read_body_json(req).await;
+            tracing::debug!(test = "", "{response:#?}");
+            assert_eq!(expected_count, response["total"], "for {q}");
+        };
 
-        // Test exact version match
-        let fetched = service
-            .fetch_sboms(
-                q("versions=2.13.8.Final-redhat-00004"),
-                Paginated::default(),
-                (),
-                &ctx.db,
-            )
-            .await?;
-        log::debug!("Exact version match results: {:#?}", fetched.items);
-        assert_eq!(1, fetched.total);
-
-        // Test version substring search
-        let fetched = service
-            .fetch_sboms(q("versions~2.13.8"), Paginated::default(), (), &ctx.db)
-            .await?;
-        log::debug!("Version substring search results: {:#?}", fetched.items);
-        assert_eq!(1, fetched.total);
-
-        // Test all SBOMs without version filter
-        let fetched = service
-            .fetch_sboms(Query::default(), Paginated::default(), (), &ctx.db)
-            .await?;
-        assert_eq!(2, fetched.total);
+        query(1, "versions=2.13.8.Final-redhat-00004").await;
+        query(1, "versions~2.13.8").await;
+        query(2, "").await;
 
         Ok(())
     }
