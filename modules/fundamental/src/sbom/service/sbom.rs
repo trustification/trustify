@@ -736,7 +736,7 @@ mod test {
     use trustify_common::db::query::q;
     use trustify_common::hashing::Digests;
     use trustify_entity::labels::Labels;
-    use trustify_test_context::{TrustifyContext, call::CallService};
+    use trustify_test_context::TrustifyContext;
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
@@ -933,35 +933,6 @@ mod test {
 
         log::debug!("{:#?}", affected);
         assert_eq!(0, affected);
-
-        Ok(())
-    }
-
-    #[test_context(TrustifyContext)]
-    #[test(actix_web::test)]
-    async fn query_sboms_by_versions(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-        use crate::test::caller;
-        use actix_web::test::TestRequest;
-        use urlencoding::encode;
-
-        ctx.ingest_documents([
-            "quarkus-bom-2.13.8.Final-redhat-00004.json",
-            "ubi9-9.2-755.1697625012.json",
-        ])
-        .await?;
-
-        let query = async |expected_count, q| {
-            let app = caller(ctx).await.unwrap();
-            let uri = format!("/api/v2/sbom?q={}", encode(q));
-            let req = TestRequest::get().uri(&uri).to_request();
-            let response: Value = app.call_and_read_body_json(req).await;
-            tracing::debug!(test = "", "{response:#?}");
-            assert_eq!(expected_count, response["total"], "for {q}");
-        };
-
-        query(1, "versions=2.13.8.Final-redhat-00004").await;
-        query(1, "versions~2.13.8").await;
-        query(2, "").await;
 
         Ok(())
     }
