@@ -3,6 +3,7 @@ pub mod graph;
 mod roots;
 pub use roots::*;
 
+use bytesize::ByteSize;
 use deepsize::{Context, DeepSizeOf};
 use moka::{notification::RemovalCause, sync::Cache};
 use opentelemetry::{KeyValue, Value, metrics::Counter};
@@ -23,12 +24,46 @@ pub struct AnalysisStatus {
     pub sbom_count: u32,
     /// The number of graphs loaded in memory
     pub graph_count: u32,
+    /// The number of bytes consumed by entries in the graph
+    pub graph_memory: u64,
+    /// The number of ongoing loading operations
+    pub loading_operations: u32,
+    /// More details
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub details: Option<AnalysisStatusDetails>,
 }
 
 impl fmt::Display for AnalysisStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "graph_count {}", self.graph_count)
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
+pub struct AnalysisStatusDetails {
+    /// Details about the cache
+    pub cache: CacheStatusDetails,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
+pub struct CacheStatusDetails {
+    /// Entries in the cache
+    pub entries: Vec<CacheStatusEntry>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
+pub struct CacheStatusEntry {
+    /// The ID of the SBOM
+    pub sbom_id: String,
+    /// The size of the cache entry, in bytes
+    pub size: u64,
+    /// A human-readable version of `size`
+    #[schema(value_type = trustify_common::model::ByteSizeDef)]
+    pub size_human: ByteSize,
+    /// The number of nodes in the graph
+    pub nodes: u64,
+    /// The number of edges in the graph
+    pub edges: u64,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, ToSchema)]
@@ -131,7 +166,7 @@ impl From<RemovalCauseAttributeValue> for Value {
 }
 
 impl GraphMap {
-    // Create a new instance of GraphMap
+    /// Create a new instance of GraphMap
     pub fn new(cap: u64, evictions: Counter<u64>, eviction_size: Counter<u64>) -> Self {
         log::info!("Setting graph cache size to {cap} bytes");
 
@@ -152,17 +187,17 @@ impl GraphMap {
         }
     }
 
-    // Check if the map contains a key
+    /// Check if the map contains a key
     pub fn contains_key(&self, key: &str) -> bool {
         self.map.contains_key(key)
     }
 
-    // Get the number of graphs in the map
+    /// Get the number of graphs in the map
     pub fn len(&self) -> u64 {
         self.map.entry_count()
     }
 
-    // Check if the map is empty
+    /// Check if the map is empty
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -171,20 +206,39 @@ impl GraphMap {
         self.map.weighted_size()
     }
 
-    // Add a new graph with the given key (write access)
+    /// Add a new graph with the given key (write access)
     pub fn insert(&self, key: String, graph: Arc<PackageGraph>) {
         self.map.insert(key, graph);
         self.map.run_pending_tasks();
     }
 
-    // Retrieve a reference to a graph by its key (read access)
+    /// Retrieve a reference to a graph by its key (read access)
     pub fn get(&self, key: &str) -> Option<Arc<PackageGraph>> {
         self.map.get(key)
     }
 
-    // Clear all graphs from the map
+    /// Clear all graphs from the map
     pub fn clear(&self) {
         self.map.invalidate_all();
         self.map.run_pending_tasks();
+    }
+
+    /// Get internal status
+    pub fn status(&self) -> CacheStatusDetails {
+        let mut entries = vec![];
+
+        for entry in self.map.iter() {
+            let size = DeepSizeGraph(&entry.1).deep_size_of() as u64;
+
+            entries.push(CacheStatusEntry {
+                sbom_id: entry.0.to_string(),
+                size_human: ByteSize::b(size),
+                size,
+                edges: entry.1.edge_count() as _,
+                nodes: entry.1.node_count() as _,
+            })
+        }
+
+        CacheStatusDetails { entries }
     }
 }

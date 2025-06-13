@@ -970,6 +970,12 @@ paths:
       - analysis
       summary: Get the status of the analysis service.
       operationId: status
+      parameters:
+      - name: details
+        in: query
+        required: false
+        schema:
+          type: boolean
       responses:
         '200':
           description: Analysis status
@@ -3440,17 +3446,42 @@ components:
       required:
       - sbom_count
       - graph_count
+      - graph_memory
+      - loading_operations
       properties:
+        details:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/AnalysisStatusDetails'
+            description: More details
         graph_count:
           type: integer
           format: int32
           description: The number of graphs loaded in memory
+          minimum: 0
+        graph_memory:
+          type: integer
+          format: int64
+          description: The number of bytes consumed by entries in the graph
+          minimum: 0
+        loading_operations:
+          type: integer
+          format: int32
+          description: The number of ongoing loading operations
           minimum: 0
         sbom_count:
           type: integer
           format: int32
           description: The number of SBOMs found in the database
           minimum: 0
+    AnalysisStatusDetails:
+      type: object
+      required:
+      - cache
+      properties:
+        cache:
+          $ref: '#/components/schemas/CacheStatusDetails'
+          description: Details about the cache
     BasePurlDetails:
       allOf:
       - $ref: '#/components/schemas/BasePurlHead'
@@ -3518,6 +3549,48 @@ components:
           type: string
     BinaryByteSize:
       type: string
+    ByteSizeDef:
+      type: string
+    CacheStatusDetails:
+      type: object
+      required:
+      - entries
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CacheStatusEntry'
+          description: Entries in the cache
+    CacheStatusEntry:
+      type: object
+      required:
+      - sbom_id
+      - size
+      - size_human
+      - nodes
+      - edges
+      properties:
+        edges:
+          type: integer
+          format: int64
+          description: The number of edges in the graph
+          minimum: 0
+        nodes:
+          type: integer
+          format: int64
+          description: The number of nodes in the graph
+          minimum: 0
+        sbom_id:
+          type: string
+          description: The ID of the SBOM
+        size:
+          type: integer
+          format: int64
+          description: The size of the cache entry, in bytes
+          minimum: 0
+        size_human:
+          $ref: '#/components/schemas/ByteSizeDef'
+          description: A human-readable version of `size`
     ClearlyDefinedCurationImporter:
       allOf:
       - $ref: '#/components/schemas/CommonImporter'
