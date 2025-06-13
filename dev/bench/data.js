@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749824479244,
+  "lastUpdate": 1749825622728,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11594,6 +11594,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/64e6e903a2345a01ab80e49fdbf3258282203ae9"
         },
         "date": 1749824477605,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "b8ef582a6185e78962cc3b69e66dfab8a322010b",
+          "message": "test(analysis): adapt tests to fixed \"components by name\"\n\nThese tests did check all matching results, however those were flawed\nas the endpoint did return \"all SBOMs\" instead. So the number for that\nendpoint is less now.\n\nAlso, this is using `assert_eq` instead, to get a message of expected vs\nactual.",
+          "timestamp": "2025-06-13T14:15:21Z",
+          "tree_id": "9fd2fb0e0c60c63b7d33e69eb307ccbe3397038e",
+          "url": "https://github.com/trustification/trustify/commit/b8ef582a6185e78962cc3b69e66dfab8a322010b"
+        },
+        "date": 1749825621783,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
