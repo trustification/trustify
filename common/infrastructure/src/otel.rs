@@ -212,7 +212,6 @@ fn init_no_tracing() {
         .with(
             tracing_subscriber::fmt::layer()
                 .map_fmt_fields(|f| f.debug_alt())
-                .with_ansi(true)
                 .with_level(true)
                 .with_thread_ids(true)
                 .compact(),

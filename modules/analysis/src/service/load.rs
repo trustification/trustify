@@ -269,7 +269,7 @@ impl InnerService {
             GraphQuery::Component(ComponentReference::Name(name)) => sbom_node::Entity::find()
                 .filter(sbom_node::Column::Name.eq(name))
                 .select_only()
-                .column(sbom::Column::SbomId)
+                .column(sbom_node::Column::SbomId)
                 .distinct()
                 .into_query(),
             GraphQuery::Component(ComponentReference::Purl(purl)) => sbom_node::Entity::find()
@@ -640,7 +640,7 @@ impl InnerService {
         Ok(g)
     }
 
-    /// Load all SBOMs by the provided IDs
+    /// Load all SBOMs by the provided IDs, also resolve external references and load them too
     #[instrument(
         skip(self, connection, distinct_sbom_ids),
         fields(distinct_sbom_ids_len = distinct_sbom_ids.len()),
@@ -653,15 +653,15 @@ impl InnerService {
     ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
         log::info!("loading {} SBOMs", distinct_sbom_ids.len());
 
+        let external_sboms = sbom_external_node::Entity::find().all(connection).await?;
+
         let mut results = Vec::new();
-        for distinct_sbom_id in distinct_sbom_ids {
-            let distinct_sbom_id = distinct_sbom_id.as_ref();
+        for distinct_sbom_id in distinct_sbom_ids.iter().map(AsRef::as_ref) {
             // TODO: we need a better heuristic for loading external sboms
-            let external_sboms = sbom_external_node::Entity::find().all(connection).await?;
             for external_sbom in &external_sboms {
                 if !distinct_sbom_id.eq(&external_sbom.node_id.to_string()) {
                     let resolved_external_sbom =
-                        resolve_external_sbom(external_sbom.node_id.to_string(), connection).await;
+                        resolve_external_sbom(&external_sbom.node_id, connection).await;
                     log::debug!("resolved external sbom: {:?}", resolved_external_sbom);
                     if let Some(resolved_external_sbom) = resolved_external_sbom {
                         let resolved_external_sbom_id = resolved_external_sbom.sbom_id;
@@ -683,6 +683,7 @@ impl InnerService {
                 self.load_graph(connection, distinct_sbom_id).await?,
             ));
         }
+
         Ok(results)
     }
 }
