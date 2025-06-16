@@ -50,6 +50,7 @@ Advisories have a UUID that uniquely identifies the advisory.
         input_description("UUID of the Advisory. Example: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df")
     }
 
+    #[allow(deprecated)]
     async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
         let service = &self.service;
 
@@ -174,8 +175,8 @@ mod tests {
   "identifier": "RHSA-1",
   "issuer": null,
   "title": "RHSA-1",
-  "score": 9.1,
-  "severity": "critical",
+  "score": null,
+  "severity": null,
   "vulnerabilities": [
     {
       "identifier": "CVE-123",

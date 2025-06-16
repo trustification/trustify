@@ -4,10 +4,10 @@ use crate::{
 };
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ConnectionTrait, DatabaseBackend, DbErr, EntityTrait,
-    FromQueryResult, IntoActiveModel, IntoIdentity, QueryResult, QuerySelect, QueryTrait,
-    RelationTrait, Select, Statement, TransactionTrait,
+    FromQueryResult, IntoActiveModel, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select,
+    Statement, TransactionTrait,
 };
-use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr};
+use sea_query::{ColumnType, Expr, JoinType};
 use trustify_common::{
     db::{
         Database, UpdateDeprecatedAdvisory,
@@ -18,12 +18,7 @@ use trustify_common::{
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
 };
-use trustify_entity::{
-    advisory,
-    cvss3::{self, Severity},
-    labels::Labels,
-    organization, source_document,
-};
+use trustify_entity::{advisory, labels::Labels, organization, source_document};
 use trustify_module_ingestor::common::{Deprecation, DeprecationExt};
 use uuid::Uuid;
 
@@ -43,54 +38,10 @@ impl AdvisoryService {
         deprecation: Deprecation,
         connection: &C,
     ) -> Result<PaginatedResults<AdvisorySummary>, Error> {
-        // To be able to ORDER or WHERE using a synthetic column, we must first
-        // SELECT col, extra_col FROM (SELECT col, random as extra_col FROM...)
-        // which involves mucking about inside the Select<E> to re-target from
-        // the original underlying table it expects the entity to live in.
-        let inner_query = advisory::Entity::find()
+        let limiter = advisory::Entity::find()
             .with_deprecation(deprecation)
-            .left_join(cvss3::Entity)
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                    cvss3::Column::Score.into_column_ref(),
-                ))),
-                "average_score",
-            )
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::cust("cvss3_severity".into_identity()).arg(
-                    SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                        cvss3::Column::Score.into_column_ref(),
-                    ))),
-                )),
-                "average_severity",
-            )
-            .group_by(advisory::Column::Id);
-
-        let mut outer_query = advisory::Entity::find();
-
-        // Alias the inner query as exactly the table the entity is expecting
-        // so that column aliases link up correctly.
-        QueryTrait::query(&mut outer_query)
-            .from_clear()
-            .from_subquery(inner_query.into_query(), "advisory".into_identity());
-
-        // And then proceed as usual.
-        let limiter = outer_query
             .left_join(source_document::Entity)
             .join(JoinType::LeftJoin, advisory::Relation::Issuer.def())
-            .column_as(
-                SimpleExpr::Column(ColumnRef::Column(
-                    "average_score".into_identity().into_iden(),
-                )),
-                "average_score",
-            )
-            .column_as(
-                SimpleExpr::Column(ColumnRef::Column(
-                    "average_severity".into_identity().into_iden(),
-                ))
-                .cast_as("TEXT".into_identity()),
-                "average_severity",
-            )
             .filtering_with(
                 search,
                 Columns::from_entity::<advisory::Entity>()
@@ -98,27 +49,9 @@ impl AdvisoryService {
                         source_document::Column::Ingested,
                         ColumnType::TimestampWithTimeZone,
                     )
-                    .add_column("average_score", ColumnType::Decimal(None))
-                    .add_column(
-                        "average_severity",
-                        ColumnType::Enum {
-                            name: "cvss3_severity".into_identity().into_iden(),
-                            variants: vec![
-                                "none".into_identity().into_iden(),
-                                "low".into_identity().into_iden(),
-                                "medium".into_identity().into_iden(),
-                                "high".into_identity().into_iden(),
-                                "critical".into_identity().into_iden(),
-                            ],
-                        },
-                    )
-                    .translator(|f, op, v| match (f, v) {
-                        // v = "" for all sort fields
-                        ("average_severity", "") => Some(format!("average_score:{op}")),
-                        (f, _) => match f.split_once(':') {
-                            Some(("label", key)) => Some(format!("labels:{key}{op}{v}")),
-                            _ => None,
-                        },
+                    .translator(|f, op, v| match f.split_once(':') {
+                        Some(("label", key)) => Some(format!("labels:{key}{op}{v}")),
+                        _ => None,
                     }),
             )?
             .try_limiting_as_multi_model::<AdvisoryCatcher>(
@@ -142,52 +75,9 @@ impl AdvisoryService {
         id: Id,
         connection: &C,
     ) -> Result<Option<AdvisoryDetails>, Error> {
-        // To be able to ORDER or WHERE using a synthetic column, we must first
-        // SELECT col, extra_col FROM (SELECT col, random as extra_col FROM...)
-        // which involves mucking about inside the Select<E> to re-target from
-        // the original underlying table it expects the entity to live in.
-        let inner_query = advisory::Entity::find()
-            .left_join(cvss3::Entity)
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                    cvss3::Column::Score.into_column_ref(),
-                ))),
-                "average_score",
-            )
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::cust("cvss3_severity".into_identity()).arg(
-                    SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                        cvss3::Column::Score.into_column_ref(),
-                    ))),
-                )),
-                "average_severity",
-            )
-            .group_by(advisory::Column::Id);
-
-        let mut outer_query = advisory::Entity::find();
-
-        // Alias the inner query as exactly the table the entity is expecting
-        // so that column aliases link up correctly.
-        QueryTrait::query(&mut outer_query)
-            .from_clear()
-            .from_subquery(inner_query.into_query(), "advisory".into_identity());
-
-        let results = outer_query
+        let results = advisory::Entity::find()
             .left_join(source_document::Entity)
             .join(JoinType::LeftJoin, advisory::Relation::Issuer.def())
-            .column_as(
-                SimpleExpr::Column(ColumnRef::Column(
-                    "average_score".into_identity().into_iden(),
-                )),
-                "average_score",
-            )
-            .column_as(
-                SimpleExpr::Column(ColumnRef::Column(
-                    "average_severity".into_identity().into_iden(),
-                ))
-                .cast_as("TEXT".into_identity()),
-                "average_severity",
-            )
             .try_filter(id)?
             .try_into_multi_model::<AdvisoryCatcher>()?
             .one(connection)
@@ -308,8 +198,6 @@ pub struct AdvisoryCatcher {
     pub source_document: Option<source_document::Model>,
     pub advisory: advisory::Model,
     pub issuer: Option<organization::Model>,
-    pub average_score: Option<f64>,
-    pub average_severity: Option<Severity>,
 }
 
 impl FromQueryResult for AdvisoryCatcher {
@@ -322,8 +210,6 @@ impl FromQueryResult for AdvisoryCatcher {
             )?,
             advisory: Self::from_query_result_multi_model(res, "", advisory::Entity)?,
             issuer: Self::from_query_result_multi_model_optional(res, "", organization::Entity)?,
-            average_score: res.try_get("", "average_score")?,
-            average_severity: res.try_get("", "average_severity")?,
         })
     }
 }
@@ -338,4 +224,5 @@ impl FromQueryResultMultiModel for AdvisoryCatcher {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 pub mod test;
