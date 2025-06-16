@@ -184,6 +184,11 @@ postgresql_archive = { version = "0.18.0", default-features = false, features = 
 postgresql_embedded = { version = "0.18.0", default-features = false, features = ["theseus", "rustls"] }
 postgresql_commands = { version = "0.18.0", default-features = false, features = ["tokio"] }
 
+# Do not generate debuginfo for dependencies in `dev` and `test` profiles. This
+# save us some disk space
+[profile.dev.package."*"]
+debug = false
+
 [patch.crates-io]
 #csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }
 #sbom-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }
