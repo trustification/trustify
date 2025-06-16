@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750070534898,
+  "lastUpdate": 1750072517727,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11681,6 +11681,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/baeb1a224628f830fef5eda643dbf6d277ba83a3"
         },
         "date": 1750070533803,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "a5fb99bba827d4b6e6506af91381934998f81169",
+          "message": "chore: otelcol internal telemetry",
+          "timestamp": "2025-06-16T10:53:10Z",
+          "tree_id": "c86bb72167034faf984136ab33e966f0291b3312",
+          "url": "https://github.com/trustification/trustify/commit/a5fb99bba827d4b6e6506af91381934998f81169"
+        },
+        "date": 1750072516492,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
