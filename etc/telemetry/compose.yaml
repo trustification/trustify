@@ -40,6 +40,7 @@ services:
       - './config-collector.yaml:/otel-collector-config.yaml:z'
     ports:
       - "4317:4317"
+      - "8888:8888"
     depends_on: [tempo]
 
   # NOTE: Database part to avoid opening two more terminals for extra commands.
