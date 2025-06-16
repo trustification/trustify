@@ -3444,6 +3444,7 @@ components:
       - sbom_count
       - graph_count
       - graph_memory
+      - graph_max_memory
       - loading_operations
       properties:
         details:
@@ -3455,6 +3456,11 @@ components:
           type: integer
           format: int32
           description: The number of graphs loaded in memory
+          minimum: 0
+        graph_max_memory:
+          type: integer
+          format: int64
+          description: The maximum number of bytes the cache will hold
           minimum: 0
         graph_memory:
           type: integer
@@ -3551,13 +3557,30 @@ components:
     CacheStatusDetails:
       type: object
       required:
+      - capacity
+      - free
+      - usage
       - entries
       properties:
+        capacity:
+          type: integer
+          format: int64
+          description: The maximum number of bytes the cache will hold
+          minimum: 0
         entries:
           type: array
           items:
             $ref: '#/components/schemas/CacheStatusEntry'
           description: Entries in the cache
+        free:
+          type: integer
+          format: int64
+          description: The number of bytes which are still free
+          minimum: 0
+        usage:
+          type: number
+          format: double
+          description: The percentage the cache is filled (0..1)
     CacheStatusEntry:
       type: object
       required:
