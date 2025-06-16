@@ -341,6 +341,112 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
         .to_request();
     let response = app.call_service(req).await;
     assert_eq!(StatusCode::BAD_REQUEST, response.status());
+
+    // Test license IDs are case-insensitive https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions/#case-sensitivity
+    // because, so far, the test ingested `Apache-2.0` licenses but the next SBOM contains
+    // the license ID `APACHE-2.0` (the same for `BSD-2-Clause`)
+    let id = ctx
+        .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
+        .await?
+        .id
+        .to_string();
+    let uri = format!("/api/v2/sbom/{id}/all-license-ids");
+    let req = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(req).await;
+    let expected_result = json!([
+      {
+        "license_id": "Apache-2.0",
+        "license_name": "Apache-2.0"
+      },
+      {
+        "license_id": "BOUNCY-CASTLE-LICENCE",
+        "license_name": "BOUNCY-CASTLE-LICENCE"
+      },
+      {
+        "license_id": "BSD-2-Clause",
+        "license_name": "BSD-2-Clause"
+      },
+      {
+        "license_id": "BSD-3-Clause",
+        "license_name": "BSD-3-Clause"
+      },
+      {
+        "license_id": "BSD-4-CLAUSE",
+        "license_name": "BSD-4-CLAUSE"
+      },
+      {
+        "license_id": "CC0-1.0",
+        "license_name": "CC0-1.0"
+      },
+      {
+        "license_id": "EPL-1.0",
+        "license_name": "EPL-1.0"
+      },
+      {
+        "license_id": "EPL-2.0",
+        "license_name": "EPL-2.0"
+      },
+      {
+        "license_id": "GNU-LESSER-GENERAL-PUBLIC-LICENSE",
+        "license_name": "GNU-LESSER-GENERAL-PUBLIC-LICENSE"
+      },
+      {
+        "license_id": "GPL-2.0-WITH-CLASSPATH-EXCEPTION",
+        "license_name": "GPL-2.0-WITH-CLASSPATH-EXCEPTION"
+      },
+      {
+        "license_id": "LGPL-2.1",
+        "license_name": "LGPL-2.1"
+      },
+      {
+        "license_id": "LGPL-2.1+",
+        "license_name": "LGPL-2.1+"
+      },
+      {
+        "license_id": "LGPL-2.1-ONLY",
+        "license_name": "LGPL-2.1-ONLY"
+      },
+      {
+        "license_id": "LGPL-2.1-OR-LATER",
+        "license_name": "LGPL-2.1-OR-LATER"
+      },
+      {
+        "license_id": "MIT",
+        "license_name": "MIT"
+      },
+      {
+        "license_id": "MPL-1.1",
+        "license_name": "MPL-1.1"
+      },
+      {
+        "license_id": "MPL-2.0",
+        "license_name": "MPL-2.0"
+      },
+      {
+        "license_id": "NOASSERTION",
+        "license_name": "NOASSERTION"
+      },
+      {
+        "license_id": "PUBLIC-DOMAIN",
+        "license_name": "PUBLIC-DOMAIN"
+      },
+      {
+        "license_id": "SIMILAR-TO-APACHE-LICENSE-BUT",
+        "license_name": "SIMILAR-TO-APACHE-LICENSE-BUT"
+      },
+      {
+        "license_id": "UPL-1.0",
+        "license_name": "UPL-1.0"
+      }
+    ]);
+    log::debug!("{}", serde_json::to_string_pretty(&response)?);
+    match response {
+        Value::Array(ref list) => {
+            // assert_eq!(expected_result, list);
+            assert_eq!(expected_result.as_array().unwrap(), list);
+        }
+        _ => panic!("Incorrect response"),
+    }
     Ok(())
 }
 
