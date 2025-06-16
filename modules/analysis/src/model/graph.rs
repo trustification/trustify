@@ -1,4 +1,6 @@
 use super::*;
+use time::{OffsetDateTime, macros::format_description};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize, DeepSizeOf)]
 pub enum Node {
@@ -19,17 +21,39 @@ impl Deref for Node {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize, DeepSizeOf)]
+#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
 pub struct BaseNode {
-    pub sbom_id: String,
+    pub sbom_id: Uuid,
     pub node_id: String,
-    pub published: String,
+    pub published: OffsetDateTime,
 
     pub name: String,
 
-    pub document_id: String,
-    pub product_name: String,
-    pub product_version: String,
+    pub document_id: Option<Arc<String>>,
+    pub product_name: Option<Arc<String>>,
+    pub product_version: Option<Arc<String>>,
+}
+
+impl DeepSizeOf for BaseNode {
+    fn deep_size_of_children(&self, context: &mut Context) -> usize {
+        let Self {
+            sbom_id,
+            node_id,
+            published,
+            name,
+            document_id,
+            product_name,
+            product_version,
+        } = self;
+
+        size_of_val(sbom_id)
+            + node_id.deep_size_of_children(context)
+            + size_of_val(published)
+            + name.deep_size_of_children(context)
+            + document_id.deep_size_of_children(context)
+            + product_name.deep_size_of_children(context)
+            + product_version.deep_size_of_children(context)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize, DeepSizeOf)]
@@ -71,6 +95,14 @@ impl Deref for ExternalNode {
     }
 }
 
+fn published_to_string(value: OffsetDateTime) -> String {
+    let format = format_description!(
+        "[year]-[month]-[day] [hour]:[minute]:[second][offset_hour sign:mandatory]"
+    );
+
+    value.format(&format).unwrap_or_else(|_| value.to_string())
+}
+
 impl From<&Node> for BaseSummary {
     fn from(value: &Node) -> Self {
         match value {
@@ -82,10 +114,22 @@ impl From<&Node> for BaseSummary {
                 cpe: vec![],
                 name: value.name.to_string(),
                 version: "".to_string(),
-                published: value.published.to_string(),
-                document_id: value.document_id.to_string(),
-                product_name: value.product_name.to_string(),
-                product_version: value.product_version.to_string(),
+                published: published_to_string(value.published),
+                document_id: value
+                    .document_id
+                    .as_ref()
+                    .map(|s| s.to_string())
+                    .unwrap_or_default(),
+                product_name: value
+                    .product_name
+                    .as_ref()
+                    .map(|s| s.to_string())
+                    .unwrap_or_default(),
+                product_version: value
+                    .product_version
+                    .as_ref()
+                    .map(|s| s.to_string())
+                    .unwrap_or_default(),
             },
         }
     }
@@ -100,10 +144,22 @@ impl From<&PackageNode> for BaseSummary {
             cpe: value.cpe.clone(),
             name: value.name.to_string(),
             version: value.version.to_string(),
-            published: value.published.to_string(),
-            document_id: value.document_id.to_string(),
-            product_name: value.product_name.to_string(),
-            product_version: value.product_version.to_string(),
+            published: published_to_string(value.published),
+            document_id: value
+                .document_id
+                .as_ref()
+                .map(|s| s.to_string())
+                .unwrap_or_default(),
+            product_name: value
+                .product_name
+                .as_ref()
+                .map(|s| s.to_string())
+                .unwrap_or_default(),
+            product_version: value
+                .product_version
+                .as_ref()
+                .map(|s| s.to_string())
+                .unwrap_or_default(),
         }
     }
 }

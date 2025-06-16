@@ -343,7 +343,7 @@ async fn test_status_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let analysis_status = service.status(&ctx.db, false).await?;
     assert_eq!(analysis_status.sbom_count, 1);
     assert_eq!(analysis_status.graph_count, 1);
-    assert_eq!(analysis_status.graph_memory, 6894);
+    assert_eq!(analysis_status.graph_memory, 6564);
     assert!(analysis_status.details.is_none());
 
     service.clear_all_graphs()?;
@@ -386,8 +386,8 @@ async fn test_cache_size_used(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     assert_eq!(all_graphs.len(), 2);
 
     let big_sbom_size = service.cache_size_used() - small_sbom_size;
-    assert!(big_sbom_size > 950 * kb);
-    assert!(big_sbom_size < 960 * kb);
+    assert!(big_sbom_size > 800 * kb);
+    assert!(big_sbom_size < 810 * kb);
 
     // Now lets try it with small cache that can at least fit the small bom
     let service = AnalysisService::new(

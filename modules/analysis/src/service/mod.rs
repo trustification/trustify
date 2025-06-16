@@ -613,8 +613,9 @@ impl AnalysisService {
                     }
                     _ => vec![],
                 };
+                let sbom_id = node.sbom_id.to_string();
                 let mut context = ValueContext::from([
-                    ("sbom_id", Value::String(&node.sbom_id)),
+                    ("sbom_id", Value::String(&sbom_id)),
                     ("node_id", Value::String(&node.node_id)),
                     ("name", Value::String(&node.name)),
                 ]);

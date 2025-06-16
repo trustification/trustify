@@ -30,9 +30,10 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 spdx-rs = { workspace = true }
 thiserror = { workspace = true }
+time = { workspace = true }
 tokio = { workspace = true, features = ["sync"] }
 tracing = { workspace = true }
-utoipa = { workspace = true, features = ["actix_extras", "uuid"] }
+utoipa = { workspace = true, features = ["actix_extras", "uuid", "time", "rc_schema"] }
 utoipa-actix-web = { workspace = true }
 uuid = { workspace = true }
 
