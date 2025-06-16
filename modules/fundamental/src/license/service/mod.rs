@@ -230,18 +230,26 @@ impl LicenseService {
                     r#"
                     (
                         -- Successfully parsed (during SBOM ingestion) license ID values can be
-                        -- retrieved from the spdx_licenses column
-                        SELECT DISTINCT unnest(l.spdx_licenses) as license_name, unnest(l.spdx_licenses) as license_id
+                        -- retrieved from the spdx_licenses column. The DISTINCT must be on lower values
+                        -- because the license identifiers have to be managed in case-insensitive way
+                        -- ref. https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions/#case-sensitivity
+                        SELECT DISTINCT on (lower(l.spdx_licenses)) l.spdx_licenses as license_name, l.spdx_licenses as license_id
                         FROM sbom_package_license spl
-                        JOIN license l ON spl.license_id = l.id
+                        -- 'spdx_licenses' must be unnested and sorted before joining in order to ensure consistent results
+                        JOIN (
+                            SELECT id, unnest(spdx_licenses) as spdx_licenses
+                            FROM license
+                            ORDER BY id, spdx_licenses
+                        ) AS l ON spl.license_id = l.id
                         WHERE spl.sbom_id = $1
                         AND l.spdx_licenses IS NOT NULL
                         UNION
                         -- CycloneDX SBOMs has NO "LicenseRef" by specifications (hence
                         -- the above condition 'licensing_infos.license_id IS NULL')  so
                         -- all the values in the license.text whose spdx_licenses is null
-                        -- must be added to the result set
-                        SELECT DISTINCT l.text as license_name, l.text as license_id
+                        -- must be added to the result set. The need for the DISTINCT on lower is
+                        -- clearly explained above.
+                        SELECT DISTINCT ON (LOWER(l.text)) l.text as license_name, l.text as license_id
                         FROM sbom_package_license spl
                         JOIN license l ON spl.license_id = l.id
                         LEFT JOIN licensing_infos ON licensing_infos.sbom_id = spl.sbom_id
