@@ -1,9 +1,9 @@
-use crate::service::LoadingOp;
 use crate::{
     Error,
     model::{PackageGraph, graph},
     service::{
-        AnalysisService, ComponentReference, GraphQuery, InnerService, resolve_external_sbom,
+        AnalysisService, ComponentReference, GraphQuery, InnerService, LoadingOp,
+        resolve_external_sbom,
     },
 };
 use ::cpe::{
@@ -28,6 +28,7 @@ use std::{
     str::FromStr,
     sync::Arc,
 };
+use time::OffsetDateTime;
 use tokio::sync::oneshot;
 use tracing::{Level, instrument};
 use trustify_common::{
@@ -51,7 +52,7 @@ use uuid::Uuid;
 pub struct Node {
     pub sbom_id: Uuid,
     pub document_id: Option<String>,
-    pub published: String,
+    pub published: OffsetDateTime,
 
     pub node_id: String,
     pub node_name: String,
@@ -64,35 +65,59 @@ pub struct Node {
     pub ext_node_id: Option<String>,
     pub ext_external_document_ref: Option<String>,
     pub ext_external_node_id: Option<String>,
+    #[allow(unused)]
     pub ext_external_type: Option<ExternalType>,
 
     pub product_name: Option<String>,
     pub product_version: Option<String>,
 }
 
-impl From<Node> for graph::Node {
-    fn from(value: Node) -> Self {
+#[derive(Debug, Default)]
+struct Context {
+    strings: HashMap<String, Arc<String>>,
+}
+
+impl Context {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn intern(&mut self, s: String) -> Arc<String> {
+        if self.strings.contains_key(&s) {
+            if let Some(s) = self.strings.get(&s) {
+                return s.clone();
+            }
+        }
+
+        let a = Arc::new(s.clone());
+        self.strings.insert(s, a.clone());
+        a
+    }
+}
+
+impl Node {
+    fn into_graph_node(self, ctx: &mut Context) -> graph::Node {
         let base = graph::BaseNode {
-            sbom_id: value.sbom_id.to_string(),
-            node_id: value.node_id,
-            published: value.published.clone(),
-            name: value.node_name,
-            document_id: value.document_id.clone().unwrap_or_default(),
-            product_name: value.product_name.clone().unwrap_or_default(),
-            product_version: value.product_version.clone().unwrap_or_default(),
+            sbom_id: self.sbom_id,
+            node_id: self.node_id,
+            published: self.published,
+            name: self.node_name,
+            document_id: self.document_id.map(|s| ctx.intern(s)),
+            product_name: self.product_name.map(|s| ctx.intern(s)),
+            product_version: self.product_version.map(|s| ctx.intern(s)),
         };
 
-        match (value.package_node_id, value.ext_node_id) {
+        match (self.package_node_id, self.ext_node_id) {
             (Some(_), _) => graph::Node::Package(graph::PackageNode {
                 base,
-                purl: to_purls(value.purls),
-                cpe: to_cpes(value.cpes),
-                version: value.package_version.clone().unwrap_or_default(),
+                purl: to_purls(self.purls),
+                cpe: to_cpes(self.cpes),
+                version: self.package_version.clone().unwrap_or_default(),
             }),
             (_, Some(_)) => graph::Node::External(graph::ExternalNode {
                 base,
-                external_document_reference: value.ext_external_document_ref.unwrap_or_default(),
-                external_node_id: value.ext_external_node_id.unwrap_or_default(),
+                external_document_reference: self.ext_external_document_ref.unwrap_or_default(),
+                external_node_id: self.ext_external_node_id.unwrap_or_default(),
             }),
             _ => graph::Node::Unknown(base),
         }
@@ -142,7 +167,7 @@ cpe_ref AS (
 SELECT
     sbom.sbom_id,
     sbom.document_id,
-    sbom.published::text,
+    sbom.published,
 
     t1_node.node_id AS node_id,
     t1_node.name AS node_name,
@@ -574,12 +599,14 @@ impl InnerService {
             }
         };
 
+        let mut ctx = Context::new();
+
         for node in loaded_nodes {
             detected_nodes.insert(node.node_id.clone());
 
             match nodes.entry(node.node_id.clone()) {
                 Entry::Vacant(entry) => {
-                    let index = g.add_node(node.into());
+                    let index = g.add_node(node.into_graph_node(&mut ctx));
 
                     log::debug!("Inserting - id: {}, index: {index:?}", entry.key());
 
