@@ -24,14 +24,17 @@ pub struct AdvisoryDetails {
 
     /// Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
     #[schema(required)]
+    #[deprecated]
     pub average_severity: Option<Severity>,
 
     /// Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
     #[schema(required)]
+    #[deprecated]
     pub average_score: Option<f64>,
 }
 
 impl AdvisoryDetails {
+    #[allow(deprecated)]
     pub async fn from_entity<C: ConnectionTrait>(
         advisory: &AdvisoryCatcher,
         tx: &C,
@@ -62,8 +65,8 @@ impl AdvisoryDetails {
                 .as_ref()
                 .map(SourceDocument::from_entity),
             vulnerabilities,
-            average_severity: advisory.average_severity.map(|sev| sev.into()),
-            average_score: advisory.average_score,
+            average_severity: None,
+            average_score: None,
         })
     }
 }

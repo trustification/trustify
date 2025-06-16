@@ -1,7 +1,6 @@
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
 use trustify_common::memo::Memo;
-use trustify_cvss::cvss3::score::Score;
 use trustify_entity::{advisory_vulnerability, vulnerability};
 use utoipa::ToSchema;
 
@@ -21,10 +20,12 @@ pub struct AdvisorySummary {
 
     /// Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
     #[schema(required)]
+    #[deprecated]
     pub average_severity: Option<String>,
 
     /// Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
     #[schema(required)]
+    #[deprecated]
     pub average_score: Option<f64>,
 
     /// Vulnerabilities addressed within this advisory.
@@ -32,6 +33,7 @@ pub struct AdvisorySummary {
 }
 
 impl AdvisorySummary {
+    #[allow(deprecated)]
     pub async fn from_entities<C: ConnectionTrait>(
         entities: &[AdvisoryCatcher],
         tx: &C,
@@ -53,8 +55,6 @@ impl AdvisorySummary {
                 AdvisoryVulnerabilityHead::from_entities(&each.advisory, &vulnerabilities, tx)
                     .await?;
 
-            let average_score = each.average_score.map(|score| Score::new(score).roundup());
-
             summaries.push(AdvisorySummary {
                 head: AdvisoryHead::from_advisory(
                     &each.advisory,
@@ -66,11 +66,8 @@ impl AdvisorySummary {
                     .source_document
                     .as_ref()
                     .map(SourceDocument::from_entity),
-                average_severity: each
-                    .average_severity
-                    .as_ref()
-                    .map(|severity| severity.to_string()),
-                average_score: average_score.map(|score| score.value()),
+                average_severity: None,
+                average_score: None,
                 vulnerabilities,
             })
         }
