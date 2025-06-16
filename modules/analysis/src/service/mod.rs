@@ -414,7 +414,7 @@ impl AnalysisService {
     }
 
     /// Collect nodes from the graph
-    #[instrument(skip(self, create))]
+    #[instrument(skip(self, create, graphs))]
     async fn collect_graph<'a, C>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
@@ -444,7 +444,7 @@ impl AnalysisService {
         .await
     }
 
-    #[instrument(skip(self, connection, graph_cache))]
+    #[instrument(skip(self, connection, graphs, graph_cache))]
     pub async fn run_graph_query<'a, C: ConnectionTrait>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
