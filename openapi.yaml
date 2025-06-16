@@ -3280,6 +3280,7 @@ components:
             - 'null'
             format: double
             description: Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
+            deprecated: true
           average_severity:
             oneOf:
             - type: 'null'
@@ -3363,11 +3364,13 @@ components:
             - 'null'
             format: double
             description: Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
+            deprecated: true
           average_severity:
             type:
             - string
             - 'null'
             description: Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
+            deprecated: true
           vulnerabilities:
             type: array
             items:
@@ -4040,11 +4043,13 @@ components:
                   - 'null'
                   format: double
                   description: Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
+                  deprecated: true
                 average_severity:
                   type:
                   - string
                   - 'null'
                   description: Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
+                  deprecated: true
                 vulnerabilities:
                   type: array
                   items:

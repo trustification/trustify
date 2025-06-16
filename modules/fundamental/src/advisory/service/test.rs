@@ -7,7 +7,7 @@ use time::OffsetDateTime;
 use trustify_common::{db::query::q, hashing::Digests, model::Paginated, purl::Purl};
 use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
-    PrivilegesRequired, Scope, UserInteraction, severity::Severity,
+    PrivilegesRequired, Scope, UserInteraction,
 };
 use trustify_entity::version_scheme::VersionScheme;
 use trustify_module_ingestor::graph::Outcome;
@@ -86,54 +86,6 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn all_advisories_filtered_by_average_score(
-    ctx: &TrustifyContext,
-) -> Result<(), anyhow::Error> {
-    ingest_and_link_advisory(ctx).await?;
-
-    ingest_sample_advisory(ctx, "RHSA-2", "RHSA-2").await?;
-
-    let fetch = AdvisoryService::new(ctx.db.clone());
-    let fetched = fetch
-        .fetch_advisories(
-            q("average_score>8"),
-            Paginated::default(),
-            Default::default(),
-            &ctx.db,
-        )
-        .await?;
-
-    assert_eq!(fetched.total, 1);
-    Ok(())
-}
-
-#[test_context(TrustifyContext)]
-#[test(actix_web::test)]
-async fn all_advisories_filtered_by_average_severity(
-    ctx: &TrustifyContext,
-) -> Result<(), anyhow::Error> {
-    ingest_and_link_advisory(ctx).await?;
-
-    ingest_sample_advisory(ctx, "RHSA-2", "RHSA-2").await?;
-
-    let fetch = AdvisoryService::new(ctx.db.clone());
-    let fetched = fetch
-        .fetch_advisories(
-            q("average_severity>=critical"),
-            Paginated::default(),
-            Default::default(),
-            &ctx.db,
-        )
-        .await?;
-
-    log::debug!("{:#?}", fetched);
-
-    assert_eq!(fetched.total, 1);
-    Ok(())
-}
-
-#[test_context(TrustifyContext)]
-#[test(actix_web::test)]
 async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let digests = Digests::digest("RHSA-1");
 
@@ -204,11 +156,10 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 sha512,
                 ..
             }),
-            average_severity: Some(average_severity),
-
+            average_severity: None,
                 ..
             })
-        if sha256 == jenny256.to_string() && sha384 == jenny384.to_string() && sha512 == jenny512.to_string() && average_severity == Severity::Critical));
+        if sha256 == jenny256.to_string() && sha384 == jenny384.to_string() && sha512 == jenny512.to_string()));
 
     let fetched = fetch.fetch_advisory(id, &ctx.db).await?;
     assert!(matches!(
@@ -221,11 +172,11 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 sha512,
                 ..
             }),
-            average_severity: Some(average_severity),
+            average_severity: None,
 
                 ..
             })
-        if sha256 == jenny256.to_string() && sha384 == jenny384.to_string() && sha512 == jenny512.to_string() && average_severity == Severity::Critical));
+        if sha256 == jenny256.to_string() && sha384 == jenny384.to_string() && sha512 == jenny512.to_string()));
 
     Ok(())
 }
