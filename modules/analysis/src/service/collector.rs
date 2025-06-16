@@ -121,6 +121,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
             // we've already seen this
             return None;
         }
+
         match self.graph.node_weight(self.node) {
             Some(graph::Node::External(external_node)) => {
                 // we know this is an external node, so retrieve external sbom descendant nodes
