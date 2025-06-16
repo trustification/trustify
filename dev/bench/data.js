@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750067872403,
+  "lastUpdate": 1750070534898,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11652,6 +11652,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/cb02e9ca145c3ecb922114743b8adea943c5e7ac"
         },
         "date": 1750067871174,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "baeb1a224628f830fef5eda643dbf6d277ba83a3",
+          "message": "fix: prevent dumping massive amounts of log info\n\nHaving the `graphs` variable logged dumps out an enormous amount of\ndata, not adding any value. Blocking the log file, having an impact\non performance.",
+          "timestamp": "2025-06-16T10:17:49Z",
+          "tree_id": "83c339a2efaa94f09daddccb9854fdc25f87b59a",
+          "url": "https://github.com/trustification/trustify/commit/baeb1a224628f830fef5eda643dbf6d277ba83a3"
+        },
+        "date": 1750070533803,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
