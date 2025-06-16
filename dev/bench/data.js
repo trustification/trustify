@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1749825622728,
+  "lastUpdate": 1750067872403,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11623,6 +11623,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b8ef582a6185e78962cc3b69e66dfab8a322010b"
         },
         "date": 1749825621783,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "cb02e9ca145c3ecb922114743b8adea943c5e7ac",
+          "message": "fix: don't force ansi colors, respect NO_COLOR, default on",
+          "timestamp": "2025-06-16T09:35:16Z",
+          "tree_id": "0c6e81a91366e754eb95bfc9af4d7974b8446866",
+          "url": "https://github.com/trustification/trustify/commit/cb02e9ca145c3ecb922114743b8adea943c5e7ac"
+        },
+        "date": 1750067871174,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
