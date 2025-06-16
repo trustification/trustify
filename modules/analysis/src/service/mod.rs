@@ -408,6 +408,7 @@ impl AnalysisService {
             sbom_count: distinct_sbom_ids as u32,
             graph_count: self.inner.graph_cache.len() as u32,
             graph_memory: self.inner.graph_cache.size_used(),
+            graph_max_memory: self.inner.graph_cache.capacity(),
             loading_operations: self.inner.loading_ops.lock().len() as u32,
             details: details.then(|| self.inner.status_details()),
         })

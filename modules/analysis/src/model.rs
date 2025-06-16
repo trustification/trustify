@@ -18,7 +18,7 @@ use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, ToSchema, serde::Serialize)]
 pub struct AnalysisStatus {
     /// The number of SBOMs found in the database
     pub sbom_count: u32,
@@ -26,6 +26,8 @@ pub struct AnalysisStatus {
     pub graph_count: u32,
     /// The number of bytes consumed by entries in the graph
     pub graph_memory: u64,
+    /// The maximum number of bytes the cache will hold
+    pub graph_max_memory: u64,
     /// The number of ongoing loading operations
     pub loading_operations: u32,
     /// More details
@@ -39,14 +41,20 @@ impl fmt::Display for AnalysisStatus {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, ToSchema, serde::Serialize)]
 pub struct AnalysisStatusDetails {
     /// Details about the cache
     pub cache: CacheStatusDetails,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, ToSchema, serde::Serialize)]
 pub struct CacheStatusDetails {
+    /// The maximum number of bytes the cache will hold
+    pub capacity: u64,
+    /// The number of bytes which are still free
+    pub free: u64,
+    /// The percentage the cache is filled (0..1)
+    pub usage: f64,
     /// Entries in the cache
     pub entries: Vec<CacheStatusEntry>,
 }
@@ -117,6 +125,9 @@ impl DerefMut for Node {
 pub type PackageGraph = Graph<graph::Node, Relationship, petgraph::Directed>;
 
 pub struct GraphMap {
+    /// cache capacity in bytes
+    capacity: u64,
+    /// the cache
     map: Cache<String, Arc<PackageGraph>>,
 }
 
@@ -171,6 +182,7 @@ impl GraphMap {
         log::info!("Setting graph cache size to {cap} bytes");
 
         GraphMap {
+            capacity: cap,
             map: Cache::builder()
                 .weigher(size_of_graph_entry)
                 .max_capacity(cap)
@@ -206,6 +218,10 @@ impl GraphMap {
         self.map.weighted_size()
     }
 
+    pub fn capacity(&self) -> u64 {
+        self.capacity
+    }
+
     /// Add a new graph with the given key (write access)
     pub fn insert(&self, key: String, graph: Arc<PackageGraph>) {
         self.map.insert(key, graph);
@@ -239,6 +255,15 @@ impl GraphMap {
             })
         }
 
-        CacheStatusDetails { entries }
+        let used = self.size_used();
+        let free = self.capacity - used;
+        let usage = used as f64 / self.capacity as f64;
+
+        CacheStatusDetails {
+            capacity: self.capacity,
+            free,
+            usage,
+            entries,
+        }
     }
 }
