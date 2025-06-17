@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750087710955,
+  "lastUpdate": 1750147275020,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11739,6 +11739,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/5496e5f6f778246a4eab82a292abcfc190810c36"
         },
         "date": 1750087709175,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": false,
+          "id": "9c03149355db4937fe87db39d6db2d3695596abd",
+          "message": "TC-1902 SBOM packages license management: improved distinct and sorted unnested 'spdx_licenses' before joining\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-06-17T07:35:51Z",
+          "tree_id": "9761cf5d772b6862349e44765569697681f86b0f",
+          "url": "https://github.com/trustification/trustify/commit/9c03149355db4937fe87db39d6db2d3695596abd"
+        },
+        "date": 1750147273942,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
