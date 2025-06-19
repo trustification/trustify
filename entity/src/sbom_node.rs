@@ -20,6 +20,12 @@ pub enum Relation {
     )]
     Package,
     #[sea_orm(
+        belongs_to = "super::sbom_package::Entity",
+        from = "Column::SbomId",
+        to = "super::sbom_package::Column::SbomId"
+    )]
+    PackageBySbomId,
+    #[sea_orm(
         belongs_to = "super::sbom_file::Entity",
         from = "(Column::SbomId, Column::NodeId)",
         to = "(super::sbom_file::Column::SbomId, super::sbom_file::Column::NodeId)"

@@ -351,7 +351,8 @@ impl InnerService {
         where
             E: EntityTrait + Related<sbom::Entity>,
         {
-            const RANK_SQL: &str = "RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC)";
+            const RANK_SQL: &str =
+                "RANK() OVER (PARTITION BY cpe.id,sbom_node.name ORDER BY sbom.published DESC)";
 
             E::find()
                 .select_only()
@@ -431,12 +432,18 @@ impl InnerService {
                 query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
-                let subquery = find::<sbom_package_cpe_ref::Entity>()
+                let subquery = find::<sbom_node::Entity>()
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_node::Relation::PackageBySbomId.def(),
+                    )
+                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
                         JoinType::LeftJoin,
                         sbom_package_cpe_ref::Relation::Cpe.def(),
                     )
-                    .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()));
+                    .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()))
+                    .filter(sbom_node::Column::Name.not_like("pkg:%"));
 
                 query_all(subquery.into_query(), connection).await?
             }
