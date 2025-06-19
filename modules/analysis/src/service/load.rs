@@ -395,7 +395,10 @@ impl InnerService {
         let latest_sbom_ids: Vec<_> = match query {
             GraphQuery::Component(ComponentReference::Id(node_id)) => {
                 let subquery = find::<sbom_node::Entity>()
-                    .left_join(sbom_package::Entity)
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_node::Relation::PackageBySbomId.def(),
+                    )
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
                         JoinType::LeftJoin,
@@ -407,7 +410,10 @@ impl InnerService {
             }
             GraphQuery::Component(ComponentReference::Name(name)) => {
                 let subquery = find::<sbom_node::Entity>()
-                    .left_join(sbom_package::Entity)
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_node::Relation::PackageBySbomId.def(),
+                    )
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
                         JoinType::LeftJoin,
@@ -419,7 +425,10 @@ impl InnerService {
             }
             GraphQuery::Component(ComponentReference::Purl(purl)) => {
                 let subquery = find::<sbom_package_purl_ref::Entity>()
-                    .left_join(sbom_package::Entity)
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_node::Relation::PackageBySbomId.def(),
+                    )
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
                         JoinType::LeftJoin,
@@ -449,7 +458,10 @@ impl InnerService {
             }
             GraphQuery::Query(query) => {
                 let subquery = find::<sbom_node::Entity>()
-                    .join(JoinType::Join, sbom_node::Relation::Package.def())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_node::Relation::PackageBySbomId.def(),
+                    )
                     .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
