@@ -195,17 +195,21 @@ async fn resolve_rh_external_sbom_descendants<C: ConnectionTrait>(
         .await
     {
         Ok(Some(entity)) => {
-            // now find if there are any other other nodes with the same checksums
+            // now find if there are any other nodes with the same checksums
             match sbom_node_checksum::Entity::find()
                 .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
                 .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
-                .one(connection)
+                .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.clone()))
+                .all(connection)
                 .await
             {
-                Ok(Some(matched)) => Some(ResolvedSbom {
-                    sbom_id: matched.sbom_id,
-                    node_id: matched.node_id,
-                }),
+                Ok(matches) => matches
+                    .into_iter()
+                    .next() // just return the first
+                    .map(|matched_model| ResolvedSbom {
+                        sbom_id: matched_model.sbom_id,
+                        node_id: matched_model.node_id,
+                    }),
                 _ => None,
             }
         }
@@ -227,23 +231,21 @@ async fn resolve_rh_external_sbom_ancestors<C: ConnectionTrait>(
         .await
     {
         Ok(Some(entity)) => {
-            // now find if there are any other other nodes with the same checksums
+            // now find if there are any other nodes with the same checksums
             match sbom_node_checksum::Entity::find()
                 .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
                 .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.clone()))
                 .all(connection)
                 .await
             {
-                Ok(matches) => {
-                    let mut resolved_sboms: Vec<ResolvedSbom> = vec![];
-                    for matched in matches {
-                        resolved_sboms.push(ResolvedSbom {
-                            sbom_id: matched.sbom_id,
-                            node_id: matched.node_id,
-                        })
-                    }
-                    resolved_sboms
-                }
+                Ok(matches) => matches
+                    .into_iter()
+                    .map(|matched| ResolvedSbom {
+                        sbom_id: matched.sbom_id,
+                        node_id: matched.node_id,
+                    })
+                    .collect(),
 
                 _ => vec![],
             }
