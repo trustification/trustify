@@ -675,7 +675,7 @@ async fn resolve_rh_variant_image_variant_cdx_external_reference_ancestors(
             "document_id": "urn:uuid:aa6b5176-94f2-4c73-90bd-613fb1e560e8/1",
             "ancestors":[
             {
-                "node_id": "2b8dc6da540ea58f",
+                "node_id": "ose-openstack-cinder-csi-driver-operator-container_s390x",
                 "purl": [
                 "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256:d3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d?arch=s390x&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8"
                 ],

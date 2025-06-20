@@ -196,21 +196,42 @@ async fn resolve_rh_external_sbom_descendants<C: ConnectionTrait>(
     {
         Ok(Some(entity)) => {
             // now find if there are any other nodes with the same checksums
-            match sbom_node_checksum::Entity::find()
-                .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
-                .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
-                .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.clone()))
-                .all(connection)
-                .await
-            {
-                Ok(matches) => matches
-                    .into_iter()
-                    .next() // just return the first
-                    .map(|matched_model| ResolvedSbom {
-                        sbom_id: matched_model.sbom_id,
-                        node_id: matched_model.node_id,
-                    }),
-                _ => None,
+
+            // TODO: we need to have slightly different behaviour - depending on if encoded from rh cdx or rh spdx.
+            //       no doubt there are probably better ways to achieve this then what we have here.
+            if sbom_external_node_ref.starts_with("SPDXRef") {
+                match sbom_node_checksum::Entity::find()
+                    .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                    .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                    .all(connection)
+                    .await
+                {
+                    Ok(matches) => matches
+                        .into_iter()
+                        .next() // just return the first
+                        .map(|matched_model| ResolvedSbom {
+                            sbom_id: matched_model.sbom_id,
+                            node_id: matched_model.node_id,
+                        }),
+                    _ => None,
+                }
+            } else {
+                match sbom_node_checksum::Entity::find()
+                    .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                    .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                    .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.clone()))
+                    .all(connection)
+                    .await
+                {
+                    Ok(matches) => matches
+                        .into_iter()
+                        .next() // just return the first
+                        .map(|matched_model| ResolvedSbom {
+                            sbom_id: matched_model.sbom_id,
+                            node_id: matched_model.node_id,
+                        }),
+                    _ => None,
+                }
             }
         }
         _ => None,
@@ -232,22 +253,44 @@ async fn resolve_rh_external_sbom_ancestors<C: ConnectionTrait>(
     {
         Ok(Some(entity)) => {
             // now find if there are any other nodes with the same checksums
-            match sbom_node_checksum::Entity::find()
-                .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
-                .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
-                .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.clone()))
-                .all(connection)
-                .await
-            {
-                Ok(matches) => matches
-                    .into_iter()
-                    .map(|matched| ResolvedSbom {
-                        sbom_id: matched.sbom_id,
-                        node_id: matched.node_id,
-                    })
-                    .collect(),
 
-                _ => vec![],
+            // TODO: we need to have slightly different behaviour - depending on if encoded from rh cdx or rh spdx.
+            //       no doubt there are probably better ways to achieve this then what we have here.
+            if sbom_external_node_ref.starts_with("SPDXRef") {
+                match sbom_node_checksum::Entity::find()
+                    .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                    .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                    .all(connection)
+                    .await
+                {
+                    Ok(matches) => matches
+                        .into_iter()
+                        .map(|matched| ResolvedSbom {
+                            sbom_id: matched.sbom_id,
+                            node_id: matched.node_id,
+                        })
+                        .collect(),
+
+                    _ => vec![],
+                }
+            } else {
+                match sbom_node_checksum::Entity::find()
+                    .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                    .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                    .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.clone()))
+                    .all(connection)
+                    .await
+                {
+                    Ok(matches) => matches
+                        .into_iter()
+                        .map(|matched| ResolvedSbom {
+                            sbom_id: matched.sbom_id,
+                            node_id: matched.node_id,
+                        })
+                        .collect(),
+
+                    _ => vec![],
+                }
             }
         }
         _ => {

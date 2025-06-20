@@ -352,7 +352,7 @@ impl InnerService {
             E: EntityTrait + Related<sbom::Entity>,
         {
             const RANK_SQL: &str =
-                "RANK() OVER (PARTITION BY cpe.id,sbom_node.name ORDER BY sbom.published DESC)";
+                "RANK() OVER (PARTITION BY sbom_node.name,cpe.id ORDER BY sbom.published DESC)";
 
             E::find()
                 .select_only()
@@ -409,6 +409,7 @@ impl InnerService {
                 query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Name(name)) => {
+                log::warn!("Found component: {:?}", name);
                 let subquery = find::<sbom_node::Entity>()
                     .join(
                         JoinType::LeftJoin,
@@ -453,6 +454,7 @@ impl InnerService {
                     )
                     .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()))
                     .filter(sbom_node::Column::Name.not_like("pkg:%"));
+                // For CPE searches ^^ The .not_like("pkg:%") filter is required
 
                 query_all(subquery.into_query(), connection).await?
             }
@@ -472,6 +474,8 @@ impl InnerService {
                         JoinType::LeftJoin,
                         sbom_package_purl_ref::Relation::Purl.def(),
                     )
+                    .filter(sbom_node::Column::Name.not_like("pkg:%"))
+                    // For multi-column searches ^^ The .not_like("pkg:%") filter is required
                     .filtering_with(query.clone(), q_columns())?;
 
                 query_all(subquery.into_query(), connection).await?
