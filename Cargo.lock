@@ -9231,6 +9231,7 @@ dependencies = [
  "test-context",
  "test-log",
  "thiserror 2.0.12",
+ "time",
  "tokio",
  "tokio-util",
  "tracing",
