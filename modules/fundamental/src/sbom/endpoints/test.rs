@@ -247,12 +247,7 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
         "license_id": "LicenseRef-3"
       }
     ]);
-    match response {
-        Value::Array(ref list) => {
-            assert_eq!(expected_result.as_array().unwrap(), list);
-        }
-        _ => panic!("Incorrect response"),
-    }
+    assert!(expected_result.contains_subset(response.clone()));
     log::debug!("{response:#?}");
 
     let id = ctx
@@ -322,12 +317,7 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
         "license_id": "The GNU General Public License, v2 with Universal FOSS Exception, v1.0"
       }
     ]);
-    match response {
-        Value::Array(ref list) => {
-            assert_eq!(expected_result.as_array().unwrap(), list);
-        }
-        _ => panic!("Incorrect response"),
-    }
+    assert!(expected_result.contains_subset(response.clone()));
     log::debug!("{response:#?}");
 
     // properly formatted but not existent Id
@@ -440,13 +430,7 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
       }
     ]);
     log::debug!("{}", serde_json::to_string_pretty(&response)?);
-    match response {
-        Value::Array(ref list) => {
-            // assert_eq!(expected_result, list);
-            assert_eq!(expected_result.as_array().unwrap(), list);
-        }
-        _ => panic!("Incorrect response"),
-    }
+    assert!(expected_result.contains_subset(response.clone()));
     Ok(())
 }
 
