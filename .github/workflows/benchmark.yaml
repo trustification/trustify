@@ -15,7 +15,7 @@ concurrency:
 jobs:
 
   bench:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     permissions:
       # deployments permission to deploy GitHub pages website
@@ -75,7 +75,7 @@ jobs:
           TIMEOUT=300  # 5 minutes
           INTERVAL=5   # Interval between retries in seconds
           START_TIME=$(date +%s)
-          
+
           while true; do
             # Check if the endpoint is up
             if curl -s --fail "$URL"; then
@@ -83,16 +83,16 @@ jobs:
               echo "Endpoint is up!"
               exit 0
             fi
-            
+
             # Check if timeout has passed
             CURRENT_TIME=$(date +%s)
             ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
-            
+
             if [ "$ELAPSED_TIME" -ge "$TIMEOUT" ]; then
               echo "Timeout reached. Endpoint is still down."
               exit 1
             fi
-            
+
             echo "Endpoint is down. Retrying in $INTERVAL seconds..."
             sleep "$INTERVAL"
           done
