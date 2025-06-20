@@ -27,23 +27,29 @@ For `1.0.0` and beyond, this should work differently. Maybe even before. However
 
 * You have some common developer tools for Rust installed (e.g. `cargo`, `git`)
 * Your local `main` branch is in sync with the upstream `main` branch. The git remote for upstream is named `upstream`.
+* There's a `release/<stream>` branch (e.g. `release/0.3.z`) which is up to date:
+    * This includes having backported all relevant changes to this branch
 * You have `cargo release` installed. This can be done using `cargo install cargo-release`.
 
 ## Performing the release
 
 In a nutshell, the steps are:
 
-* Ensure the cargo versions are aligned with the release tag that we create next
-* Re-generate the OpenAPI spec, as it contains the version
-* Tag the release
-* Push the tag
+* Prepare release on `main`
+    * Ensure the cargo versions are aligned with the release tag that we create next
+    * Re-generate the OpenAPI spec, as it contains the version
+    * Update dependencies
+    * Create a PR, merging changes into `main`
+* Port release preparation to `release/<stream>`
+    * Tag the release
+    * Push the tag
 
-To make it clearer what got released and what is part of the next release, it makes sense to create a PR *before*
+To clarify what got released and what is part of the next release, it makes sense to create a PR *before*
 pushing the release tag. This will also make step 1 easier for the *next* release, as that's already been taken care of.
 
 The following instructions walk you through the process on the example of releasing `0.0.0-alpha.1`, which you need
-to replace with the actual release. Note that during release process we should avoid merging any other PRs to main branch.
-
+to replace with the actual release. Note that during release process we should avoid merging any other PRs to `main`
+branch.
 
 ### 1. Prepare Branch 
 
@@ -103,13 +109,19 @@ Get a friend to review.
 
 On successful review go ahead and merge!
 
+### 4. Update release branch
+
+* Cherry-pick the commits from the release preparation PR to the release branch
+* Update the versions again, ensuring that `trustify-ui` gets updated from the corresponding release branch
+* Create (and merge) another PR against the release branch
+
 ### 4. Create release
 
-Switch to main branch and make sure your local checkout is up-to-date.
+Switch to release branch and make sure your local checkout is up-to-date.
 ```shell
-> git switch main
+> git switch release/<stream>
 > git fetch --all
-> git rebase upstream/main
+> git rebase upstream/<stream>
 ```
 
 Create (signed) tag. 
@@ -117,7 +129,7 @@ Create (signed) tag.
 > git tag -S v0.0.0-alpha.1
 ```
 
-Push tag which triggers github release workflow. 
+Push tag, which triggers GitHub release workflow. 
 ```shell
 > git push upstream v0.0.0-alpha.1
 ```
