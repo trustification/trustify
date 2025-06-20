@@ -21,7 +21,7 @@ env:
 
 jobs:
   init:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{steps.version.outputs.version}}
       prerelease: ${{steps.state.outputs.prerelease}}
@@ -62,7 +62,7 @@ jobs:
 
   publish:
     needs: [ init, build ]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     outputs:
       image: ${{ steps.push.outputs.registry-path }}
@@ -123,7 +123,7 @@ jobs:
 
   deploy:
     if: ${{ (github.repository == 'trustification/trustify') && (needs.init.outputs.version == 'main') }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - publish
       - e2e-test

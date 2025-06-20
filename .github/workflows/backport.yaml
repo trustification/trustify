@@ -12,10 +12,12 @@ on:
 
 jobs:
   cherry_pick_job:
+    runs-on: ubuntu-24.04
+
     permissions:
       pull-requests: write
       contents: write
-    
+
     # Only run when pull request is merged
     # or when a comment starting with `/backport` is created by someone other than the
     # https://github.com/apps/trustification-ci-bot bot user (user id: 199085543). Note that if you use your

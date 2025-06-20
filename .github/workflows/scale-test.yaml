@@ -30,7 +30,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           COMMENT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          
+
           gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
             -f body="🛠️ Scale test has started! Follow the progress here: [Workflow Run]($COMMENT_URL)"
 
@@ -112,13 +112,13 @@ jobs:
         run: |
           COMMENT_BODY=$(cat <<__EOF__
           <details><summary>Goose Report</summary>
-          
+
           $(cat report/report.md)
-          
+
           </details>
-          
+
           📄 **[Full Report](${{ env.artifact_url }})** (Go to "Artifacts" and download **report**)
-          
+
           __EOF__
           )
           gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
