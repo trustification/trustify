@@ -60,6 +60,22 @@ async fn test_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(4168, license_result.sbom_package_license.len());
 
+    let cpes_result = license_result
+        .sbom_package_license
+        .iter()
+        .filter(|sl| sl.name == "SATELLITE-6.15-RHEL-8")
+        .collect::<Vec<_>>();
+    // Verify that the part of all CPEs is the string "a"
+    assert_eq!(8, cpes_result[0].cpe.len());
+    assert_eq!(
+        8,
+        cpes_result[0]
+            .cpe
+            .iter()
+            .filter(|c| c.part == Some("a".into()))
+            .count()
+    );
+
     let package_license_result = license_result
         .sbom_package_license
         .into_iter()

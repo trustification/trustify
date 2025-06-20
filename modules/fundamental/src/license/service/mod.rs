@@ -106,7 +106,7 @@ impl LicenseService {
                 )
                 .select_only()
                 .column_as(trustify_entity::cpe::Column::Id, "id")
-                .column_as(trustify_entity::cpe::Column::Part, "cpe")
+                .column_as(trustify_entity::cpe::Column::Part, "part")
                 .column_as(trustify_entity::cpe::Column::Vendor, "vendor")
                 .column_as(trustify_entity::cpe::Column::Product, "product")
                 .column_as(trustify_entity::cpe::Column::Version, "version")
