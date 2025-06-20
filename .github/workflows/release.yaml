@@ -11,7 +11,7 @@ permissions:
 jobs:
 
   init:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{steps.version.outputs.version}}
       prerelease: ${{steps.state.outputs.prerelease}}
@@ -45,7 +45,7 @@ jobs:
 
   # ensure that the version of the tag is the version of the crates
   ensure-version:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - init
     steps:
@@ -82,7 +82,7 @@ jobs:
 
   publish:
     needs: [ init, build ]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: write
