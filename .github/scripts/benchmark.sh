@@ -8,9 +8,10 @@ pushd etc/datasets
 make ds3.zip
 popd
 
-# Show httpie version
+# Show httpie & zip version
 
 http --version
+zip --version
 
 # Send
 
