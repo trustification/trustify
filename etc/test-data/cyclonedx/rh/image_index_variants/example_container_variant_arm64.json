@@ -30,7 +30,7 @@
       "name": "openshift/ose-openstack-cinder-csi-driver-operator",
       "purl": "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256%3A0e72df1e6f4b356282576efaed99915fa7fb8c22718b67b1f82f89be6722b24f?arch=arm64&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8",
       "type": "container",
-      "bom-ref": "fb61cd6dd75398fb",
+      "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_arm64",
       "version": "sha256:0e72df1e6f4b356282576efaed99915fa7fb8c22718b67b1f82f89be6722b24f",
       "hashes": [
         {
@@ -14133,7 +14133,7 @@
   "specVersion": "1.6",
   "dependencies": [
     {
-      "ref": "fb61cd6dd75398fb",
+      "ref": "ose-openstack-cinder-csi-driver-operator-container_arm64",
       "dependsOn": [
         "pkg:rpm/redhat/acl@2.2.53-3.el8?arch=aarch64&distro=rhel-8.10&package-id=a7917c72826610a9&upstream=acl-2.2.53-3.el8.src.rpm",
         "pkg:rpm/redhat/audit-libs@3.1.2-1.el8?arch=aarch64&distro=rhel-8.10&package-id=7523ddbf31d32fd5&upstream=audit-3.1.2-1.el8.src.rpm",

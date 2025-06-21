@@ -351,7 +351,8 @@ impl InnerService {
         where
             E: EntityTrait + Related<sbom::Entity>,
         {
-            const RANK_SQL: &str = "RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC)";
+            const RANK_SQL: &str =
+                "RANK() OVER (PARTITION BY sbom_node.name,cpe.id ORDER BY sbom.published DESC)";
 
             E::find()
                 .select_only()
@@ -394,7 +395,10 @@ impl InnerService {
         let latest_sbom_ids: Vec<_> = match query {
             GraphQuery::Component(ComponentReference::Id(node_id)) => {
                 let subquery = find::<sbom_node::Entity>()
-                    .left_join(sbom_package::Entity)
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_node::Relation::PackageBySbomId.def(),
+                    )
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
                         JoinType::LeftJoin,
@@ -405,8 +409,12 @@ impl InnerService {
                 query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Name(name)) => {
+                log::warn!("Found component: {:?}", name);
                 let subquery = find::<sbom_node::Entity>()
-                    .left_join(sbom_package::Entity)
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_node::Relation::PackageBySbomId.def(),
+                    )
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
                         JoinType::LeftJoin,
@@ -418,7 +426,10 @@ impl InnerService {
             }
             GraphQuery::Component(ComponentReference::Purl(purl)) => {
                 let subquery = find::<sbom_package_purl_ref::Entity>()
-                    .left_join(sbom_package::Entity)
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_node::Relation::PackageBySbomId.def(),
+                    )
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
                         JoinType::LeftJoin,
@@ -431,18 +442,28 @@ impl InnerService {
                 query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
-                let subquery = find::<sbom_package_cpe_ref::Entity>()
+                let subquery = find::<sbom_node::Entity>()
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_node::Relation::PackageBySbomId.def(),
+                    )
+                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
                         JoinType::LeftJoin,
                         sbom_package_cpe_ref::Relation::Cpe.def(),
                     )
-                    .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()));
+                    .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()))
+                    .filter(sbom_node::Column::Name.not_like("pkg:%"));
+                // For CPE searches ^^ The .not_like("pkg:%") filter is required
 
                 query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Query(query) => {
                 let subquery = find::<sbom_node::Entity>()
-                    .join(JoinType::Join, sbom_node::Relation::Package.def())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_node::Relation::PackageBySbomId.def(),
+                    )
                     .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
@@ -453,6 +474,8 @@ impl InnerService {
                         JoinType::LeftJoin,
                         sbom_package_purl_ref::Relation::Purl.def(),
                     )
+                    .filter(sbom_node::Column::Name.not_like("pkg:%"))
+                    // For multi-column searches ^^ The .not_like("pkg:%") filter is required
                     .filtering_with(query.clone(), q_columns())?;
 
                 query_all(subquery.into_query(), connection).await?
