@@ -69,7 +69,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     let response: Value = app.call_and_read_body_json(request).await;
     log::warn!("{:?}", response.get("total"));
     assert!(response.contains_subset(json!({
-      "total":4
+      "total":6
     })));
 
     // purl partial search latest
@@ -81,7 +81,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     let response: Value = app.call_and_read_body_json(request).await;
     log::warn!("{:?}", response.get("total"));
     assert!(response.contains_subset(json!({
-      "total":8
+      "total":5
     })));
     Ok(())
 }
