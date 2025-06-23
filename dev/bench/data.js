@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750687201023,
+  "lastUpdate": 1750693727474,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11797,6 +11797,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/177365de777892201ef90d1587cc16237e35b13b"
         },
         "date": 1750687199797,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "e9968a876aec52352bbf4fe4e310be249ca3f001",
+          "message": "fix: remove 'runs-on' from 'backport' CI job\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-06-23T15:14:18Z",
+          "tree_id": "517d8535ded5d14c70096393e7955b587d6b6dd3",
+          "url": "https://github.com/trustification/trustify/commit/e9968a876aec52352bbf4fe4e310be249ca3f001"
+        },
+        "date": 1750693726216,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
