@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750693727474,
+  "lastUpdate": 1750701377899,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11826,6 +11826,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/e9968a876aec52352bbf4fe4e310be249ca3f001"
         },
         "date": 1750693726216,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "52138ef25ddbd9a36c38fd5d17b0d55850d75319",
+          "message": "fix: set RUSTFLAGS for Windows binary build\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-06-23T17:35:21Z",
+          "tree_id": "e64ed8b3ada7aab91a5054b126fbbc2c5357a41f",
+          "url": "https://github.com/trustification/trustify/commit/52138ef25ddbd9a36c38fd5d17b0d55850d75319"
+        },
+        "date": 1750701376811,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
