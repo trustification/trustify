@@ -1,5 +1,6 @@
 use chrono::{Local, NaiveDateTime};
 use human_date_parser::{ParseResult, from_human_time};
+use std::sync::Arc;
 use std::{cmp::Ordering, collections::HashMap, fmt::Debug};
 use time::OffsetDateTime;
 
@@ -103,6 +104,19 @@ impl PartialOrd<String> for Value<'_> {
 impl<'a, T: Valuable> From<&'a Vec<T>> for Value<'a> {
     fn from(v: &'a Vec<T>) -> Self {
         Value::Array(v.iter().map(|v| Value::Custom(v)).collect())
+    }
+}
+
+impl<'a, T: Valuable> From<&'a Arc<[T]>> for Value<'a> {
+    fn from(arc_slice: &'a Arc<[T]>) -> Self {
+        Value::Array(
+            // dereference Arc to slice `&[T]`, then iterate
+            arc_slice
+                .iter()
+                // map each element `&T` to `Value::Custom(&T)`
+                .map(|item_ref| Value::Custom(item_ref))
+                .collect(),
+        )
     }
 }
 
