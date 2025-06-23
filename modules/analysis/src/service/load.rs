@@ -110,8 +110,8 @@ impl Node {
         match (self.package_node_id, self.ext_node_id) {
             (Some(_), _) => graph::Node::Package(graph::PackageNode {
                 base,
-                purl: to_purls(self.purls),
-                cpe: to_cpes(self.cpes),
+                purl: to_purls(self.purls).into(),
+                cpe: to_cpes(self.cpes).into(),
                 version: self.package_version.clone().unwrap_or_default(),
             }),
             (_, Some(_)) => graph::Node::External(graph::ExternalNode {

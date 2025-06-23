@@ -343,7 +343,7 @@ async fn test_status_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let analysis_status = service.status(&ctx.db, false).await?;
     assert_eq!(analysis_status.sbom_count, 1);
     assert_eq!(analysis_status.graph_count, 1);
-    assert_eq!(analysis_status.graph_memory, 6564);
+    assert_eq!(analysis_status.graph_memory, 2268);
     assert!(analysis_status.details.is_none());
 
     service.clear_all_graphs()?;
@@ -377,8 +377,9 @@ async fn test_cache_size_used(ctx: &TrustifyContext) -> Result<(), anyhow::Error
 
     let kb = 1024;
     let small_sbom_size = service.cache_size_used();
-    assert!(small_sbom_size > 6 * kb);
-    assert!(small_sbom_size < 7 * kb);
+
+    assert!(small_sbom_size > 2 * kb);
+    assert!(small_sbom_size < 3 * kb);
 
     ctx.ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
         .await?;
@@ -386,8 +387,9 @@ async fn test_cache_size_used(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     assert_eq!(all_graphs.len(), 2);
 
     let big_sbom_size = service.cache_size_used() - small_sbom_size;
-    assert!(big_sbom_size > 800 * kb);
-    assert!(big_sbom_size < 810 * kb);
+    log::warn!("{:?}", big_sbom_size);
+    assert!(big_sbom_size > 420 * kb);
+    assert!(big_sbom_size < 430 * kb);
 
     // Now lets try it with small cache that can at least fit the small bom
     let service = AnalysisService::new(
