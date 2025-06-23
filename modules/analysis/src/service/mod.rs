@@ -700,7 +700,7 @@ fn acyclic(id: &str, graph: &Arc<PackageGraph>) -> bool {
         // FIXME: we need a better strategy handling such errors
         let start = graph.node_weight(start);
         let end = graph.node_weight(end);
-        log::debug!(
+        log::warn!(
             "analysis graph of sbom {id} has circular references (detected: {start:?} -> {end:?})!",
         );
     }
