@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750147275020,
+  "lastUpdate": 1750687201023,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11768,6 +11768,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/9c03149355db4937fe87db39d6db2d3695596abd"
         },
         "date": 1750147273942,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "177365de777892201ef90d1587cc16237e35b13b",
+          "message": "ci: using the same ubuntu version across workflows",
+          "timestamp": "2025-06-23T13:29:23Z",
+          "tree_id": "2b0c9e0d2133fbdd3142cc6df85123e408e95df6",
+          "url": "https://github.com/trustification/trustify/commit/177365de777892201ef90d1587cc16237e35b13b"
+        },
+        "date": 1750687199797,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
