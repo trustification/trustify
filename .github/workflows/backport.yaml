@@ -12,8 +12,6 @@ on:
 
 jobs:
   cherry_pick_job:
-    runs-on: ubuntu-24.04
-
     permissions:
       pull-requests: write
       contents: write
