@@ -60,8 +60,8 @@ impl DeepSizeOf for BaseNode {
 pub struct PackageNode {
     pub base: BaseNode,
 
-    pub purl: Vec<Purl>,
-    pub cpe: Vec<Cpe>,
+    pub purl: Arc<[Purl]>,
+    pub cpe: Arc<[Cpe]>,
     pub version: String,
 }
 
@@ -140,8 +140,8 @@ impl From<&PackageNode> for BaseSummary {
         Self {
             sbom_id: value.sbom_id.to_string(),
             node_id: value.node_id.to_string(),
-            purl: value.purl.clone(),
-            cpe: value.cpe.clone(),
+            purl: value.purl.to_vec(),
+            cpe: value.cpe.to_vec(),
             name: value.name.to_string(),
             version: value.version.to_string(),
             published: published_to_string(value.published),
