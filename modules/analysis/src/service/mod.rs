@@ -197,7 +197,8 @@ async fn resolve_rh_external_sbom_descendants<C: ConnectionTrait>(
         Ok(Some(entity)) => {
             // now find if there are any other nodes with the same checksums
 
-            // TODO: we need to have slightly different behaviour - depending on if encoded from rh cdx or rh spdx.
+            // TODO: Resolution of external sbom is different between spdx/cdx so we need to have
+            //       slightly different heuristics - depending on if encoded from rh cdx or rh spdx.
             //       no doubt there are probably better ways to achieve this then what we have here.
             if sbom_external_node_ref.starts_with("SPDXRef") {
                 match sbom_node_checksum::Entity::find()
@@ -254,7 +255,8 @@ async fn resolve_rh_external_sbom_ancestors<C: ConnectionTrait>(
         Ok(Some(entity)) => {
             // now find if there are any other nodes with the same checksums
 
-            // TODO: we need to have slightly different behaviour - depending on if encoded from rh cdx or rh spdx.
+            // TODO: Resolution of external sbom is different between spdx/cdx so we need to have
+            //       slightly different heuristics - depending on if encoded from rh cdx or rh spdx.
             //       no doubt there are probably better ways to achieve this then what we have here.
             if sbom_external_node_ref.starts_with("SPDXRef") {
                 match sbom_node_checksum::Entity::find()
