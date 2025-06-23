@@ -1,4 +1,5 @@
 use crate::test::caller;
+
 use actix_http::Request;
 use actix_web::test::TestRequest;
 use serde_json::{Value, json};
@@ -57,7 +58,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(64, response["total"]);
+    assert_eq!(8, response["total"]);
 
     // purl partial search latest
     let uri: String = format!(
@@ -68,7 +69,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     let response: Value = app.call_and_read_body_json(request).await;
     log::warn!("{:?}", response.get("total"));
     assert!(response.contains_subset(json!({
-      "total":16
+      "total":6
     })));
 
     // purl partial search latest
@@ -80,7 +81,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     let response: Value = app.call_and_read_body_json(request).await;
     log::warn!("{:?}", response.get("total"));
     assert!(response.contains_subset(json!({
-      "total":19
+      "total":5
     })));
     Ok(())
 }
@@ -209,7 +210,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 30);
+    assert_eq!(response["total"], 22);
 
     // purl partial latest search
     let uri: String = format!(
@@ -218,7 +219,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 8);
+    assert_eq!(response["total"], 6);
 
     // name exact search
     let uri: String = format!(
@@ -227,7 +228,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 30);
+    assert_eq!(response["total"], 22);
 
     // latest name exact search
     let uri: String = format!(
@@ -236,7 +237,104 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 8);
+    assert_eq!(response["total"], 6);
 
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn test_tc2606(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_documents([
+        "cyclonedx/rh/latest_filters/TC-2606/1F5B983228BA420.json",
+        "cyclonedx/rh/latest_filters/TC-2606/401A4500E49D44D.json",
+        "cyclonedx/rh/latest_filters/TC-2606/74092FCBFD294FC.json",
+        "cyclonedx/rh/latest_filters/TC-2606/80138DC9368C4D3.json",
+        "cyclonedx/rh/latest_filters/TC-2606/B67E38F00200413.json",
+        "cyclonedx/rh/latest_filters/TC-2606/CE8E7B92C4BD452.json",
+    ])
+    .await?;
+
+    let uri: String = "/api/v2/analysis/component".to_string();
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
+    // latest cpe search
+    let uri: String = format!(
+        "/api/v2/analysis/latest/component/{}?descendants=1",
+        urlencoding::encode("cpe:/a:redhat:rhel_eus:9.4::appstream")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    log::info!("{:#?}", response);
+    assert_eq!(response["total"], 2);
+
+    assert!(response.contains_subset(json!(
+            {
+      "items": [
+        {
+          "node_id": "RHEL-9.4.0.Z.EUS",
+          "name": "Red Hat Enterprise Linux 9.4 Extended Update Support",
+          "version": "RHEL-9.4.0.Z.EUS",
+          "published": "2025-06-09 10:18:20+00",
+          "document_id": "urn:uuid:501c2eae-1514-3252-a7ce-b6beed26fe62/1",
+          "descendants": [
+            {
+              "node_id": "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src",
+              "purl": [
+                "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src&repository_id=rhel-9-for-s390x-appstream-eus-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src&repository_id=rhel-9-for-aarch64-appstream-eus-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src&repository_id=rhel-9-for-x86_64-appstream-e4s-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src",
+                "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src&repository_id=rhel-9-for-s390x-appstream-e4s-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src&repository_id=rhel-9-for-x86_64-appstream-aus-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src&repository_id=rhel-9-for-ppc64le-appstream-eus-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src&repository_id=rhel-9-for-x86_64-appstream-eus-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src&repository_id=rhel-9-for-ppc64le-appstream-e4s-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/grafana@9.2.10-23.el9_4?arch=src&repository_id=rhel-9-for-aarch64-appstream-e4s-source-rpms__9_DOT_4"
+              ],
+              "name": "grafana",
+              "version": "9.2.10-23.el9_4",
+              "published": "2025-06-09 10:18:20+00",
+              "document_id": "urn:uuid:501c2eae-1514-3252-a7ce-b6beed26fe62/1",
+              "relationship": "generates"
+            }
+          ],
+        },
+        {
+          "node_id": "RHEL-9.4.0.Z.EUS",
+          "name": "Red Hat Enterprise Linux 9.4 Extended Update Support",
+          "version": "RHEL-9.4.0.Z.EUS",
+          "published": "2025-06-09 03:29:53+00",
+          "document_id": "urn:uuid:b84b0b69-6d39-3b23-86c6-5c258fc730b7/1",
+          "descendants": [
+            {
+              "node_id": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src",
+              "purl": [
+                "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-s390x-appstream-e4s-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src",
+                "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-aarch64-appstream-e4s-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-e4s-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-ppc64le-appstream-eus-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-s390x-appstream-eus-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-ppc64le-appstream-e4s-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-aus-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-eus-source-rpms__9_DOT_4",
+                "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-aarch64-appstream-eus-source-rpms__9_DOT_4"
+              ],
+              "name": "podman",
+              "version": "4.9.4-18.el9_4.1",
+              "published": "2025-06-09 03:29:53+00",
+              "document_id": "urn:uuid:b84b0b69-6d39-3b23-86c6-5c258fc730b7/1",
+              "relationship": "generates"
+            }
+          ],
+        }
+      ],
+      "total": 2
+    })));
     Ok(())
 }

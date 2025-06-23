@@ -1,0 +1,126 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "dev"
+        }
+      ]
+    },
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "component": {
+      "name": "Red Hat Enterprise Linux 9.4 Extended Update Support",
+      "type": "operating-system",
+      "bom-ref": "RHEL-9.4.0.Z.EUS",
+      "version": "RHEL-9.4.0.Z.EUS",
+      "evidence": {
+        "identity": [
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/a:redhat:rhel_eus:9.4::appstream"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    },
+    "timestamp": "2025-06-09T03:29:53Z",
+    "properties": [
+      {
+        "name": "redhat:advisory_id",
+        "value": "150368"
+      }
+    ]
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "podman",
+      "purl": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "be07351552fb0bb5f50d223cffe5f925b2b85ebe6c64f483de96f99c93a02f22"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src",
+      "version": "4.9.4-18.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-s390x-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-ppc64le-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-aus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-aarch64-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-ppc64le-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-s390x-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src&repository_id=rhel-9-for-aarch64-appstream-eus-source-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "Apache-2.0 AND BSD-2-Clause AND BSD-3-Clause AND ISC AND MIT AND MPL-2.0"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "RHEL-9.4.0.Z.EUS",
+      "provides": [
+        "pkg:rpm/redhat/podman@4.9.4-18.el9_4.1?arch=src"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "serialNumber": "urn:uuid:b84b0b69-6d39-3b23-86c6-5c258fc730b7"
+}

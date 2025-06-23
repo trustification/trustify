@@ -44,7 +44,7 @@
       "name": "quarkus/mandrel-for-jdk-21-rhel8",
       "purl": "pkg:oci/mandrel-for-jdk-21-rhel8@sha256%3A6545d1ae562899d6eb902f81be46a9fc6a8bd60f2b6b874f470722bca25fc0da?arch=amd64&os=linux&tag=23.1-19.1739757566",
       "type": "container",
-      "bom-ref": "1c4abceaa349a8c2",
+      "bom-ref": "quarkus-mandrel-231-rhel8-container_amd64",
       "version": "sha256:6545d1ae562899d6eb902f81be46a9fc6a8bd60f2b6b874f470722bca25fc0da",
       "hashes": [
         {
@@ -18085,7 +18085,7 @@
   "specVersion": "1.6",
   "dependencies": [
     {
-      "ref": "1c4abceaa349a8c2",
+      "ref": "quarkus-mandrel-231-rhel8-container_amd64",
       "dependsOn": [
         "pkg:rpm/redhat/abattis-cantarell-fonts@0.0.25-6.el8?arch=noarch&distro=rhel-8.10&package-id=a91121201ed3be00&upstream=abattis-cantarell-fonts-0.0.25-6.el8.src.rpm",
         "pkg:rpm/redhat/acl@2.2.53-3.el8?arch=x86_64&distro=rhel-8.10&package-id=d9a5accf56f24c33&upstream=acl-2.2.53-3.el8.src.rpm",
