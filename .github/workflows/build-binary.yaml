@@ -118,6 +118,16 @@ jobs:
         run: |
           cargo binstall cross -y --force
 
+      # Workaround for https://github.com/actions/runner-images/issues/12432
+      # from https://github.com/rust-lang/rust/issues/141626#issuecomment-2919419236
+      # Visual Studio bug tracker https://developercommunity.visualstudio.com/t/Regression-from-1943:-linkexe-crashes/10912960
+      - name: Setup RUSTFLAGS (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('RUSTFLAGS', '-Csymbol-mangling-version=v0');
+
       - run: mkdir -p upload
 
       - name: Build | Build
