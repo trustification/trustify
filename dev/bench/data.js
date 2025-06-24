@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750752893529,
+  "lastUpdate": 1750758873472,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11884,6 +11884,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b3a31460b5a29394c50ecddccc7cf129d982403d"
         },
         "date": 1750752892336,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "bxf12315@gmail.com",
+            "name": "Xiaofeng Bai",
+            "username": "bxf12315"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "b2ccf8757d1ecf2cef22b355008761fc7310609a",
+          "message": "Fix: Avoid errors caused by different orderings of ouput.",
+          "timestamp": "2025-06-24T09:32:02Z",
+          "tree_id": "3b175387b252f609ddb3b35f63ea140c639b3fc3",
+          "url": "https://github.com/trustification/trustify/commit/b2ccf8757d1ecf2cef22b355008761fc7310609a"
+        },
+        "date": 1750758872658,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
