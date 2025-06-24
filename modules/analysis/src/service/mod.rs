@@ -656,9 +656,7 @@ impl AnalysisService {
             }
             GraphQuery::Query(query) => graph.node_weight(i).is_some_and(|node| {
                 let purls: Vec<_> = match node {
-                    graph::Node::Package(p) => {
-                        p.purl.iter().map(|p| Value::Json(p.into())).collect()
-                    }
+                    graph::Node::Package(p) => p.purl.iter().map(|p| Value::Custom(p)).collect(),
                     _ => vec![],
                 };
                 let sbom_id = node.sbom_id.to_string();
@@ -671,7 +669,6 @@ impl AnalysisService {
                     graph::Node::Package(package) => {
                         context.put_string("version", &package.version);
                         context.put_value("cpe", Value::from(&package.cpe));
-                        context.put_value("purl", Value::from(&package.purl));
                         context.put_array("purl", purls);
                     }
                     graph::Node::External(external) => {
