@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1750760239115,
+  "lastUpdate": 1751295033083,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -11947,6 +11947,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "46ab4cbdcf5601e43491248a516e2092fabfdd78",
+          "message": "fix: add indexes to sbom_node_checksum",
+          "timestamp": "2025-06-30T14:06:03Z",
+          "tree_id": "f8a3e9c7eaf6ebc56a28e787d6d99e5c44c2b0a7",
+          "url": "https://github.com/trustification/trustify/commit/46ab4cbdcf5601e43491248a516e2092fabfdd78"
+        },
+        "date": 1751295031270,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
