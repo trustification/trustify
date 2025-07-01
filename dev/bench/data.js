@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751297127530,
+  "lastUpdate": 1751376529711,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12000,6 +12000,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/cf6a3781a0924798be8214ef4728a0a4a868570c"
         },
         "date": 1751297125746,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "d34f06f99020e732d820ad2b8f9357e322412870",
+          "message": "chore:minor analysis graph perf improvements",
+          "timestamp": "2025-07-01T13:05:18Z",
+          "tree_id": "8be2eb9ec41df6eca0da410e7f9fb3ce481b4741",
+          "url": "https://github.com/trustification/trustify/commit/d34f06f99020e732d820ad2b8f9357e322412870"
+        },
+        "date": 1751376528599,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
