@@ -9,6 +9,7 @@ use actix_web::{
 use anyhow::Context;
 use futures::future::select_all;
 use opentelemetry::metrics::Meter;
+use opentelemetry_otlp::OTEL_EXPORTER_OTLP_ENDPOINT;
 use std::{future::Future, pin::Pin, sync::Arc};
 use tokio::signal;
 
@@ -194,6 +195,12 @@ impl Infrastructure {
         M: FnOnce(MainContext<D>) -> MFut,
         MFut: Future<Output = anyhow::Result<()>>,
     {
+        log::info!(
+            "{} = {:?}",
+            OTEL_EXPORTER_OTLP_ENDPOINT,
+            std::env::var_os("OTEL_EXPORTER_OTLP_ENDPOINT")
+        );
+
         init_tracing(id, self.config.tracing);
         init_metrics(id, self.config.metrics);
 
