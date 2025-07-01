@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751376529711,
+  "lastUpdate": 1751378299384,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12034,6 +12034,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "b67152eeeb9ed5229bed9e4a66ffcc1e72d3e540",
+          "message": "chore: show OTEL exporter endpoint variable's value",
+          "timestamp": "2025-07-01T13:33:03Z",
+          "tree_id": "d85c003d9e39207a1dd15e4fcaf489004051fa14",
+          "url": "https://github.com/trustification/trustify/commit/b67152eeeb9ed5229bed9e4a66ffcc1e72d3e540"
+        },
+        "date": 1751378298558,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 10,
             "unit": "s"
           }
         ]
