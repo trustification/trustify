@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751378299384,
+  "lastUpdate": 1751460663644,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12063,6 +12063,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 10,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "92c92f60afc4f7304a0acbc7d3fc0234475d97e1",
+          "message": "fix: add support for golang versions with 'v' prefix\n\nGo ecosystem often uses 'v' prefix before semver formatted versions\n\nhttps://go.dev/ref/mod#versions\n\nOn the other hand, OSV and other adivsories are reporting pure semver versions.\nNewly introduced golang_version_matches pgsql function, strips the prefix if\nit is present and then continues with semver match.",
+          "timestamp": "2025-07-02T12:27:45Z",
+          "tree_id": "e73fecb05033be3661e3be51dfe4b8a970f87b26",
+          "url": "https://github.com/trustification/trustify/commit/92c92f60afc4f7304a0acbc7d3fc0234475d97e1"
+        },
+        "date": 1751460661847,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
