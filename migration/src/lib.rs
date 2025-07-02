@@ -28,6 +28,7 @@ mod m0001070_vulnerability_scores;
 mod m0001100_remove_get_purl;
 mod m0001110_sbom_node_checksum_indexes;
 mod m0001120_sbom_external_node_indexes;
+mod m0001130_gover_cmp;
 
 pub struct Migrator;
 
@@ -59,6 +60,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0001100_remove_get_purl::Migration),
             Box::new(m0001110_sbom_node_checksum_indexes::Migration),
             Box::new(m0001120_sbom_external_node_indexes::Migration),
+            Box::new(m0001130_gover_cmp::Migration),
         ]
     }
 }
