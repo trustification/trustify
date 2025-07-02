@@ -691,32 +691,50 @@ impl InnerService {
         let external_sboms = sbom_external_node::Entity::find().all(connection).await?;
 
         let mut results = Vec::new();
+        let mut seen_sbom_ids: HashSet<String> = HashSet::new();
+
         for distinct_sbom_id in distinct_sbom_ids.iter().map(AsRef::as_ref) {
-            // TODO: we need a better heuristic for loading external sboms
-            for external_sbom in &external_sboms {
-                if !distinct_sbom_id.eq(&external_sbom.node_id.to_string()) {
-                    let resolved_external_sbom =
-                        resolve_external_sbom(&external_sbom.node_id, connection).await;
-                    log::debug!("resolved external sbom: {:?}", resolved_external_sbom);
-                    if let Some(resolved_external_sbom) = resolved_external_sbom {
-                        let resolved_external_sbom_id = resolved_external_sbom.sbom_id;
-                        results.push((
-                            resolved_external_sbom_id.clone().to_string(),
-                            self.load_graph(connection, &resolved_external_sbom_id.to_string())
-                                .await?,
-                        ));
-                    } else {
-                        log::debug!("Cannot find external sbom {:?}", external_sbom.node_id);
-                        continue;
+            log::debug!("loading sbom: {:?}", distinct_sbom_id);
+            let current_sbom_id_str = distinct_sbom_id.to_string();
+            if seen_sbom_ids.insert(current_sbom_id_str.clone()) {
+                for external_sbom in &external_sboms {
+                    if !distinct_sbom_id.eq(&external_sbom.node_id.to_string()) {
+                        let resolved_external_sbom =
+                            resolve_external_sbom(&external_sbom.node_id, connection).await;
+                        log::debug!("resolved external sbom: {:?}", resolved_external_sbom);
+                        if let Some(resolved_external_sbom) = resolved_external_sbom {
+                            let resolved_external_sbom_id_str =
+                                resolved_external_sbom.sbom_id.to_string();
+                            // Check if SBOM ID has already been processed
+                            if seen_sbom_ids.insert(resolved_external_sbom_id_str.clone()) {
+                                results.push((
+                                    resolved_external_sbom_id_str,
+                                    self.load_graph(
+                                        connection,
+                                        &resolved_external_sbom.sbom_id.to_string(),
+                                    )
+                                    .await?,
+                                ));
+                            } else {
+                                log::debug!(
+                                    "Skipping duplicate external SBOM ID: {}",
+                                    resolved_external_sbom_id_str
+                                );
+                            }
+                        } else {
+                            log::debug!("Cannot find external sbom {:?}", external_sbom.node_id);
+                            continue;
+                        }
                     }
                 }
-            }
-            log::debug!("loading sbom: {:?}", distinct_sbom_id);
 
-            results.push((
-                distinct_sbom_id.to_string(),
-                self.load_graph(connection, distinct_sbom_id).await?,
-            ));
+                results.push((
+                    current_sbom_id_str,
+                    self.load_graph(connection, distinct_sbom_id).await?,
+                ));
+            } else {
+                log::debug!("Skipping duplicate SBOM ID: {}", current_sbom_id_str);
+            }
         }
 
         Ok(results)
