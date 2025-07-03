@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751460663644,
+  "lastUpdate": 1751552858111,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12087,6 +12087,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/92c92f60afc4f7304a0acbc7d3fc0234475d97e1"
         },
         "date": 1751460661847,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "9f94897e38a815b2aa1ae0c96701d598f3bdfc52",
+          "message": "refactor: optimise graph loading",
+          "timestamp": "2025-07-03T13:42:45Z",
+          "tree_id": "dabb1cf9c66a9beb844a72758153c46b0aa1c0cc",
+          "url": "https://github.com/trustification/trustify/commit/9f94897e38a815b2aa1ae0c96701d598f3bdfc52"
+        },
+        "date": 1751552856851,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
