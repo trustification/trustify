@@ -176,13 +176,13 @@ impl Display for Id {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Id::Sha256(inner) => {
-                write!(f, "sha256:{}", inner)
+                write!(f, "sha256:{inner}")
             }
             Id::Sha384(inner) => {
-                write!(f, "sha384:{}", inner)
+                write!(f, "sha384:{inner}")
             }
             Id::Sha512(inner) => {
-                write!(f, "sha512:{}", inner)
+                write!(f, "sha512:{inner}")
             }
             Id::Uuid(inner) => {
                 write!(f, "{}", inner.urn())

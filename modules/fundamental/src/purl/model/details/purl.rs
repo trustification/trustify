@@ -142,7 +142,7 @@ async fn get_product_statuses_for_purl<C: ConnectionTrait>(
         .filter(product_version::Column::SbomId.in_subquery(sbom_ids_query))
         .filter(Expr::col(product_status::Column::Package).eq(purl_name).or(
             namespace_name.map_or(Expr::value(false), |ns| {
-                Expr::col(product_status::Column::Package).eq(format!("{}/{}", ns, purl_name))
+                Expr::col(product_status::Column::Package).eq(format!("{ns}/{purl_name}"))
             }),
         ))
         .distinct_on([

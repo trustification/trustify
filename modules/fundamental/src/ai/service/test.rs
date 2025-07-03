@@ -82,7 +82,7 @@ async fn test_completions_sbom_info(ctx: &TrustifyContext) -> Result<(), anyhow:
 
     let result = service.completions(&req).await?;
 
-    log::info!("result: {:#?}", result);
+    log::info!("result: {result:#?}");
     let last_message_content = result.messages.last().unwrap().content.clone();
     println!(
         "Test formatted output:\n\n{}\n",
@@ -114,7 +114,7 @@ async fn test_completions_package_info(ctx: &TrustifyContext) -> Result<(), anyh
 
     let result = service.completions(&req).await?;
 
-    log::info!("result: {:#?}", result);
+    log::info!("result: {result:#?}");
     let last_message_content = result.messages.last().unwrap().content.clone();
     println!(
         "Test formatted output:\n\n{}\n",
@@ -147,7 +147,7 @@ async fn test_completions_cve_info(ctx: &TrustifyContext) -> Result<(), anyhow::
 
     let result = service.completions(&req).await?;
 
-    log::info!("result: {:#?}", result);
+    log::info!("result: {result:#?}");
     let last_message_content = result.messages.last().unwrap().content.clone();
     println!(
         "Test formatted output:\n\n{}\n",
@@ -177,7 +177,7 @@ async fn test_completions_advisory_info(ctx: &TrustifyContext) -> Result<(), any
 
     let result = service.completions(&req).await?;
 
-    log::info!("result: {:#?}", result);
+    log::info!("result: {result:#?}");
     let last_message_content = result.messages.last().unwrap().content.clone();
     println!(
         "Test formatted output:\n\n{}\n",

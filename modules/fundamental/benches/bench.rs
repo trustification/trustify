@@ -26,7 +26,7 @@ pub(crate) mod trustify_benches {
 
                     let mut duration = Duration::default();
                     for i in 0..count {
-                        log::info!("inserting document {}...", i);
+                        log::info!("inserting document {i}...");
                         let data = common::document_generated_from("csaf/cve-2023-33201.json", i)
                             .await
                             .expect("data ok");

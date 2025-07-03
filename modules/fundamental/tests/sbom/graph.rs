@@ -372,7 +372,7 @@ async fn ingest_package_relates_to_package_dependency_of(
 async fn sbom_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let system = &ctx.graph;
 
-    log::debug!("{:?}", system);
+    log::debug!("{system:?}");
 
     let sbom = system
         .ingest_sbom(

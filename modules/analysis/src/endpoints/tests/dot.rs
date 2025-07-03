@@ -14,7 +14,7 @@ async fn render_dot(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let sbom = sbom.id.try_as_uid().unwrap();
 
     // Ensure child has an ancestor that includes it
-    let uri = format!("/api/v2/analysis/sbom/{}/render.dot", sbom);
+    let uri = format!("/api/v2/analysis/sbom/{sbom}/render.dot");
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: String = String::from_utf8(app.call_and_read_body(request).await.into())?;
     log::debug!("{response}");
@@ -57,7 +57,7 @@ async fn render_unsupported_ext(ctx: &TrustifyContext) -> Result<(), anyhow::Err
     let sbom = sbom.id.try_as_uid().unwrap();
 
     // Ensure child has an ancestor that includes it
-    let uri = format!("/api/v2/analysis/sbom/{}/render.foo", sbom);
+    let uri = format!("/api/v2/analysis/sbom/{sbom}/render.foo");
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response = app.call_service(request).await;
 

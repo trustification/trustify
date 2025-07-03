@@ -188,7 +188,7 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let cvss3_scores = response.query("$.vulnerabilities[*].cvss3_scores.*")?;
 
-    log::debug!("{:#?}", cvss3_scores);
+    log::debug!("{cvss3_scores:#?}");
 
     assert_eq!(
         cvss3_scores,
@@ -278,7 +278,7 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
 
     let response: Value = app.call_and_read_body_json(request).await;
 
-    log::debug!("{:#?}", response);
+    log::debug!("{response:#?}");
 
     assert_eq!(
         response.clone().query("$.issuer.name")?,
@@ -287,7 +287,7 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
 
     let cvss3_scores = response.query("$.vulnerabilities[*].cvss3_scores.*")?;
 
-    log::debug!("{:#?}", cvss3_scores);
+    log::debug!("{cvss3_scores:#?}");
 
     assert_eq!(
         cvss3_scores,

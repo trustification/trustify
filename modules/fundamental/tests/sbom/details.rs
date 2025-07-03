@@ -167,8 +167,7 @@ fn check_advisory(
     assert_eq!(
         1,
         advisories.len(),
-        "Found none or too many advisories with ID {}",
-        advisory_id
+        "Found none or too many advisories with ID {advisory_id}"
     );
     let advisory = advisories[0].clone();
     assert_eq!(1, advisory.status.len());
