@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751552858111,
+  "lastUpdate": 1751555050589,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12116,6 +12116,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/9f94897e38a815b2aa1ae0c96701d598f3bdfc52"
         },
         "date": 1751552856851,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "382b075d694d4dd0edc886e55cf55dcfdce1b9a4",
+          "message": "chore: removes unused dependencies",
+          "timestamp": "2025-07-03T14:29:06Z",
+          "tree_id": "d936b61e73bf64588b37d02dfd595f831644d349",
+          "url": "https://github.com/trustification/trustify/commit/382b075d694d4dd0edc886e55cf55dcfdce1b9a4"
+        },
+        "date": 1751555048842,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
