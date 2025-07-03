@@ -221,7 +221,7 @@ mod test {
             .as_bytes()
             .iter()
             .fold(String::new(), |mut s, b| {
-                let _ = write!(s, "{:02x}", b);
+                let _ = write!(s, "{b:02x}");
                 s
             });
 

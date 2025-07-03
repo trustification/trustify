@@ -108,7 +108,7 @@ impl AiService {
         let model = env::var("OPENAI_MODEL").unwrap_or_else(|_| "gpt-4o".to_string());
 
         log::info!("LLM API: {}", api_base.clone());
-        log::info!("LLM Model: {}", model);
+        log::info!("LLM Model: {model}");
 
         let llm_config = OpenAIConfig::default()
             .with_api_base(api_base.clone())
@@ -125,7 +125,7 @@ impl AiService {
             let mut i = 0;
             remote_tool_urls.split(',').for_each(|url| {
                 i += 1;
-                let provider_id = format!("r{}_", i);
+                let provider_id = format!("r{i}_");
                 remote_tools_providers.push(RemoteToolsProvider::new(
                     provider_id.clone(),
                     url.to_string(),
@@ -160,7 +160,7 @@ impl AiService {
                     }
                 }
                 Err(e) => {
-                    log::error!("failed to fetch remote tools: {}", e);
+                    log::error!("failed to fetch remote tools: {e}");
                 }
             }
         }
@@ -371,19 +371,14 @@ impl AiService {
 
                 // TODO: check for duplicate conversation_id error, and retry as an update
                 // to deal with concurrent initial upsert requests.
-                log::info!("inserting conversation into db: {}", conversation_id);
+                log::info!("inserting conversation into db: {conversation_id}");
                 model.insert(connection).await?;
                 (internal_state, seq)
             }
         };
 
         // generate an assistant response
-        log::info!(
-            "got conversation: {}, seq: {}, if_seq: {:?}",
-            conversation_id,
-            current_seq,
-            if_seq
-        );
+        log::info!("got conversation: {conversation_id}, seq: {current_seq}, if_seq: {if_seq:?}");
         let internal_state = self.completions_decoded(messages, &internal_state).await?;
 
         let response = internal_state.chat_messages();

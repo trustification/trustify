@@ -135,7 +135,7 @@ pub enum Cvss3Error {
 
 impl Display for Cvss3Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 

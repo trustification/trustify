@@ -119,8 +119,7 @@ pub fn product_advisory_info_sql() -> String {
         JOIN "vulnerability" ON "advisory_vulnerability"."vulnerability_id" = "vulnerability"."id"
         WHERE
         ($2::text[] = ARRAY[]::text[] OR "status"."slug" = ANY($2::text[]))
-        AND {}
-        "#,
-        CONTEXT_CPE_FILTER_SQL
+        AND {CONTEXT_CPE_FILTER_SQL}
+        "#
     )
 }

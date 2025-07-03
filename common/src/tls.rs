@@ -34,7 +34,7 @@ impl ClientConfig {
         let service_ca = {
             let cert = Path::new(SERVICE_CA_CERT);
             if cert.exists() {
-                log::info!("Adding Service CA certificate ({:?})", cert);
+                log::info!("Adding Service CA certificate ({cert:?})");
                 Some(SERVICE_CA_CERT)
             } else {
                 None

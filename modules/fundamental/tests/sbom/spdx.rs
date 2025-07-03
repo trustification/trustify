@@ -33,7 +33,7 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
             let described = service
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
                 .await?;
-            log::debug!("{:#?}", described);
+            log::debug!("{described:#?}");
             assert_eq!(1, described.items.len());
             let first = &described.items[0];
 

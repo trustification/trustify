@@ -43,10 +43,10 @@ impl LicenseExporter {
 
         let sbom_csv = wtr_sbom
             .into_inner()
-            .map_err(|err| Error::CsvIntoInnerError(format!("csv into inner error: {}", err)))?;
+            .map_err(|err| Error::CsvIntoInnerError(format!("csv into inner error: {err}")))?;
         let license_ref_csv = wtr_license_ref
             .into_inner()
-            .map_err(|err| Error::CsvIntoInnerError(format!("csv into inner error: {}", err)))?;
+            .map_err(|err| Error::CsvIntoInnerError(format!("csv into inner error: {err}")))?;
 
         let mut compressed_data = Vec::new();
         {
@@ -129,7 +129,7 @@ impl LicenseExporter {
             let alternate_package_reference = package
                 .cpe
                 .iter()
-                .map(|reference| format!("{}", reference))
+                .map(|reference| format!("{reference}"))
                 .collect::<Vec<_>>()
                 .join("\n");
 

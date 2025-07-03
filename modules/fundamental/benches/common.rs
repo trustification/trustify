@@ -56,7 +56,7 @@ pub async fn document_generated_from(path: &str, rev: u64) -> Result<Bytes, Erro
 
     fn rev_purl(from: PackageUrl, rev: u64) -> PackageUrl {
         let name = from.name();
-        let new_name = format!("{}-{}", name, rev);
+        let new_name = format!("{name}-{rev}");
         PackageUrl::from_str(
             from.to_string()
                 .replacen(name, new_name.as_str(), 1)
@@ -65,7 +65,7 @@ pub async fn document_generated_from(path: &str, rev: u64) -> Result<Bytes, Erro
         .unwrap()
     }
     fn rev_cpe(cpe: &OwnedUri, rev: u64) -> OwnedUri {
-        let uri = format!("{:0}", cpe);
+        let uri = format!("{cpe:0}");
         let mut uri = cpe::uri::Uri::parse(uri.as_str()).unwrap();
         let x = format!("{}_{}", uri.product(), rev);
         uri.set_product(x.as_str()).unwrap();
@@ -85,7 +85,7 @@ pub async fn document_generated_from(path: &str, rev: u64) -> Result<Bytes, Erro
     }
     fn rev_vulnerability(vulnerability: &mut Vulnerability, rev: u64) {
         for cve in vulnerability.cve.iter_mut() {
-            *cve = format!("{}-{}", cve, rev);
+            *cve = format!("{cve}-{rev}");
         }
     }
 

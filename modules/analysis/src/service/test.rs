@@ -387,7 +387,7 @@ async fn test_cache_size_used(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     assert_eq!(all_graphs.len(), 2);
 
     let big_sbom_size = service.cache_size_used() - small_sbom_size;
-    log::warn!("{:?}", big_sbom_size);
+    log::warn!("{big_sbom_size:?}");
     assert!(big_sbom_size > 420 * kb);
     assert!(big_sbom_size < 430 * kb);
 

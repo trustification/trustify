@@ -182,7 +182,7 @@ impl<'g> CsafLoader<'g> {
                             .await?;
                     }
                     Err(err) => {
-                        let msg = format!("Unable to parse CVSS3: {:#?}", err);
+                        let msg = format!("Unable to parse CVSS3: {err:#?}");
                         log::info!("{msg}");
                         report.error(msg);
                     }

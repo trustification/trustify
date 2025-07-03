@@ -69,7 +69,7 @@ impl Authenticator {
         token: &Compact<AccessTokenClaims, Empty>,
     ) -> Result<Option<&AuthenticatorClient>, AuthenticationError> {
         let unverified_payload = token.unverified_payload().map_err(|err| {
-            log::info!("Failed to decode token payload: {}", err);
+            log::info!("Failed to decode token payload: {err}");
             AuthenticationError::Failed
         })?;
 
@@ -104,7 +104,7 @@ impl Authenticator {
             let provider_iss = &client.provider.config().issuer;
             let provider_client_id = &client.client_id;
 
-            log::debug!("Checking client: {} / {}", provider_iss, provider_client_id);
+            log::debug!("Checking client: {provider_iss} / {provider_client_id}");
             if provider_iss != &unverified_payload.iss {
                 return false;
             }
@@ -137,7 +137,7 @@ impl Authenticator {
         log::debug!("Using client: {}", client.client_id);
 
         client.decode_token(&mut token).map_err(|err| {
-            log::debug!("Failed to decode token: {}", err);
+            log::debug!("Failed to decode token: {err}");
             AuthenticationError::Failed
         })?;
 
@@ -145,7 +145,7 @@ impl Authenticator {
 
         validate::validate_token(client, &token, client.audience.as_deref(), None).map_err(
             |err| {
-                log::debug!("Validation failed: {}", err);
+                log::debug!("Validation failed: {err}");
                 AuthenticationError::Failed
             },
         )?;
