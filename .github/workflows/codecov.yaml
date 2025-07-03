@@ -67,7 +67,7 @@ jobs:
 
       - name: Test
         # use only one job, trying to reduce memory usage
-        run: cargo tarpaulin --jobs 1 --timeout 300 --out xml --skip-clean --features _test-s3
+        run: cargo tarpaulin --jobs 1 --timeout 300 --out xml --skip-clean --features _test-s3 --engine llvm
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" # for embedded postgresql
 
