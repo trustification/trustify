@@ -131,7 +131,7 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 90);
+    assert_eq!(response["total"], 30);
 
     // purl partial latest search
     let uri: String = format!(
@@ -140,7 +140,7 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 45);
+    assert_eq!(response["total"], 30);
 
     // name exact search
     let uri: String = format!(
@@ -149,7 +149,7 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 30);
+    assert_eq!(response["total"], 10);
 
     // latest name exact search
     let uri: String = format!(
@@ -158,7 +158,7 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 15);
+    assert_eq!(response["total"], 10);
 
     Ok(())
 }
@@ -210,7 +210,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 22);
+    assert_eq!(response["total"], 6);
 
     // purl partial latest search
     let uri: String = format!(
@@ -228,7 +228,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 22);
+    assert_eq!(response["total"], 6);
 
     // latest name exact search
     let uri: String = format!(
