@@ -24,10 +24,10 @@ impl<T: Tool> Tool for ToolLogger<T> {
         let result = self.0.call(input).await;
         match &result {
             Ok(result) => {
-                log::info!("   result: {}", result);
+                log::info!("   result: {result}");
             }
             Err(err) => {
-                log::info!("      err: {}", err);
+                log::info!("      err: {err}");
             }
         }
         result

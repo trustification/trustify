@@ -37,7 +37,7 @@ async fn configure(ctx: &TrustifyContext) -> anyhow::Result<()> {
     assert_eq!(response.status(), StatusCode::OK);
 
     let result: ChatState = actix_web::test::read_body_json(response).await;
-    log::info!("result: {:?}", result);
+    log::info!("result: {result:?}");
     assert!(
         result
             .messages
@@ -61,7 +61,7 @@ async fn flags(ctx: &TrustifyContext) -> anyhow::Result<()> {
     assert_eq!(response.status(), StatusCode::OK);
 
     let result: serde_json::Value = actix_web::test::read_body_json(response).await;
-    log::info!("result: {:?}", result);
+    log::info!("result: {result:?}");
 
     let service = AiService::new(ctx.db.clone());
 
@@ -87,7 +87,7 @@ async fn tools(ctx: &TrustifyContext) -> anyhow::Result<()> {
     assert_eq!(response.status(), StatusCode::OK);
 
     let result: serde_json::Value = actix_web::test::read_body_json(response).await;
-    log::info!("result: {:?}", result);
+    log::info!("result: {result:?}");
 
     let expected: serde_json::Value =
         serde_json::from_str(include_str!("expected_tools_result.json"))?;
@@ -128,7 +128,7 @@ async fn tools_call(ctx: &TrustifyContext) -> anyhow::Result<()> {
     assert_eq!(response.status(), StatusCode::OK);
 
     let result = sanitize_uuid_urn(sanitize_uuid_field(read_text(response).await?));
-    log::info!("result: {:?}", result);
+    log::info!("result: {result:?}");
 
     assert_eq!(
         result.trim(),

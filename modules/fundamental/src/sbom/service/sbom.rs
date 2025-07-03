@@ -976,12 +976,12 @@ mod test {
 
         let affected = service.delete_sbom(sbom_v1.sbom.sbom_id, &ctx.db).await?;
 
-        log::debug!("{:#?}", affected);
+        log::debug!("{affected:#?}");
         assert_eq!(1, affected);
 
         let affected = service.delete_sbom(sbom_v1.sbom.sbom_id, &ctx.db).await?;
 
-        log::debug!("{:#?}", affected);
+        log::debug!("{affected:#?}");
         assert_eq!(0, affected);
 
         Ok(())

@@ -39,7 +39,7 @@ Enter your question or type:
         )
     );
 
-    println!("Using Trustify endpoint: {}", url);
+    println!("Using Trustify endpoint: {url}");
 
     let mut chat_state = ChatState::default();
     loop {
@@ -63,7 +63,7 @@ Enter your question or type:
 
                 let client = reqwest::Client::new();
                 let res = client
-                    .post(format!("{}/api/v2/ai/completions", url))
+                    .post(format!("{url}/api/v2/ai/completions"))
                     .json(&chat_state)
                     .send()
                     .await?;

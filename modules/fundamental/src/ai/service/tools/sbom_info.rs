@@ -66,7 +66,7 @@ For example, input "quarkus" instead of "quarkus 3.2.11".
         let mut sbom_details = match Id::from_str(input.as_str()) {
             Err(_) => None,
             Ok(id) => {
-                log::info!("Fetching SBOM details by Id: {}", id);
+                log::info!("Fetching SBOM details by Id: {id}");
                 service.fetch_sbom_details(id, vec![], &self.db).await?
             }
         };
@@ -75,7 +75,7 @@ For example, input "quarkus" instead of "quarkus 3.2.11".
             sbom_details = match Uuid::from_str(input.as_str()) {
                 Err(_) => None,
                 Ok(id) => {
-                    log::info!("Fetching SBOM details by UUID: {}", id);
+                    log::info!("Fetching SBOM details by UUID: {id}");
                     service
                         .fetch_sbom_details(Id::Uuid(id), vec![], &self.db)
                         .await?
@@ -127,7 +127,7 @@ For example, input "quarkus" instead of "quarkus 3.2.11".
                         published: item.head.published,
                         link: format!("http://localhost:3000/sboms/urn:uuid:{}", item.head.id),
                     })?;
-                    return Ok(format!("There are multiple that match:\n\n{}", json));
+                    return Ok(format!("There are multiple that match:\n\n{json}"));
                 }
             };
         }

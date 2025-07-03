@@ -267,11 +267,11 @@ pub(crate) mod tests {
         assert!(q("detected~1993").apply(&context));
         assert!(q("1993").apply(&context));
 
-        assert!(q(&format!("published={}", now)).apply(&context));
+        assert!(q(&format!("published={now}")).apply(&context));
         assert!(q(&format!("published={}", now.date())).apply(&context));
         assert!(q(&format!("published={}", now.time())).apply(&context));
         assert!(q(&format!("published>=today {}", now.time())).apply(&context));
-        assert!(q(&format!("published>={}", now)).apply(&context));
+        assert!(q(&format!("published>={now}")).apply(&context));
         assert!(q(&format!("published<={}", now.date())).apply(&context));
         assert!(q(&format!("published~{}", now.time())).apply(&context));
 

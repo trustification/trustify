@@ -87,9 +87,7 @@ mod tests {
         let actual = cleanup_tool_result(tool.run(Value::String(input.to_string())).await);
         assert!(
             actual.contains(expected.trim()),
-            "actual:\n{}\nexpected:\n{}\n",
-            actual,
-            expected
+            "actual:\n{actual}\nexpected:\n{expected}\n"
         );
         Ok(())
     }

@@ -91,7 +91,7 @@ Advisories have a UUID that uniquely identifies the advisory.
                         identifier: item.head.identifier.clone(),
                         title: item.head.title.clone(),
                     })?;
-                    return Ok(format!("There are multiple that match:\n\n{}", json));
+                    return Ok(format!("There are multiple that match:\n\n{json}"));
                 }
 
                 // let's show the details

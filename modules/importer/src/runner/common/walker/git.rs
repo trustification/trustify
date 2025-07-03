@@ -380,9 +380,9 @@ where
         });
         cb.update_tips(|refname, a, b| {
             if a.is_zero() {
-                log::debug!("[new]     {:20} {}", b, refname);
+                log::debug!("[new]     {b:20} {refname}");
             } else {
-                log::debug!("[updated] {:10}..{:10} {}", a, b, refname);
+                log::debug!("[updated] {a:10}..{b:10} {refname}");
             }
             !self.handler.is_canceled()
         });

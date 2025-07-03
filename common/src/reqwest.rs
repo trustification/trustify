@@ -12,7 +12,7 @@ fn add_cert<P: AsRef<Path>>(
     cert: P,
 ) -> anyhow::Result<reqwest::ClientBuilder> {
     let cert = cert.as_ref();
-    log::info!("Adding root certificate: {:?}", cert);
+    log::info!("Adding root certificate: {cert:?}");
     let mut file = File::open(cert)?;
     let mut buf = Vec::new();
     file.read_to_end(&mut buf)?;
@@ -26,7 +26,7 @@ fn add_cert<P: AsRef<Path>>(
     log::info!("Found {} certificates", pems.len());
 
     for pem in pems {
-        log::info!("Adding root certificate: {:?}", pem);
+        log::info!("Adding root certificate: {pem:?}");
         client = client.add_root_certificate(pem);
     }
 

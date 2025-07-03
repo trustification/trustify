@@ -269,7 +269,7 @@ async fn test_tc2606(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::info!("{:#?}", response);
+    log::info!("{response:#?}");
     assert_eq!(response["total"], 2);
 
     assert!(response.contains_subset(json!(

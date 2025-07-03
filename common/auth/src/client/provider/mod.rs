@@ -24,9 +24,9 @@ impl Credentials {
             Self::Bearer(token) => format!("Bearer {token}"),
             Self::Basic(username, password) => {
                 let mut encoder = EncoderStringWriter::new(&BASE64_STANDARD);
-                let _ = write!(encoder, "{}:", username);
+                let _ = write!(encoder, "{username}:");
                 if let Some(password) = password {
-                    let _ = write!(encoder, "{}", password);
+                    let _ = write!(encoder, "{password}");
                 }
                 encoder.into_inner()
             }
