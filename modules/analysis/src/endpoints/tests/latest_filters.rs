@@ -140,7 +140,7 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 30);
+    assert_eq!(response["total"], 15);
 
     // name exact search
     let uri: String = format!(
@@ -158,7 +158,7 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 10);
+    assert_eq!(response["total"], 5);
 
     Ok(())
 }
@@ -219,7 +219,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 6);
+    assert_eq!(response["total"], 2);
 
     // name exact search
     let uri: String = format!(
@@ -237,7 +237,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 6);
+    assert_eq!(response["total"], 2);
 
     Ok(())
 }

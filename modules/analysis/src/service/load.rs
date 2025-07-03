@@ -691,36 +691,54 @@ impl InnerService {
         let mut results = Vec::new();
         let mut seen_sbom_ids: HashSet<String> = HashSet::new();
 
-        // prime graph cache with external sboms - should be a one time cost
-        let external_sboms = sbom_external_node::Entity::find().all(connection).await?;
-        for external_sbom in &external_sboms {
-            let resolved_external_sbom =
-                resolve_external_sbom(&external_sbom.node_id, connection).await;
-            log::debug!("resolved external sbom: {:?}", resolved_external_sbom);
-            if let Some(resolved_external_sbom) = resolved_external_sbom {
-                let resolved_external_sbom_id_str = resolved_external_sbom.sbom_id.to_string();
-                // Check if SBOM ID has already been processed
-                if seen_sbom_ids.insert(resolved_external_sbom_id_str.clone()) {
-                    results.push((
-                        resolved_external_sbom_id_str,
-                        self.load_graph(connection, &resolved_external_sbom.sbom_id.to_string())
-                            .await?,
-                    ));
-                } else {
-                    log::debug!(
-                        "Skipping duplicate external SBOM ID: {}",
-                        resolved_external_sbom_id_str
-                    );
-                }
-            } else {
-                log::debug!("Cannot find external sbom {:?}", external_sbom.node_id);
-                continue;
-            }
-        }
         for distinct_sbom_id in distinct_sbom_ids.iter().map(AsRef::as_ref) {
             log::debug!("loading sbom: {:?}", distinct_sbom_id);
             let current_sbom_id_str = distinct_sbom_id.to_string();
             if seen_sbom_ids.insert(current_sbom_id_str.clone()) {
+                // at this stage we just have sbom_id string, so have to convert back to uuid
+                let distinct_sbom_id_uuid = match Uuid::parse_str(distinct_sbom_id) {
+                    Ok(uuid) => uuid,
+                    Err(e) => {
+                        log::error!(
+                            "Failed to parse distinct_sbom_id '{distinct_sbom_id:?}' as UUID: {e:?}"
+                        );
+                        Uuid::nil()
+                    }
+                };
+                // select all related external nodes
+                let external_sboms = sbom_external_node::Entity::find()
+                    .filter(sbom_external_node::Column::SbomId.eq(distinct_sbom_id_uuid))
+                    .all(connection)
+                    .await?;
+                //resolve and load externally referenced sboms
+                for external_sbom in &external_sboms {
+                    let resolved_external_sbom =
+                        resolve_external_sbom(&external_sbom.node_id, connection).await;
+                    log::debug!("resolved external sbom: {:?}", resolved_external_sbom);
+                    if let Some(resolved_external_sbom) = resolved_external_sbom {
+                        let resolved_external_sbom_id_str =
+                            resolved_external_sbom.sbom_id.to_string();
+                        if seen_sbom_ids.insert(resolved_external_sbom_id_str.clone()) {
+                            results.push((
+                                resolved_external_sbom_id_str,
+                                self.load_graph(
+                                    connection,
+                                    &resolved_external_sbom.sbom_id.to_string(),
+                                )
+                                .await?,
+                            ));
+                        } else {
+                            log::debug!(
+                                "Skipping duplicate external SBOM ID: {}",
+                                resolved_external_sbom_id_str
+                            );
+                        }
+                    } else {
+                        log::debug!("Cannot find external sbom {:?}", external_sbom.node_id);
+                        continue;
+                    }
+                }
+
                 results.push((
                     current_sbom_id_str,
                     self.load_graph(connection, distinct_sbom_id).await?,
