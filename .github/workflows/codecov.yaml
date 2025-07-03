@@ -61,15 +61,20 @@ jobs:
         run: |
           curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 
-      - name: Install cargo-tarpaulin
-        run:
-          cargo binstall cargo-tarpaulin -y --force
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
 
       - name: Test
-        # use only one job, trying to reduce memory usage
-        run: cargo tarpaulin --jobs 1 --timeout 300 --out xml --skip-clean --features _test-s3
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" # for embedded postgresql
+        run: cargo llvm-cov --features _test-s3 --no-clean --cobertura --output-path cobertura.xml
+      # - name: Install cargo-tarpaulin
+      #   run:
+      #     cargo binstall cargo-tarpaulin -y --force
+
+      # - name: Test
+      #   # use only one job, trying to reduce memory usage
+      #   run: cargo tarpaulin --jobs 1 --timeout 300 --out xml --skip-clean --features _test-s3
+      #   env:
+      #     GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" # for embedded postgresql
 
       - uses: codecov/codecov-action@v5
         if: github.repository_owner == 'trustification'
