@@ -102,7 +102,7 @@ The input should be the partial or full name of the Vulnerability to search for.
                         identifier: item.head.identifier.clone(),
                         name: item.head.title.clone(),
                     })?;
-                    return Ok(format!("There are multiple that match:\n\n{}", json));
+                    return Ok(format!("There are multiple that match:\n\n{json}"));
                 }
 
                 // let's show the details for the one that matched.
@@ -170,7 +170,7 @@ The input should be the partial or full name of the Vulnerability to search for.
                 item.head.identifier
             )?;
         }
-        writeln!(result, "{}", json)?;
+        writeln!(result, "{json}")?;
         Ok(result)
     }
 }

@@ -114,7 +114,7 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(advisories[0]["name"], "CVE-2021-32714");
     assert_eq!(advisories[1]["name"], "CVE-2024-29025");
 
-    log::debug!("{}", advisories);
+    log::debug!("{advisories}");
 
     Ok(())
 }
@@ -140,7 +140,7 @@ async fn get_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     assert_eq!(advisory["name"], "CVE-2024-29025");
 
-    log::debug!("{}", data);
+    log::debug!("{data}");
 
     Ok(())
 }
@@ -165,7 +165,7 @@ async fn get_organization_by_name(ctx: &TrustifyContext) -> Result<(), anyhow::E
 
     assert_eq!(organization["name"], "Red Hat Product Security");
 
-    log::debug!("{}", data);
+    log::debug!("{data}");
 
     Ok(())
 }
@@ -199,7 +199,7 @@ async fn get_sbom_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert!(!source_document_id.as_str().unwrap().is_empty());
 
-    log::debug!("{}", data);
+    log::debug!("{data}");
 
     Ok(())
 }
@@ -233,7 +233,7 @@ async fn get_sboms_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     assert!(!source_document_id.as_str().unwrap().is_empty());
 
-    log::debug!("{}", data);
+    log::debug!("{data}");
 
     Ok(())
 }
@@ -253,7 +253,7 @@ async fn get_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     assert_eq!(vulnerabilities[0]["id"], "CVE-2024-2700");
     assert_eq!(vulnerabilities[1]["id"], "CVE-2024-29025");
 
-    log::debug!("{}", data);
+    log::debug!("{data}");
 
     Ok(())
 }
@@ -278,7 +278,7 @@ async fn get_vulnerability_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Er
 
     assert_eq!(vulnerability["id"], "CVE-2024-29025");
 
-    log::debug!("{}", data);
+    log::debug!("{data}");
 
     Ok(())
 }
@@ -335,7 +335,7 @@ async fn get_cves_by_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     );
      */
 
-    log::info!("{}", data);
+    log::info!("{data}");
 
     Ok(())
 }

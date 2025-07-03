@@ -144,10 +144,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                     .node_indices()
                     .find(|&node| external_graph[node].node_id.eq(&external_node_id))
                 else {
-                    log::warn!(
-                        "Node with ID {} not found in external sbom",
-                        external_node_id
-                    );
+                    log::warn!("Node with ID {external_node_id} not found in external sbom");
                     return None;
                 };
                 // recurse into those descendent nodes
@@ -204,8 +201,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                                 .find(|&node| external_graph[node].node_id.eq(&matched.node_id))
                             else {
                                 log::warn!(
-                                    "Node with ID {} not found in external sbom",
-                                    current_node_id
+                                    "Node with ID {current_node_id} not found in external sbom"
                                 );
                                 continue;
                             };
@@ -225,8 +221,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                         }
                         _ => {
                             log::debug!(
-                                "not external sbom sbom_external_node {:?}",
-                                sbom_external_node
+                                "not external sbom sbom_external_node {sbom_external_node:?}"
                             );
                             continue;
                         }

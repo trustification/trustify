@@ -117,7 +117,7 @@ Input: The package name, its Identifier URI, or UUID.
                         name: item.head.purl.name.clone(),
                         version: item.head.purl.version.clone(),
                     })?;
-                    return Ok(format!("There are multiple that match:\n\n{}", json));
+                    return Ok(format!("There are multiple that match:\n\n{json}"));
                 }
             };
         }

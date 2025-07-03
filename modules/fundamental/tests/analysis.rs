@@ -61,8 +61,7 @@ async fn upload_lazy_load(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 }]
             }]
         })),
-        "should be contained in: {}",
-        response
+        "should be contained in: {response}"
     );
 
     // after the query, we should have the SBOM loaded in the graph as well

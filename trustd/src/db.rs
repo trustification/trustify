@@ -98,8 +98,8 @@ impl Run {
         let port = postgresql.settings().port;
         self.database.port = port;
 
-        log::info!("PostgreSQL installed in {:?}", db_dir);
-        log::info!("Running on port {}", port);
+        log::info!("PostgreSQL installed in {db_dir:?}");
+        log::info!("Running on port {port}");
 
         Ok(postgresql)
     }

@@ -59,6 +59,6 @@ pub enum Relationship {
 
 impl fmt::Display for Relationship {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }

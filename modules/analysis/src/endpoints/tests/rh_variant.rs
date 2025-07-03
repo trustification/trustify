@@ -416,7 +416,7 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference_curl(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
-    log::debug!("{:?}", response);
+    log::debug!("{response:?}");
 
     assert!(response.contains_subset(json!({
       "items": [
@@ -467,7 +467,7 @@ async fn resolve_rh_variant_source_binary_cdx_external_reference(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
-    log::debug!("{:?}", response);
+    log::debug!("{response:?}");
 
     assert!(response.contains_subset(json!({
       "items": [

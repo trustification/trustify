@@ -153,7 +153,7 @@ async fn resolve_external_sbom<C: ConnectionTrait>(
             }
 
             let external_doc_ref = sbom_external_node.external_doc_ref;
-            let external_doc_id = format!("urn:cdx:{}/{}", external_doc_ref, discriminator_value);
+            let external_doc_id = format!("urn:cdx:{external_doc_ref}/{discriminator_value}");
 
             match sbom::Entity::find()
                 .filter(sbom::Column::DocumentId.eq(external_doc_id))
@@ -393,7 +393,7 @@ impl AnalysisService {
                     log::info!("Loaded {} graphs", r.len());
                 }
                 Err(err) => {
-                    log::warn!("Failed to load graphs into cache: {}", err);
+                    log::warn!("Failed to load graphs into cache: {err}");
                 }
             }
 

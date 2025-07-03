@@ -158,7 +158,7 @@ fn init_otlp_metrics(name: &str) {
         .build();
 
     println!("Exporting metrics to OTEL Collector.");
-    println!("{:#?}", provider);
+    println!("{provider:#?}");
 
     set_meter_provider(provider);
 }
@@ -183,7 +183,7 @@ fn init_otlp_tracing(name: &str) {
         .build();
 
     println!("Exporting traces to OTEL Collector.");
-    println!("{:#?}", provider);
+    println!("{provider:#?}");
 
     let formatting_layer = tracing_subscriber::fmt::Layer::default();
     let tracer = provider.tracer(name.to_string());
@@ -194,7 +194,7 @@ fn init_otlp_tracing(name: &str) {
         .with(formatting_layer)
         .try_init()
     {
-        eprintln!("Error initializing tracing: {:?}", e);
+        eprintln!("Error initializing tracing: {e:?}");
     }
     set_tracer_provider(provider);
 }
@@ -219,6 +219,6 @@ fn init_no_tracing() {
         .try_init();
 
     if let Err(err) = result {
-        eprintln!("Error initializing logging: {:?}", err);
+        eprintln!("Error initializing logging: {err:?}");
     }
 }
