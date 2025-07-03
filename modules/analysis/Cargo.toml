@@ -28,7 +28,6 @@ sea-orm = { workspace = true }
 sea-query = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-spdx-rs = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true, features = ["sync"] }
@@ -56,7 +55,6 @@ tokio-util = { workspace = true, features = ["full"] }
 tokio = { workspace = true, features = ["full"] }
 trustify-test-context = { workspace = true }
 urlencoding = { workspace = true }
-criterion = { workspace = true, features = ["html_reports", "async_tokio"] }
 csaf = { workspace = true }
 packageurl = { workspace = true }
 zip = { workspace = true }
