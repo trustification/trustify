@@ -29,7 +29,6 @@ csv = { workspace = true }
 flate2 ={ workspace = true }
 futures-util = { workspace = true }
 itertools = { workspace = true }
-lenient_semver = { workspace = true }
 langchain-rust = { workspace = true }
 log = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }

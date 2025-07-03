@@ -28,7 +28,6 @@ log = { workspace = true }
 native-tls = { workspace = true }
 packageurl = { workspace = true }
 pem = { workspace = true }
-percent-encoding = { workspace = true }
 postgresql_embedded = { workspace = true, features = ["blocking", "tokio"] }
 regex = { workspace = true }
 reqwest = { workspace = true, features = ["native-tls"] }
