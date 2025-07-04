@@ -4,6 +4,7 @@ use sea_orm::{
     Select, SelectModel, SelectTwo, SelectTwoModel, Selector, SelectorTrait,
 };
 use std::num::NonZeroU64;
+use tracing::instrument;
 
 pub struct Limiter<'db, C, S1, S2>
 where
@@ -22,10 +23,12 @@ where
     S1: SelectorTrait + 'db,
     S2: SelectorTrait + 'db,
 {
+    #[instrument(skip(self), err(level=tracing::Level::INFO))]
     pub async fn fetch(self) -> Result<Vec<S1::Item>, DbErr> {
         self.selector.all(self.db).await
     }
 
+    #[instrument(skip(self), err(level=tracing::Level::INFO))]
     pub async fn total(&self) -> Result<u64, DbErr> {
         self.paginator.num_items().await
     }

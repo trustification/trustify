@@ -55,7 +55,11 @@ pub struct AdvisoryHead {
 }
 
 impl AdvisoryHead {
-    #[instrument(skip_all, fields(advisory.id = ?advisory.id), err(level=tracing::Level::INFO))]
+    #[instrument(
+        skip_all,
+        fields(advisory.id = %advisory.id),
+        err(level=tracing::Level::INFO)
+    )]
     pub async fn from_advisory<C: ConnectionTrait>(
         advisory: &advisory::Model,
         issuer: Memo<organization::Model>,
