@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751618983761,
+  "lastUpdate": 1751641743112,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12261,6 +12261,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/bf01b56cbec15f5dd9220dae4a4efc941bbc7733"
         },
         "date": 1751618982333,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "ae658b51d18b11ef7818919f094e769840e9acb6",
+          "message": "chore: more instrumentation when fetching advisories",
+          "timestamp": "2025-07-04T14:47:17Z",
+          "tree_id": "cc3e7c9bbb356c8a88dee480f757929f46c587fd",
+          "url": "https://github.com/trustification/trustify/commit/ae658b51d18b11ef7818919f094e769840e9acb6"
+        },
+        "date": 1751641742024,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
