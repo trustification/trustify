@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751557880890,
+  "lastUpdate": 1751611708120,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12179,6 +12179,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "c1205fc747ff9121df196fb7e4a8683b42cd6969",
+          "message": "chore: missing commit",
+          "timestamp": "2025-07-04T06:27:08Z",
+          "tree_id": "9185e32348fdf2ce134559865e0e683bc0bba0cd",
+          "url": "https://github.com/trustification/trustify/commit/c1205fc747ff9121df196fb7e4a8683b42cd6969"
+        },
+        "date": 1751611706550,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
