@@ -1,5 +1,6 @@
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
+use tracing::{Instrument, info_span, instrument};
 use trustify_common::memo::Memo;
 use trustify_entity::{advisory_vulnerability, vulnerability};
 use utoipa::ToSchema;
@@ -34,6 +35,11 @@ pub struct AdvisorySummary {
 
 impl AdvisorySummary {
     #[allow(deprecated)]
+    #[instrument(
+        skip_all,
+        err(level=tracing::Level::INFO),
+        fields(entities=entities.len())
+    )]
     pub async fn from_entities<C: ConnectionTrait>(
         entities: &[AdvisoryCatcher],
         tx: &C,
@@ -49,6 +55,7 @@ impl AdvisorySummary {
                 )
                 .filter(advisory_vulnerability::Column::AdvisoryId.eq(each.advisory.id))
                 .all(tx)
+                .instrument(info_span!("find advisory vulnerabilities", advisory=%each.advisory.id))
                 .await?;
 
             let vulnerabilities =

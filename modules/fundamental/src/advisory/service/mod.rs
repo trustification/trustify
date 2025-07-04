@@ -8,6 +8,7 @@ use sea_orm::{
     Statement, TransactionTrait,
 };
 use sea_query::{ColumnType, Expr, JoinType};
+use tracing::instrument;
 use trustify_common::{
     db::{
         Database, UpdateDeprecatedAdvisory,
@@ -31,6 +32,7 @@ impl AdvisoryService {
         Self { db }
     }
 
+    #[instrument(skip(self, connection))]
     pub async fn fetch_advisories<C: ConnectionTrait + Sync + Send>(
         &self,
         search: Query,
