@@ -18,6 +18,7 @@ trustify-module-fundamental = { workspace = true }
 trustify-module-graphql = { workspace = true, optional = true }
 trustify-module-importer = { workspace = true }
 trustify-module-ingestor = { workspace = true }
+trustify-module-signature = { workspace = true }
 trustify-module-storage = { workspace = true }
 trustify-module-ui = { workspace = true }
 trustify-module-user = { workspace = true }

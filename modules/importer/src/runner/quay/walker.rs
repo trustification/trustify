@@ -13,7 +13,7 @@ use time::OffsetDateTime;
 use tokio::sync::Mutex;
 use tracing::instrument;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Cache, Format, IngestorService};
+use trustify_module_ingestor::service::{Cache, Format, Ingest, IngestorService};
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct LastModified(Option<i64>);
@@ -98,17 +98,18 @@ impl<C: RunContext> QuayWalker<C> {
         report.tick();
         match self
             .ingestor
-            .ingest(
+            .ingest(Ingest {
                 data,
-                Format::SBOM,
-                Labels::new()
+                format: Format::SBOM,
+                labels: Labels::new()
                     .add("source", &self.importer.source)
                     .add("importer", "Quay")
                     .add("file", file.to_string())
                     .extend(self.importer.labels.0.clone()),
-                None,
-                Cache::Skip,
-            )
+                issuer: None,
+                cache: Cache::Skip,
+                signatures: vec![],
+            })
             .await
         {
             Ok(result) => report.extend_messages(

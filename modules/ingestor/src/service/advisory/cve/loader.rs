@@ -8,7 +8,7 @@ use crate::{
         vulnerability::VulnerabilityInformation,
     },
     model::IngestResult,
-    service::{Error, Warnings, advisory::cve::divination::divine_purl},
+    service::{Error, Metadata, Warnings, advisory::cve::divination::divine_purl},
 };
 use cve::{
     Cve, Timestamp,
@@ -16,13 +16,12 @@ use cve::{
 };
 use sea_orm::TransactionTrait;
 use serde_json::Value;
-use std::fmt::Debug;
 use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::{hashing::Digests, id::Id};
+use trustify_common::id::Id;
 use trustify_cvss::cvss3::{Cvss3Base, score::Score, severity::Severity};
-use trustify_entity::{labels::Labels, version_scheme::VersionScheme};
+use trustify_entity::version_scheme::VersionScheme;
 
 /// Loader capable of parsing a CVE Record JSON file
 /// and manipulating the Graph to integrate it into
@@ -42,15 +41,16 @@ impl<'g> CveLoader<'g> {
     }
 
     #[instrument(skip(self, cve), err(level=tracing::Level::INFO))]
-    pub async fn load(
-        &self,
-        labels: impl Into<Labels> + Debug,
-        cve: Cve,
-        digests: &Digests,
-    ) -> Result<IngestResult, Error> {
+    pub async fn load(&self, metadata: Metadata, cve: Cve) -> Result<IngestResult, Error> {
+        let Metadata {
+            labels,
+            issuer: _,
+            digests,
+            signatures,
+        } = metadata;
         let warnings = Warnings::new();
         let id = cve.id();
-        let labels = labels.into().add("type", "cve");
+        let labels = labels.add("type", "cve");
 
         let tx = self.graph.db.begin().await?;
 
@@ -88,7 +88,11 @@ impl<'g> CveLoader<'g> {
 
         let advisory = self
             .graph
-            .ingest_advisory(id, labels, digests, advisory_info, &tx)
+            .ingest_advisory(id, labels, &digests, advisory_info, &tx)
+            .await?;
+
+        self.graph
+            .attach_signatures(advisory.advisory.source_document_id, signatures, &tx)
             .await?;
 
         // Link the advisory to the backing vulnerability
@@ -399,7 +403,15 @@ mod test {
 
         let loader = CveLoader::new(&graph);
         loader
-            .load(("file", "CVE-2024-28111.json"), cve, &digests)
+            .load(
+                Metadata {
+                    labels: ("file", "CVE-2024-28111.json").into(),
+                    digests,
+                    issuer: None,
+                    signatures: vec![],
+                },
+                cve,
+            )
             .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", &ctx.db).await?;
@@ -450,7 +462,15 @@ mod test {
 
         let loader = CveLoader::new(&graph);
         loader
-            .load(("file", "CVE-2024-26308.json"), cve, &digests)
+            .load(
+                Metadata {
+                    labels: ("file", "CVE-2024-26308.json").into(),
+                    digests,
+                    issuer: None,
+                    signatures: vec![],
+                },
+                cve,
+            )
             .await?;
 
         let purl = graph

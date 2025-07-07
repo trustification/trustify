@@ -1,11 +1,11 @@
 #![allow(clippy::unwrap_used)]
 
+mod common;
+
+use crate::common::create_zip;
 use bytes::BytesMut;
 use futures_util::StreamExt;
-use std::{
-    io::{Cursor, Write},
-    time::Instant,
-};
+use std::time::Instant;
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
@@ -13,7 +13,6 @@ use trustify_common::id::Id;
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_storage::service::StorageBackend;
 use trustify_test_context::TrustifyContext;
-use zip::write::FileOptions;
 
 /// Test ingesting a dataset.
 #[test_context(TrustifyContext, skip_teardown)]
@@ -27,23 +26,7 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
 
     // create dataset ad-hoc
 
-    let base = ctx.absolute_path("../datasets/ds3")?;
-    let mut data = vec![];
-    let mut dataset = zip::write::ZipWriter::new(Cursor::new(&mut data));
-    for entry in walkdir::WalkDir::new(&base) {
-        let entry = entry?;
-        let Ok(path) = entry.path().strip_prefix(&base) else {
-            continue;
-        };
-
-        if entry.file_type().is_file() {
-            dataset.start_file_from_path(path, FileOptions::<()>::default())?;
-            dataset.write_all(&(std::fs::read(entry.path())?))?;
-        } else if entry.file_type().is_dir() {
-            dataset.add_directory_from_path(path, FileOptions::<()>::default())?;
-        }
-    }
-    dataset.finish()?;
+    let data = create_zip(ctx.absolute_path("../datasets/ds3")?)?;
 
     // ingest
 

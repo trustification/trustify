@@ -1,12 +1,11 @@
 use crate::{
     graph::{Graph, Outcome, sbom::cyclonedx},
     model::IngestResult,
-    service::{Error, Warnings},
+    service::{Error, Metadata, Warnings},
 };
 use sea_orm::TransactionTrait;
 use tracing::instrument;
-use trustify_common::{hashing::Digests, id::Id};
-use trustify_entity::labels::Labels;
+use trustify_common::id::Id;
 
 pub struct CyclonedxLoader<'g> {
     graph: &'g Graph,
@@ -18,12 +17,14 @@ impl<'g> CyclonedxLoader<'g> {
     }
 
     #[instrument(skip(self, buffer), err(level=tracing::Level::INFO))]
-    pub async fn load(
-        &self,
-        labels: Labels,
-        buffer: &[u8],
-        digests: &Digests,
-    ) -> Result<IngestResult, Error> {
+    pub async fn load(&self, metadata: Metadata, buffer: &[u8]) -> Result<IngestResult, Error> {
+        let Metadata {
+            labels,
+            issuer: _,
+            digests,
+            signatures,
+        } = metadata;
+
         let warnings = Warnings::default();
 
         let cdx: Box<serde_cyclonedx::cyclonedx::v_1_6::CycloneDx> = serde_json::from_slice(buffer)
@@ -51,7 +52,7 @@ impl<'g> CyclonedxLoader<'g> {
             .graph
             .ingest_sbom(
                 labels,
-                digests,
+                &digests,
                 document_id.clone(),
                 cyclonedx::Information(&cdx),
                 &tx,
@@ -61,6 +62,10 @@ impl<'g> CyclonedxLoader<'g> {
             Outcome::Existed(sbom) => sbom,
             Outcome::Added(sbom) => {
                 sbom.ingest_cyclonedx(cdx, &warnings, &tx).await?;
+                self.graph
+                    .attach_signatures(sbom.sbom.source_document_id, signatures, &tx)
+                    .await?;
+
                 tx.commit().await?;
 
                 sbom
@@ -77,8 +82,10 @@ impl<'g> CyclonedxLoader<'g> {
 
 #[cfg(test)]
 mod test {
-    use crate::service::{Cache, IngestorService};
-    use crate::{graph::Graph, service::Format};
+    use crate::{
+        graph::Graph,
+        service::{Format, Ingest, IngestorService},
+    };
     use test_context::test_context;
     use test_log::test;
     use trustify_test_context::{TrustifyContext, document_bytes};
@@ -93,13 +100,12 @@ mod test {
         let ingestor = IngestorService::new(graph, ctx.storage.clone(), Default::default());
 
         ingestor
-            .ingest(
-                &data,
-                Format::CycloneDX,
-                ("source", "test"),
-                None,
-                Cache::Skip,
-            )
+            .ingest(Ingest {
+                data: &data,
+                format: Format::CycloneDX,
+                labels: ("source", "test").into(),
+                ..Default::default()
+            })
             .await
             .expect("must ingest");
 

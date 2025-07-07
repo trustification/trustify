@@ -1,12 +1,16 @@
-use crate::runner::common::Error;
-use crate::runner::report::{Phase, ReportBuilder};
-use std::io::{Cursor, Read};
-use std::sync::Arc;
+use crate::runner::{
+    common::Error,
+    report::{Phase, ReportBuilder},
+};
+use std::{
+    io::{Cursor, Read},
+    sync::Arc,
+};
 use tokio::sync::Mutex;
 use tokio_util::bytes::Buf;
 use tracing::instrument;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Cache, Format, IngestorService};
+use trustify_module_ingestor::service::{Format, Ingest, IngestorService};
 use zip::ZipArchive;
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -78,15 +82,14 @@ impl CweWalker {
 
         if let Err(err) = self
             .ingestor
-            .ingest(
-                &content,
-                Format::CweCatalog,
-                Labels::new()
+            .ingest(Ingest {
+                data: &content,
+                format: Format::CweCatalog,
+                labels: Labels::new()
                     .add("source", &self.source)
                     .add("importer", "CWE Catalog"),
-                None,
-                Cache::Skip,
-            )
+                ..Default::default()
+            })
             .await
         {
             self.report

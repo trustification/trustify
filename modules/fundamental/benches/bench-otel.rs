@@ -6,22 +6,22 @@ mod common;
 
 #[allow(clippy::expect_used, clippy::unwrap_used)]
 pub(crate) mod trustify_benches {
-    use std::hint::black_box;
-    use std::time::{Duration, Instant};
-
     use criterion::Criterion;
-    use std::ops::Add;
-    use trustify_entity::labels::Labels;
-    use trustify_module_ingestor::service::{Cache, Format};
-
     use opentelemetry::trace::TracerProvider as _;
     use opentelemetry_sdk::{
         Resource,
         trace::{Sampler, SdkTracerProvider},
     };
+    use std::{
+        hint::black_box,
+        ops::Add,
+        sync::Once,
+        time::{Duration, Instant},
+    };
     use tracing_core::Level;
     use tracing_opentelemetry::OpenTelemetryLayer;
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+    use trustify_module_ingestor::service::{Format, Ingest};
 
     use crate::common;
 
@@ -72,8 +72,6 @@ pub(crate) mod trustify_benches {
         }
     }
 
-    use std::sync::Once;
-
     static INIT: Once = Once::new();
 
     pub fn ingestion(c: &mut Criterion) {
@@ -96,13 +94,11 @@ pub(crate) mod trustify_benches {
                         let start = Instant::now();
                         black_box(
                             ctx.ingestor
-                                .ingest(
-                                    &data,
-                                    Format::Advisory,
-                                    Labels::default(),
-                                    None,
-                                    Cache::Skip,
-                                )
+                                .ingest(Ingest {
+                                    data: &data,
+                                    format: Format::Advisory,
+                                    ..Default::default()
+                                })
                                 .await
                                 .expect("ingest ok"),
                         );

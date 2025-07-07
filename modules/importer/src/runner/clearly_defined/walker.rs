@@ -1,14 +1,17 @@
-use crate::runner::common::Error;
-use crate::runner::progress::{Progress, ProgressInstance};
-use crate::runner::report::{Phase, ReportBuilder};
+use crate::runner::{
+    common::Error,
+    progress::{Progress, ProgressInstance},
+    report::{Phase, ReportBuilder},
+};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashSet, LinkedList};
-use std::io::{BufRead, Read};
-use std::sync::Arc;
+use std::{
+    collections::{HashSet, LinkedList},
+    io::{BufRead, Read},
+    sync::Arc,
+};
 use tokio::sync::Mutex;
 use tokio_util::bytes::Buf;
-use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Cache, Format, IngestorService};
+use trustify_module_ingestor::service::{Format, Ingest, IngestorService};
 
 pub struct ClearlyDefinedWalker<P: Progress + Send + 'static> {
     continuation: ClearlyDefinedItemContinuation,
@@ -108,13 +111,12 @@ impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
 
         if let Err(err) = self
             .ingestor
-            .ingest(
-                &body,
-                Format::ClearlyDefined,
-                Labels::default(),
-                Some("ClearlyDefined".to_string()),
-                Cache::Skip,
-            )
+            .ingest(Ingest {
+                data: &body,
+                format: Format::ClearlyDefined,
+                issuer: Some("ClearlyDefined".to_string()),
+                ..Default::default()
+            })
             .await
         {
             report.add_error(Phase::Upload, coordinate, err.to_string());

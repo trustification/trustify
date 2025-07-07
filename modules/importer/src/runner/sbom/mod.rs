@@ -20,8 +20,7 @@ use sbom_walker::{
     validation::ValidationVisitor,
     walker::Walker,
 };
-use std::collections::HashSet;
-use std::{sync::Arc, time::SystemTime};
+use std::{collections::HashSet, sync::Arc, time::SystemTime};
 use tracing::instrument;
 use trustify_module_ingestor::{graph::Graph, service::IngestorService};
 use url::Url;

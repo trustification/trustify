@@ -19,8 +19,13 @@ use sea_orm::error::DbErr;
 use std::{fmt::Debug, sync::Arc, time::Instant};
 use tokio::task::JoinError;
 use tracing::instrument;
-use trustify_common::{error::ErrorInformation, id::Id, id::IdError};
+use trustify_common::{
+    error::ErrorInformation,
+    hashing::Digests,
+    id::{Id, IdError},
+};
 use trustify_entity::labels::Labels;
+use trustify_entity::signature_type::SignatureType;
 use trustify_module_analysis::service::AnalysisService;
 use trustify_module_storage::service::{StorageBackend, dispatch::DispatchBackend};
 
@@ -169,6 +174,49 @@ impl From<Cache> for Option<bool> {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct Ingest<'a> {
+    pub data: &'a [u8],
+    pub format: Format,
+    pub cache: Cache,
+    pub issuer: Option<String>,
+    pub labels: Labels,
+    pub signatures: Vec<Signature>,
+}
+
+#[derive(Clone, Debug)]
+pub struct Signature {
+    pub r#type: SignatureType,
+    pub payload: Vec<u8>,
+}
+
+impl Default for Ingest<'_> {
+    fn default() -> Self {
+        Self {
+            data: &[],
+            format: Format::Unknown,
+            cache: Default::default(),
+            issuer: None,
+            labels: Default::default(),
+            signatures: Default::default(),
+        }
+    }
+}
+
+impl<'a> Ingest<'a> {
+    pub fn into_document(self, digests: Digests) -> Document<'a> {
+        Document {
+            metadata: Metadata {
+                labels: self.labels,
+                issuer: self.issuer,
+                digests,
+                signatures: self.signatures,
+            },
+            data: self.data,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct IngestorService {
     graph: Graph,
@@ -201,36 +249,31 @@ impl IngestorService {
         self.graph.db.clone()
     }
 
-    #[instrument(skip(self, bytes), err)]
-    pub async fn ingest(
-        &self,
-        bytes: &[u8],
-        format: Format,
-        labels: impl Into<Labels> + Debug,
-        issuer: Option<String>,
-        cache: Cache,
-    ) -> Result<IngestResult, Error> {
+    #[instrument(skip(self, ingest), err)]
+    pub async fn ingest(&self, ingest: Ingest<'_>) -> Result<IngestResult, Error> {
         let start = Instant::now();
+
+        let cache = ingest.cache;
 
         // We want to resolve the format first to avoid storing a
         // document that we can't subsequently retrieve and load into
         // the database.
-        let fmt = match format {
-            Format::Advisory => Format::advisory_from_bytes(bytes)?,
-            Format::SBOM => Format::sbom_from_bytes(bytes)?,
-            Format::Unknown => Format::from_bytes(bytes)?,
+        let fmt = match ingest.format {
+            Format::Advisory => Format::advisory_from_bytes(ingest.data)?,
+            Format::SBOM => Format::sbom_from_bytes(ingest.data)?,
+            Format::Unknown => Format::from_bytes(ingest.data)?,
             v => v,
         };
 
         let result = self
             .storage
-            .store(bytes)
+            .store(ingest.data)
             .await
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
 
-        let result = fmt
-            .load(&self.graph, labels.into(), issuer, &result.digests, bytes)
-            .await?;
+        let document = ingest.into_document(result.digests);
+
+        let result = fmt.load(&self.graph, document).await?;
 
         if let Some(wait) = cache.into() {
             self.load_graph_cache(fmt, &result, wait).await;
@@ -331,4 +374,18 @@ pub struct Discard;
 
 impl ReportSink for Discard {
     fn error(&self, _msg: String) {}
+}
+
+#[derive(Clone, Debug)]
+pub struct Document<'a> {
+    pub metadata: Metadata,
+    pub data: &'a [u8],
+}
+
+#[derive(Clone, Debug)]
+pub struct Metadata {
+    pub labels: Labels,
+    pub issuer: Option<String>,
+    pub digests: Digests,
+    pub signatures: Vec<Signature>,
 }

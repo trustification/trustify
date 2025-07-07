@@ -7,6 +7,7 @@ license.workspace = true
 
 [dependencies]
 trustify-common = { workspace = true }
+trustify-entity = { workspace = true }
 
 anyhow = { workspace = true }
 async-compression = { workspace = true, features = ["tokio", "zstd"] }
