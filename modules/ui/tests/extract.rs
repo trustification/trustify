@@ -4,7 +4,7 @@ use actix_web::{dev::ServiceResponse, test::TestRequest};
 use serde_json::{Value, json};
 use test_log::test;
 use trustify_module_ui::endpoints::{Config, UiResources, configure, post_configure};
-use trustify_test_context::{call, call::CallService, document_bytes};
+use trustify_test_context::{call, call::CallService, document_bytes_raw};
 use trustify_ui::UI;
 
 pub async fn caller() -> anyhow::Result<impl CallService> {
@@ -57,7 +57,7 @@ async fn assert_extract_fn(
 ) -> anyhow::Result<()> {
     let app = caller().await?;
 
-    let bytes = document_bytes(file).await?;
+    let bytes = document_bytes_raw(file).await?;
 
     let mut uri = "/api/v2/ui/extract-sbom-purls?".to_string();
 
