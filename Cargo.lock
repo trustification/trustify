@@ -9617,6 +9617,8 @@ dependencies = [
  "trustify-module-ingestor",
  "trustify-module-storage",
  "utoipa-actix-web",
+ "walkdir",
+ "zip 4.2.0",
 ]
 
 [[package]]

@@ -32,8 +32,10 @@ tracing = { workspace = true }
 tracing-flame =  { workspace = true }
 tracing-subscriber = { workspace = true }
 utoipa-actix-web = { workspace = true }
+walkdir = { workspace = true }
+zip = { workspace = true }
 
 [dev-dependencies]
-test-log = { workspace = true, features = ["log", "trace"] }
-osv = { workspace = true, features = ["schema"] }
 hex = { workspace = true }
+osv = { workspace = true, features = ["schema"] }
+test-log = { workspace = true, features = ["log", "trace"] }
