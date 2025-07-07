@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1751889919403,
+  "lastUpdate": 1751901949581,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12319,6 +12319,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/30bb03d1fef92606fe14cb9cb8521dc102ccca6c"
         },
         "date": 1751889918292,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "216d9d443ea5b71b0e374aa94b59b1f139487d77",
+          "message": "chore: more instrumentation and refactor dataset tests\n\nFor one, this adds more instrumentation in places where it seems to make\nsense.\n\nSecond, this makes it easier for tests to run tests based on a dataset\nby providing out of the box functionality to ingest a dataset.",
+          "timestamp": "2025-07-07T15:01:12Z",
+          "tree_id": "4b01a4f327897e66b6176ffb884f1c1afacc294b",
+          "url": "https://github.com/trustification/trustify/commit/216d9d443ea5b71b0e374aa94b59b1f139487d77"
+        },
+        "date": 1751901948530,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
