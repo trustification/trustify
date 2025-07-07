@@ -14,7 +14,7 @@ use serde::Serialize;
 use std::{
     env,
     fmt::Debug,
-    io::{Read, Seek},
+    io::{Cursor, Read, Seek, Write},
     path::{Path, PathBuf},
 };
 use test_context::AsyncTestContext;
@@ -25,9 +25,22 @@ use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{
     graph::Graph,
     model::IngestResult,
-    service::{Cache, Format, IngestorService},
+    service::{Cache, Format, IngestorService, dataset::DatasetIngestResult},
 };
 use trustify_module_storage::service::fs::FileSystemBackend;
+use zip::write::FileOptions;
+
+pub enum Dataset {
+    DS3,
+}
+
+impl AsRef<Path> for Dataset {
+    fn as_ref(&self) -> &Path {
+        match self {
+            Self::DS3 => Path::new("../datasets/ds3"),
+        }
+    }
+}
 
 /// A common test content.
 ///
@@ -154,6 +167,34 @@ impl TrustifyContext {
         let r = r.try_into().expect("Unexpected number of results");
 
         Ok(r)
+    }
+
+    /// Create a dataset on the fly and ingest it
+    ///
+    /// The path can either be a literal path, or a pre-defined constant like [`Dataset`].
+    pub async fn ingest_dataset(
+        &self,
+        path: impl AsRef<Path>,
+    ) -> Result<DatasetIngestResult, anyhow::Error> {
+        let base = self.absolute_path(path)?;
+        let mut data = vec![];
+        let mut dataset = zip::write::ZipWriter::new(Cursor::new(&mut data));
+        for entry in walkdir::WalkDir::new(&base) {
+            let entry = entry?;
+            let Ok(path) = entry.path().strip_prefix(&base) else {
+                continue;
+            };
+
+            if entry.file_type().is_file() {
+                dataset.start_file_from_path(path, FileOptions::<()>::default())?;
+                dataset.write_all(&(std::fs::read(entry.path())?))?;
+            } else if entry.file_type().is_dir() {
+                dataset.add_directory_from_path(path, FileOptions::<()>::default())?;
+            }
+        }
+        dataset.finish()?;
+
+        Ok(self.ingestor.ingest_dataset(&data, (), 0).await?)
     }
 }
 
