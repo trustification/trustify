@@ -44,6 +44,13 @@ pub struct SbomHead {
 }
 
 impl SbomHead {
+    #[instrument(
+        skip(sbom, db),
+        fields(
+            sbom=%sbom.sbom_id,
+        )
+        err(level=tracing::Level::INFO),
+    )]
     pub async fn from_entity<C: ConnectionTrait>(
         sbom: &sbom::Model,
         sbom_node: Option<sbom_node::Model>,
