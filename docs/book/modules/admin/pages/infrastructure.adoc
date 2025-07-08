@@ -301,10 +301,11 @@ Install the following Red Hat services:
 
 * Red Hat Single Sign-on (SSO) operator as the OpenID Connect (OIDC) provider.
 * Red Hat OpenShift Data Foundation operator as the storage provider.
+* Red Hat Build of Opentelemetry for tracing and metrics.
 
 === Manual setup
 
-==== Red Hat Single Sign-on operator
+=== Red Hat Single Sign-on operator
 
  * Install Single Sign-on operator with deployment https://docs.redhat.com/en/documentation/red_hat_single_sign-on/7.6/html/server_installation_and_configuration_guide/operator#installing-operator[guide].
  * Navigate to the related Keycloak instance of RHSSO operator and login to the Admin console with valid credentials.
@@ -312,19 +313,19 @@ Install the following Red Hat services:
 Complete the following steps to configure Keycloak:
 
 [[_realm_creation]]
-===== Realm Creation
+==== Realm Creation
 
  * Create a new **Realm** within your Keycloak instance.
 
 [[_role_definition]]
-===== Role Definition
+==== Role Definition
 
  * Create a custom role, for example, `trust-admin`.
  * Assign the `trust-admin` role to the default roles for your newly created realm.
  * Navigate to **Realm Settings** -> **Roles** tab -> Select the `default-roles-{your-realm-name}` role -> **Role Mappings** tab -> **Assign Role** to add `trust-admin`.
 
 [[_client_scope_definition]]
-===== Client Scope Definition
+==== Client Scope Definition
 
  * Create the following **Client Scopes** with the `openid-connect` protocol:
   ** `read:document`
@@ -333,14 +334,14 @@ Complete the following steps to configure Keycloak:
   ** `delete:document`
 
 [[_assign_role_to_client_scope]]
-===== Assign Roles to Client Scopes
+==== Assign Roles to Client Scopes
 
  * After creating the Client Scopes in <<_client_scope_definition,Client Scope Definition>>, navigate to each individual **Client Scope**.
  * Select the **Scope** tab within each Client Scope's settings.
  * Move the `trust-admin` role (created in <<_role_definition,Role Definition>>) from the Available Roles to the Assigned Roles for each scope.
 
 [[_client_import]]
-===== Client Import
+==== Client Import
 
  * Go to Keycloak administration console -> Go to **Clients** section.
  * Click the **Create** button -> then **Import**.
@@ -424,21 +425,21 @@ Complete the following steps to configure Keycloak:
 ----
 
 [[_user_management]]
-===== User Management
+==== User Management
 
  * Go to the **Users** section and add a new user.
  * Go to the **Role Mapping** tab for this user, and assign the `trust-admin` role to the user.
  * Under the **Credentials** tab, set a password for this user.
 
 [[_cli_client_secret]]
-===== Retrieve CLI Client Secret
+==== Retrieve CLI Client Secret
 
  * Navigate to the **Clients** section and select the `cli` client that you imported in <<_client_import,Client Import>>.
  * Go to the **Credentials** tab.
  * Retrieve the **secret** displayed here. This secret is essential for the Helm chart installation.
 
 [[_frontend_redirect_uris]]
-===== Configure Frontend Redirect URIs
+==== Configure Frontend Redirect URIs
 
  * Navigate to the **Clients** section and select the `frontend` client that you imported in <<_client_import,Client Import>>.
  * In the **Valid Redirect URIs** field, add the application URL that will be used after the Helm installation which is `https://server{appDomain}`.
@@ -446,7 +447,7 @@ Complete the following steps to configure Keycloak:
 [NOTE]
  Failure to update this field will result in a redirect URI error during application login.
 
-===== Usage
+==== Usage
 
 For the RHTPA installation, the following OIDC values are retrieved from your Keycloak (RH-SSO) configuration:
 
@@ -458,12 +459,13 @@ This means no secret or specific configuration is needed for the OIDC setup to i
 
 * **cli**: Retrieve the **Client Secret** from the Keycloak admin console by navigating to **Clients** -> **cli** -> **Credentials** tab.
 
-==== Red Hat OpenShift Data Foundation Operator Configuration
+[[rhodf_operator_installation]]
+=== Red Hat OpenShift Data Foundation Operator Configuration
 
 This guide details the steps to configure and verify the Red Hat OpenShift Data Foundation Operator.
 
 [[_prerequisites]]
-===== Prerequisites
+==== Prerequisites
 
 Before proceeding with the Openshift Data Foundation installation, ensure you have the following:
 
@@ -492,7 +494,7 @@ watch "oc get machinesets -n openshift-machine-api | egrep 'NAME|workerocs'"
 oc get nodes -l cluster.ocs.openshift.io/openshift-storage=
 ----
 
-===== Installation
+==== Installation
 
 Follow these steps to install and configure the Openshift Data Foundation Operator:
 
@@ -518,7 +520,7 @@ oc get storagecluster -n openshift-storage ocs-storagecluster -o jsonpath='{.sta
 ----
 
 [[_object_storage]]
-===== Object Storage Configuration
+==== Object Storage Configuration
 After Openshift Data Foundation is installed, proceed with the following steps to configure and test object storage:
 
 * Get the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `External DNS` (under the S3 address section) from the `NooBaa` status command.
@@ -530,7 +532,7 @@ noobaa status -n openshift-storage
 * Create new object buckets by following the link:https://docs.redhat.com/en/documentation/red_hat_openshift_data_foundation/4.18/html-single/managing_hybrid_and_multicloud_resources/index#creating-new-buckets-using-mcg-object-browser_rhodf[guide].
 
 [[_ocp_tls_certs]]
-===== Export Default Openshift TLS Certs
+==== Export Default Openshift TLS Certs
 * Export the cluster's default TLS certificate. This is often required for S3 clients to trust the endpoint.
 +
 [source, bash]
@@ -539,7 +541,7 @@ oc get secret -n openshift-ingress  router-certs-default -o go-template='{{index
 ----
 
 [[_verify_s3]]
-===== Verify S3 Connection
+==== Verify S3 Connection
 * Verify the connection to your S3 endpoint by exporting the Openshift Data Foundation storage <<_object_storage, details>> and SSL <<_ocp_tls_certs, certs>> using the AWS CLI.
 +
 [source, bash]
@@ -554,7 +556,7 @@ aws  s3 ls --endpoint <External DNS>
 To add bucket policies to object buckets by using the Amazon Web Services (AWS) command-line interface to manage access permissions.
 
 [[_bucket_policy]]
-===== Create Bucket Policy
+==== Create Bucket Policy
  * Create a `policy.json` file with the desired content. The example below grants `Allow` access to anyone; update the `Principal` section to restrict user permissions.
 +
 [source, json]
@@ -583,7 +585,7 @@ To add bucket policies to object buckets by using the Amazon Web Services (AWS) 
 aws --endpoint <Noobaa External DNS Endpoint> s3api put-bucket-policy --bucket <bucket name> --policy file://<policy.json file path>
 ----
 
-===== Usage
+==== Usage
 For the RHTPA installation, the following S3 values are retrieved from your Red Hat OpenShift Data Foundation installation:
 
 * **type**: `s3`
@@ -594,3 +596,498 @@ For the RHTPA installation, the following S3 values are retrieved from your Red 
 
 Additionally, you must refer to the `tls.crt` file for installing with the `Values.tls.additionalTrustAnchor` option.
 
+=== Red Hat Build of Opentelemetry for tracing and metrics
+The Red Hat Build of Opentelemetry provides a way to collect and export telemetry data from your applications running in OpenShift. This guide outlines the steps to set up and configure the Opentelemetry Collector in your OpenShift environment.
+
+[[_prerequisites_otel]]
+==== Prerequisites
+
+* Make sure you have cluster admin privileges to install the Opentelemetry Collector operator.
+* Before installing - Add one or more tenants, and configure <<_tempo_tenant_configuration, read and write>> access. You can configure such an authorization setup by using a cluster role and cluster role binding for the Kubernetes Role-Based Access Control (RBAC). By default, no users are granted read or write permissions.
+
+[[_otel_collector_installation]]
+==== Installation  
+
+NOTE: Official documentation for Red Hat Build of OpenTelemetry Operator link:https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html-single/red_hat_build_of_opentelemetry/index#install-otel[installation]
+
+* Login to your OpenShift cluster as a cluster administrator.
+* Go Operators -> OperatorHub in the OpenShift web console.
+* Search for `Red Hat Build of Opentelemetry` and select the Red Hat Build of Opentelemetry operator.
+* On the model window, Click on `Install`
+* On the `Install Operator` page, make sure to align the following options:
+  ** **Update Channel**: `stable`
+  ** **Installation Mode**: `All namespaces on the cluster (default)`
+  ** **Installed Namespace**: `Operator recommended namespace: openshift-opentelemetry-collector`
+  ** **Update approval**: `Automatic`
+* Click on `Install` to proceed with the installation.
+
+[[_otel_collector_configuration]]
+==== Configuration
+* After the installation is complete, Go to the `Installed Operators` page.
+* Select the RHTPA installation namespace, example `trustify`
+* Click on the `Red Hat Build of OpenTelemetry`, Select `Opentelemetry Collector` and click on `Create Opentelemetry Collector` on the Operator details page.
+* The OpenTelemetry requires a configuration file to define the collection and export settings for telemetry data. The below configuration is an example of the Opentelemetry Collector which collects data from RHTPA and exports it to Prometheus and Tempo.
++
+[source, yaml]
+----
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  # (1) Name of the OTEL collector instance
+  name: dev
+  # (2) namespace where the OTEL collector is deployed
+  namespace: <Namespace>
+spec:
+  mode: deployment
+  serviceAccount: otel-collector
+  config:
+    connectors:
+      spanmetrics: 
+        metrics_flush_interval: 15s
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+      jaeger:
+        protocols:
+          thrift_binary:
+          thrift_compact:
+          thrift_http:
+          grpc:
+    extensions:
+      bearertokenauth:
+        filename: "/var/run/secrets/kubernetes.io/serviceaccount/token"
+    processors: {}
+    exporters:
+      prometheus:
+        endpoint: '0.0.0.0:8889'
+        resource_to_telemetry_conversion:
+          enabled: true
+      otlp:
+      # (3) Tempo traces endpoint
+        endpoint: <Tempo traces endpoint (via OTLP)>
+        tls:
+          insecure: false
+          ca_file: "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
+        auth:
+          authenticator: bearertokenauth
+        headers:
+          X-Scope-OrgID: "dev"
+    service:
+      extensions: [bearertokenauth]
+      pipelines:
+        traces:
+          receivers: [otlp, jaeger]
+          exporters: [otlp, spanmetrics]
+        metrics:
+          receivers: [otlp, spanmetrics]
+          exporters: [prometheus]
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+----
+
+**References:**
+
+. _Name of the OpenTelemetry Collector instance:_ To identify the collector instance in the OpenShift cluster
+. _Namespace where the OpenTelemetry Collector is deployed:_ To keep the permissions and access control simple, deploy OpenTelemetry Collector in the same namespace as the RHTPA installation. example `trustify`.
+. _Tempo traces endpoint:_ The endpoint where the OpenTelemetry Collector sends the traces data. Traces can be configured within Openshift using Tempo operator (Refer <<_tempo_installation,Setting up Distributed Tracing for Tempo collector>> section). Example, `tempo-simplest-gateway.<namespace>.svc.cluster.local:8090`
+
+[[_otel_collector_usage]]
+==== Usage
+* Verify the Opentelemetry collector with verification <<_verify_otel_collector, step>>
+* Create <<_enable_monitoring,ServiceMonitors>> to capture metrics on Openshift web console under Observe -> Metrics.
+* OTEL collector uses port `4317` for gRPC protocol to receive data from clients. Since all the serices and configurations are aligned in the same namespace, use the collector endpoint `dev-collector:4317`.
+* To enable monitoring and tracing for the RHTPA installation use the below helm command,
++
+[source, bash]
+----
+helm upgrade --install -n $NAMESPACE trustify openshift-helm-charts/redhat-trusted-profile-analyzer  --values PATH_TO_VALUES_FILE --set-string appDomain=$APP_DOMAIN --set tracing.enabled=true --set metrics.enabled=true --set-string collector.endpoint="grpc://dev-collector:4317" 
+----
+
+[[_verify_otel_collector]]
+==== Verify OpenTelemetry Collector
+* Create the below job pointing to the otel collector endpoint to verify the tracing and metrics collection.
++
+[source, yaml]
+----
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: telemetrygen
+  namespace: <TPA Namespace>
+  labels:
+    app: telmeetrygen
+spec:
+  ttlSecondsAfterFinished: 30
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: telemetrygen
+        image: ghcr.io/open-telemetry/opentelemetry-collector-contrib/telemetrygen:v0.74.0
+        args: [traces, --otlp-endpoint=dev-collector:4317, --otlp-insecure, --duration=240s, --rate=4]
+----
+* Go to Observe -> Traces in the OpenShift web console.
+* Select `<namespace>/simplest` from the `Tempo instance` dropdown and select `telemetrygen` from the `Filter by Service Name` dropdown.
+* The traces from the above job is captured and displayed in the Traces UI. The `--otlp-endpoint` points to the OpenTelemetry Collector service endpoint, Example `dev-collector:4317` referred for the `collector.endpoint` in the <<_otel_collector_usage, helm command>>.
+
+[[_tempo_tenant_configuration]]
+==== Tempo Tenant Configuration
+It is mandate to define and configure one or more tenants and their read and write access.
+
+NOTE: Official documentation for link:https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html-single/distributed_tracing/index#configuring-permissions-and-tenants_distr-tracing-tempo-installing[Configuring permissions and tenants]
+
+===== Configuring read permissions for tenants
+* To add the tenants to a cluster role with read permissions to read traces:
++
+[source, yaml]
+----
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tempostack-traces-reader
+rules:
+  - apiGroups:
+      - 'tempo.grafana.com'
+    resources:
+      - dev
+    resourceNames:
+      - traces
+    verbs:
+      - 'get'
+----
+* To grant authenticated users the read permissions for trace data, you can create a cluster role binding for the above cluster role with the following,
++
+[source, yaml]
+----
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tempostack-traces-reader
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tempostack-traces-reader
+subjects:
+  - kind: Group
+    apiGroup: rbac.authorization.k8s.io
+    name: system:authenticated
+----
+
+===== Configuring write permissions for tenants
+
+* Create a Service Account for the OpenTelemetry Collector
++
+[source, yaml]
+----
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-collector
+  # (1) Namespace for the Service Account
+  namespace: <Namespace>
+----
+**References:**
+
+. _Namespace for the Service Account:_ To keep the permissions and access control simple, the Service Account is deployed in the same namespace as the RHTPA installation. example `trustify`.
+
+* Add the tenants to a cluster role with the write (create) permissions to write traces.
++
+[source, yaml]
+----
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tempostack-traces-write
+rules:
+  - apiGroups:
+      - 'tempo.grafana.com'
+    resources:
+      - dev
+    resourceNames:
+      - traces
+    verbs:
+      - 'create'
+----
+* Grant the OpenTelemetry Collector the write permissions by defining a cluster role binding to attach the OpenTelemetry Collector service account
++
+[source, yaml]
+----
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tempostack-traces
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: tempostack-traces-write
+
+subjects:
+  - kind: ServiceAccount
+    name: otel-collector
+    # (1) Namespace for the Service Account
+    namespace: <Namespace>
+----
++
+**References:**
+
+. _Namespace for the Service Account:_ Specify the service account namespace. example `trustify`.
+
+* <<_otel_collector_installation,Configure OpenTelemetry collector>> custom resource with the tenant information.
+
+[[_tempo_installation]]
+==== Setting up Distributed Tracing for Tempo collector:
+
+[[_prerequisites_tempo]]
+==== Prerequisites
+
+* Tempo requires Object storage to store traces data. You can use the  <<rhodf_operator_installation, Red Hat OpenShift Data Foundation>> to set up object storage, or you can use any other S3 compatible storage service like AWS S3, <<_minio_installation, minio>>, etc.
+
+
+===== Installation
+NOTE: Official documentation for link:https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html-single/red_hat_build_of_opentelemetry/index#install-otel[Distributed tracing]
+
+* Go to Operators -> OperatorHub in the OpenShift web console.
+* Search for "Tempo" and select `Tempo Operator provided by Red Hat`
+* On the model window, Click on `Install`
+* On the `Install Operator` page, make sure to align the following options:
+  ** **Update Channel**: `stable`
+  ** **Installation Mode**: `All namespaces on the cluster (default)`
+  ** **Installed Namespace**: `Operator recommended namespace: openshift-tempo-operator`
+  ** **Update approval**: `Automatic`
+* Click on `Install` to proceed with the installation.
+
+===== Configuration
+* Create a secret with S3 storage credentials. Refer the official documentation for setting up link:https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html-single/distributed_tracing/index#distr-tracing-tempo-object-storage-setup_distr-tracing-tempo-installing[object storage setup]
+** Sample code block for S3 credentials secret given below:
++
+[source, yaml]
+----
+apiVersion: v1
+kind: Secret
+metadata:
+  name: s3-secret
+  namespace: <Namespace>
+stringData:
+  bucket: <bucket_name>
+  endpoint: <storage_endpoint>
+  access_key_id: <access_key_id>
+  access_key_secret: <access_key_secret>
+type: Opaque
+----
+
+* After the installation is complete, Go to the `Installed Operators` page.
+* Select the RHTPA installation namespace, example `trustify`
+* Click on the `Tempo Operator`, Select `TempoStack` and click on `Create TempoStack` on the Operator details page.
+* The TempoStack requires a configuration file to define the storage and tracing settings for telemetry data. The below configuration is an example of the TempoStack,
++
+[source, yaml]
+----
+apiVersion: tempo.grafana.com/v1alpha1
+kind: TempoStack 
+metadata:
+  name: simplest
+  # (1) Namespace for the TempoStack
+  namespace: <Namespace>
+spec:
+  storage: 
+    secret: 
+    # (2) Secret containing the S3 credentials
+      name: s3-secret
+      type: s3
+  storageSize: 1Gi
+  resources:
+    total:
+      limits:
+        memory: 2Gi
+        cpu: 2000m
+  tenants:
+    mode: openshift 
+    authentication: 
+      - tenantName: dev 
+      # (3) Unique UUID for the tenant
+        tenantId: "1610b0c3-c509-4592-a256-a1871353dbfa" 
+      - tenantName: prod
+        tenantId: "1610b0c3-c509-4592-a256-a1871353dbfb"
+  template:
+    gateway:
+      enabled: true 
+    queryFrontend:
+      jaegerQuery:
+        enabled: true
+----
+
+**References:**
+
+. _Namespace for the TempoStack:_ To keep the permissions and access control simple, TempoStack is deployed in the same namespace as the RHTPA installation. example `trustify`.
+. _Secret containing the S3 credentials:_ The secret containing the S3 credentials for the object storage. 
+. _Unique UUID for the tenant:_ The unique UUID for the tenant is used to identify the tenant in the TempoStack. It is recommended to use a unique UUID for each tenant.
+
+====== Distributed tracing UI Plugin:
+* Go to Operators -> OperatorHub in the OpenShift web console.
+* Search for `Cluster Observability Operator` and select `Cluster Observability Operator`
+* On the model window, Click on `Install`
+* Go to Operator -> Installed Operator
+* Select `Cluster Observability Operator`, Select `UIPlugin` and Click `Create UIPlugin` on the operator details page. Use the below configuration to enable the Traces UI plugin.
++
+[source, yaml]
+----
+apiVersion: observability.openshift.io/v1alpha1
+kind: UIPlugin
+metadata:
+  name: distributed-tracing
+spec:
+  type: DistributedTracing
+----
+* After the installation, Refresh the web console
+* `Traces` option will be available in the left navigation menu of the OpenShift web console under `Observe` section
+* <<_otel_collector_configuration, Configure OTEL collector>> with the tempo tracing endpoint for the otlp.endpoint under the exporters section. 
+
+[[_minio_installation]]
+==== MinIO Installation
+Use the following steps to install MinIO on your OpenShift cluster to provide S3 compatible storage for TempoStack
+
+[source, yaml]
+----
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  serviceName: "minio"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: quay.io/minio/minio:latest
+          args:
+            - server
+            - /data
+          env:
+            - name: MINIO_ROOT_USER
+              value: "minioadmin"
+            - name: MINIO_ROOT_PASSWORD
+              value: "minioadmin123"
+          ports:
+            - containerPort: 9000
+          volumeMounts:
+            - name: storage
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+----
+Create route for the minio service
+[source, yaml]
+----
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+spec:
+  selector:
+    app: minio
+  ports:
+    - protocol: TCP
+      port: 9000
+      targetPort: 9000
+----
+Create a S3 object storage bucket in MinIO
+[source, bash]
+----
+export AWS_ACCESS_KEY_ID=minioadmin
+export AWS_SECRET_ACCESS_KEY=minioadmin123
+aws s3 mb s3://<bucketname> --endpoint-url <minio_endpoint>
+----
+
+[[_enable_monitoring]]
+==== Enable Monitoring for User defined Projects
+NOTE: Official documentation for link:https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html/monitoring/configuring-user-workload-monitoring#enabling-monitoring-for-user-defined-projects-uwm_preparing-to-configure-the-monitoring-stack-uwm[Enabling Monitoring for User defined Projects]
+
+* Create or Edit ConfigMap to enable User workload monitoring
++
+[source, yaml]
+----
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |
+    enableUserWorkload: true
+----
+* Enabling User workload monitoring add prometheus operator under `openshift-user-workload-monitoring` namespace.
++
+[source, bash]
+----
+oc get prometheus -n openshift-user-workload-monitoring
+----
+* Create ServiceMonitor for the OTEL collector Services targeting the prometheus port and metrics port
++
+[source, yaml]
+----
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector-app-metrics
+  # (1) Namespace for the ServiceMonitor
+  namespace: <Namespace>
+  labels:
+    openshift.io/user-monitoring: "true"
+    release: user-workload
+spec:
+  selector:
+    matchLabels:
+    # (2) Match labels for the OTEL collector service
+      app.kubernetes.io/name: dev-collector
+  endpoints:
+  - port: prometheus
+    interval: 30s           
+    path: /metrics 
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: otel-collector-self-metrics
+  # (1) Namespace for the ServiceMonitor
+  namespace: <Namespace>
+  labels:
+    openshift.io/user-monitoring: "true"
+    release: user-workload
+spec:
+  selector:
+    matchLabels:
+    # (2) Match labels for the OTEL collector service
+      app.kubernetes.io/name: dev-collector-monitoring
+  endpoints:
+  - port: metrics
+    interval: 30s
+----
++
+**References:**
+
+. _Namespace for the ServiceMonitor:_ To keep the permissions and access control simple, the ServiceMonitor is deployed in the same namespace as the RHTPA installation. example `trustify`
+. _Match labels for the OTEL collector service:_ The labels used to match the OTEL collector service. The labels should match the labels used in the OTEL collector service.
+
+* After ServiceMonitor creation, Go to Observe -> Metrics in the OpenShift web console.
+* With the `collector.endpoint` pointing to the OTEL collector with <<_otel_collector_usage,helm installation>>, The metrics from the OTEL collector service displayed on the Metrics graph for RHTPA. Enter the expression `http_server_duration_seconds_bucket` in the query field and click on `Run Query` to display the metrics.
