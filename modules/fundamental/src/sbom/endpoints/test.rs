@@ -1180,6 +1180,7 @@ async fn query_sboms_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error
             ("file", "zoo.json"),
             ("datasetFile", "none"),
             ("foo", "bar"),
+            ("pfx/app.first-name", "jim"),
         ],
     )
     .await?;
@@ -1193,6 +1194,7 @@ async fn query_sboms_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error
             ("file", "openssl.json"),
             ("datasetFile", "zilch"),
             ("foo", "baz"),
+            ("pfx/app.first-name", "carlos"),
         ],
     )
     .await?;
@@ -1225,6 +1227,7 @@ async fn query_sboms_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     query(1, "label:type!=spdx").await;
     query(1, "labels:type~one&labels:foo>aah").await;
     query(1, "labels:importer~one&label:file~zoo").await;
+    query(2, "labels:pfx/app.first-name=carlos|jim").await;
 
     Ok(())
 }
