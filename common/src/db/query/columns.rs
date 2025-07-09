@@ -557,6 +557,10 @@ mod tests {
             clause(q("purl:name=log4j").sort(r"purl:name"))?,
             r#"("advisory"."purl" ->> 'name') = 'log4j' ORDER BY "advisory"."purl" ->> 'name' ASC"#
         );
+        assert_eq!(
+            clause(q("purl:pfx/app.first-name=carlos"))?,
+            r#"("advisory"."purl" ->> 'pfx/app.first-name') = 'carlos'"#
+        );
         assert!(clause(q("missing:name=log4j")).is_err());
         assert!(clause(q("").sort(r"missing:name")).is_err());
 

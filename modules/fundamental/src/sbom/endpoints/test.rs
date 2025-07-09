@@ -1196,6 +1196,7 @@ async fn query_sboms_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error
             ("file", "zoo.json"),
             ("datasetFile", "none"),
             ("foo", "bar"),
+            ("pfx/app.first-name", "jim"),
         ],
     )
     .await?;
