@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752054806857,
+  "lastUpdate": 1752063244550,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12377,6 +12377,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/71bffbbd4a9ebad5797f95e8bf5dd2153d672cc5"
         },
         "date": 1752054805582,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86094767+mrrajan@users.noreply.github.com",
+            "name": "mrrajan",
+            "username": "mrrajan"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "4c0bf56d76e6fccb9a9213a78157885c8cf0991c",
+          "message": "Documention for OTEL collector\n\nSigned-off-by: mrrajan <86094767+mrrajan@users.noreply.github.com.>",
+          "timestamp": "2025-07-09T11:50:09Z",
+          "tree_id": "5ac047e68c85464770f51f7e66e99574e8e27d9f",
+          "url": "https://github.com/trustification/trustify/commit/4c0bf56d76e6fccb9a9213a78157885c8cf0991c"
+        },
+        "date": 1752063243379,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
