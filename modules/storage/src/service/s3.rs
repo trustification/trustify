@@ -171,11 +171,11 @@ impl StorageBackend for S3Backend {
 
         match req.send().await {
             Ok(resp) => {
-                let content_encoding = resp.content_encoding();
+                let content_encoding = resp.content_encoding().map(cleanup);
                 log::debug!("Content encoding: {content_encoding:?}");
 
                 let compression = match content_encoding {
-                    Some(encoding) => Compression::from_str(encoding).inspect_err(|_| {
+                    Some(encoding) => Compression::from_str(&encoding).inspect_err(|_| {
                         log::warn!("Content encoding: '{encoding}' not supported")
                     })?,
                     None => Compression::None,
@@ -192,6 +192,20 @@ impl StorageBackend for S3Backend {
             },
         }
     }
+}
+
+/// Cleanup the encoding header returned by the S3 storage.
+///
+/// Today, this removes the `aws-chunked` encoding, which should not be present in the metadata, but
+/// for ODF it is.
+fn cleanup(encoding: &str) -> String {
+    let items = encoding
+        .split(',')
+        .map(|s| s.trim())
+        .filter(|s| !matches!(*s, "aws-chunked"))
+        .collect::<Vec<_>>();
+
+    items.join(", ")
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -283,5 +297,14 @@ mod test {
     async fn read_not_found() {
         let backend = backend(Compression::None).await;
         test_read_not_found(backend).await;
+    }
+
+    #[test]
+    fn cleanup() {
+        assert_eq!(super::cleanup(""), "");
+        assert_eq!(super::cleanup("none"), "none");
+        assert_eq!(super::cleanup("aws-chunked"), "");
+        assert_eq!(super::cleanup("aws-chunked, none"), "none");
+        assert_eq!(super::cleanup("foo, aws-chunked, bar"), "foo, bar");
     }
 }
