@@ -171,8 +171,13 @@ impl StorageBackend for S3Backend {
 
         match req.send().await {
             Ok(resp) => {
-                let compression = match resp.content_encoding() {
-                    Some(encoding) => Compression::from_str(encoding)?,
+                let content_encoding = resp.content_encoding();
+                log::debug!("Content encoding: {content_encoding:?}");
+
+                let compression = match content_encoding {
+                    Some(encoding) => Compression::from_str(encoding).inspect_err(|_| {
+                        log::warn!("Content encoding: '{encoding}' not supported")
+                    })?,
                     None => Compression::None,
                 };
 
