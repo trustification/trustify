@@ -59,6 +59,7 @@ The input should be the partial or full name of the Vulnerability to search for.
         )
     }
 
+    #[allow(deprecated)]
     async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
         let service = &self.service;
 
