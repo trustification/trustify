@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752063244550,
+  "lastUpdate": 1752099764116,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12406,6 +12406,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/4c0bf56d76e6fccb9a9213a78157885c8cf0991c"
         },
         "date": 1752063243379,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": false,
+          "id": "69133f129b6ea3ee65a29ca64eef35c4af1e2961",
+          "message": "feat: query field names may include any character except `\\`\n\nfixes: #1849",
+          "timestamp": "2025-07-09T21:56:46Z",
+          "tree_id": "5bab66ef481c77f83ae010963c7755949a8b2532",
+          "url": "https://github.com/trustification/trustify/commit/69133f129b6ea3ee65a29ca64eef35c4af1e2961"
+        },
+        "date": 1752099762434,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
