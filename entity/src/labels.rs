@@ -92,9 +92,9 @@ impl Labels {
                 return Err(Error::InvalidLabel("empty keys are now allowed".into()));
             }
 
-            if k.contains('=') {
+            if k.contains('=') || k.contains('\\') {
                 return Err(Error::InvalidLabel(
-                    format!("key must not contain '=' ({k})").into(),
+                    format!("key must not contain '=' or '\' ({k})").into(),
                 ));
             }
 
@@ -464,5 +464,6 @@ mod test {
         assert!(Labels::new().add("  =  ", "foo").validate().is_err());
         assert!(Labels::new().add("foo", "foo=bar").validate().is_err());
         assert!(Labels::new().add("foo", "  == ").validate().is_err());
+        assert!(Labels::new().add("foo\\", "bar").validate().is_err());
     }
 }

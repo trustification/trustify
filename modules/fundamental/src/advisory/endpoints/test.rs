@@ -612,6 +612,7 @@ async fn query_advisories_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::
             ("file", "cve-2023-33201.json"),
             ("datasetFile", "none"),
             ("foo", "bar"),
+            ("pfx/app.first-name", "carlos"),
         ],
     )
     .await?;
@@ -635,6 +636,7 @@ async fn query_advisories_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::
     query("label:type!=spdx").await;
     query("labels:type~af&labels:foo>aah").await;
     query("labels:importer~one&label:file~33201").await;
+    query("labels:pfx/app.first-name=carlos").await;
 
     Ok(())
 }
