@@ -3424,6 +3424,29 @@ components:
               All CVSS3 scores from the advisory for the given vulnerability.
               May include several, varying by minor version of the CVSS3 vector.
       description: Summary of information from this advisory regarding a single specific vulnerability.
+    AnalysisDetails:
+      allOf:
+      - $ref: '#/components/schemas/VulnerabilityHead'
+      - type: object
+        required:
+        - status
+        properties:
+          status:
+            type: object
+            description: |-
+              Map of status to advisories
+
+              Allowed status values:
+              - `affected`: Advisories that affect the package
+              - `under_investigation`: Advisories that might affect the package, but the investigation is still ongoing
+
+              Additional status values may be added in the future; see API documentation for details.
+            additionalProperties:
+              type: array
+              items:
+                $ref: '#/components/schemas/AdvisoryHead'
+            propertyNames:
+              type: string
     AnalysisRequest:
       type: object
       required:
@@ -3438,7 +3461,7 @@ components:
       additionalProperties:
         type: array
         items:
-          $ref: '#/components/schemas/VulnerabilityDetails'
+          $ref: '#/components/schemas/AnalysisDetails'
       propertyNames:
         type: string
     AnalysisStatus:
@@ -5200,6 +5223,7 @@ components:
             - 'null'
             format: double
             description: Average (arithmetic mean) score of the vulnerability aggregated from *all* related advisories.
+            deprecated: true
           average_severity:
             oneOf:
             - type: 'null'
