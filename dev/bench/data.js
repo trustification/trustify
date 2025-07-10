@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752138132960,
+  "lastUpdate": 1752141344640,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12469,6 +12469,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "d55e8d8ce7792d3fd35a39d98f24ea28569d0293",
+          "message": "fix(storage): clean up the returned content encoding\n\nODF seems to return `aws-chunked` as encoding type, which should not\nbe stored or returned. We filter this out, not failing in the next\nstep, where we decode this encoding into the compression enum variant.\n\nCloses: #1850",
+          "timestamp": "2025-07-10T09:33:09Z",
+          "tree_id": "9cb55544c1c8623985d6325527f0a4fcc3914ae4",
+          "url": "https://github.com/trustification/trustify/commit/d55e8d8ce7792d3fd35a39d98f24ea28569d0293"
+        },
+        "date": 1752141343508,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
