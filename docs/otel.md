@@ -21,19 +21,17 @@ We are focusing on the signals: **traces** and **metrics**.
 
 ## To enable traces, follow the instructions below
 
-* Clone trustify
+* Clone Trustify
 * Open a terminal and run the command below to start OTEL Collector, Tempo, Prometheus, and Grafana:
 
-> This will also start the database and apply migrations for convenience.
-
 ```shell
-podman compose -f etc/telemetry/compose.yaml up
+podman compose -f etc/deploy/compose/compose.yaml -f etc/deploy/compose/compose-otel.yaml up
 ```
 
-* Open a new terminal and run the command below to start trustify with traces and metrics enabled:
+* Open a new terminal and start Trustify with traces and metrics enabled:
 
 ```shell
-RUST_LOG=info OTEL_TRACES_SAMPLER_ARG=1 cargo run --bin trustd api --db-password trustify --auth-disabled --tracing enabled --metrics enabled
+RUST_LOG=info OTEL_TRACES_SAMPLER_ARG=1 cargo run --bin trustd api --devmode --db-password trustify --auth-disabled --tracing enabled --metrics enabled
 ```
 
 >[!NOTE]
