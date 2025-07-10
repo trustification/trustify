@@ -28,15 +28,7 @@ async fn issue_1840(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .collect::<Vec<_>>();
 
     // TODO: find out why we return four times the same
-    assert_eq!(
-        ids,
-        vec![
-            "CVE-2024-28834",
-            "CVE-2024-28834",
-            "CVE-2024-28834",
-            "CVE-2024-28834"
-        ]
-    );
+    assert_eq!(ids, vec!["CVE-2024-28834",]);
 
     Ok(())
 }
