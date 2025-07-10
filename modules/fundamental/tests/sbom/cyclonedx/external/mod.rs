@@ -6,9 +6,19 @@ use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use test_context::test_context;
 use test_log::test;
 use trustify_entity::sbom_external_node;
+use trustify_module_ingestor::model::IngestResult;
 use trustify_test_context::TrustifyContext;
+use uuid::Uuid;
 
 mod rh;
+
+/// Take the result vec and turn it into an array of UIDs.
+///
+/// **NOTE:** This will panic if either the vec does not contain enough results, or the result's ID
+/// does not have a UID.
+fn split_uid<const N: usize>(result: Vec<IngestResult>) -> [Uuid; N] {
+    std::array::from_fn(|i| result[i].id.try_as_uid().expect("must have a uid"))
+}
 
 /// A simple test for ingesting two CDX SBOMs with external references
 #[test_context(TrustifyContext)]
