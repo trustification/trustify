@@ -18,7 +18,7 @@ use reqwest::RequestBuilder;
 use std::sync::Once;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::{
-    EnvFilter, field::MakeExt, layer::SubscriberExt, util::SubscriberInitExt,
+    EnvFilter, field::MakeExt, filter::Directive, layer::SubscriberExt, util::SubscriberInitExt,
 };
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq, Default)]
@@ -188,8 +188,18 @@ fn init_otlp_tracing(name: &str) {
     let formatting_layer = tracing_subscriber::fmt::Layer::default();
     let tracer = provider.tracer(name.to_string());
 
+    let base_filter = EnvFilter::from_default_env();
+    let ping_directive = match "trustify_common::db[ping_error]=error".parse::<Directive>() {
+        Ok(directive) => directive,
+        Err(e) => {
+            println!("Error parsing filter directive: {e}");
+            return;
+        }
+    };
+    let filter = base_filter.add_directive(ping_directive);
+
     if let Err(e) = tracing_subscriber::registry()
-        .with(EnvFilter::from_default_env())
+        .with(filter)
         .with(OpenTelemetryLayer::new(tracer))
         .with(formatting_layer)
         .try_init()

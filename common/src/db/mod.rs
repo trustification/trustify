@@ -8,7 +8,7 @@ pub mod query;
 
 pub use func::*;
 
-use anyhow::{Context, ensure};
+use anyhow::ensure;
 use migration::{Migrator, MigratorTrait};
 use reqwest::Url;
 use sea_orm::{
@@ -124,13 +124,21 @@ impl Database {
     /// Ping the database.
     ///
     /// Intended to be used for health checks.
-    #[instrument(skip(self), err)]
-    pub async fn ping(&self) -> anyhow::Result<()> {
-        self.db
-            .ping()
-            .await
-            .context("failed to ping the database")?;
-        Ok(())
+    pub async fn ping(&self) -> anyhow::Result<(), DbErr> {
+        match self.db.get_postgres_connection_pool().try_acquire() {
+            Some(_) => Ok(()),
+            None => {
+                let span = tracing::error_span!(
+                    "ping_error",
+                    error = "failed to acquire a connection to the database"
+                );
+                let _guard = span.enter();
+
+                Err(DbErr::Custom(
+                    "failed to acquire a connection to the database".to_string(),
+                ))
+            }
+        }
     }
 
     /// Get the name of the database
