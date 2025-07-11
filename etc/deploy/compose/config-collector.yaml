@@ -17,10 +17,6 @@ exporters:
     verbosity: basic
 
 processors:
-  filter/duration:
-    traces:
-      span:
-        - (end_time - start_time) < Duration("1ms")
   batch: {}
 
 service:
@@ -35,7 +31,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [filter/duration,batch]
+      processors: [batch]
       exporters: [debug, otlp]
     metrics:
       receivers: [otlp]
