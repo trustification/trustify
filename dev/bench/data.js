@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752141344640,
+  "lastUpdate": 1752243051105,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12493,6 +12493,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d55e8d8ce7792d3fd35a39d98f24ea28569d0293"
         },
         "date": 1752141343508,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "48cf6187216ad0614df26ab4853fee4c478f293c",
+          "message": "chore: move OTEL compose to deploy directory",
+          "timestamp": "2025-07-11T13:26:32Z",
+          "tree_id": "0398a5da171d0d3a82fdda901821d192feef7b04",
+          "url": "https://github.com/trustification/trustify/commit/48cf6187216ad0614df26ab4853fee4c478f293c"
+        },
+        "date": 1752243049301,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
