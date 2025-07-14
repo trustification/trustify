@@ -3424,6 +3424,18 @@ components:
               All CVSS3 scores from the advisory for the given vulnerability.
               May include several, varying by minor version of the CVSS3 vector.
       description: Summary of information from this advisory regarding a single specific vulnerability.
+    AnalysisAdvisory:
+      allOf:
+      - $ref: '#/components/schemas/AdvisoryHead'
+      - type: object
+        required:
+        - scores
+        properties:
+          scores:
+            type: array
+            items:
+              $ref: '#/components/schemas/Score'
+            description: CVSS scores
     AnalysisDetails:
       allOf:
       - $ref: '#/components/schemas/VulnerabilityHead'
@@ -3444,7 +3456,7 @@ components:
             additionalProperties:
               type: array
               items:
-                $ref: '#/components/schemas/AdvisoryHead'
+                $ref: '#/components/schemas/AnalysisAdvisory'
             propertyNames:
               type: string
     AnalysisRequest:
@@ -5043,6 +5055,36 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/SbomPackage'
+    Score:
+      type: object
+      required:
+      - type
+      - value
+      - severity
+      properties:
+        severity:
+          $ref: '#/components/schemas/Severity'
+          description: The derived severity
+        type:
+          $ref: '#/components/schemas/ScoreType'
+          description: The score type
+        value:
+          type: number
+          format: double
+          description: The actual value
+    ScoreType:
+      type: string
+      description: The type of score, indicating the scoring system and version used.
+      enum:
+      - '2.0'
+      - '3.0'
+      - '3.1'
+      - '4.0'
+      x-enum-descriptions:
+      - CVSS v2.0 score
+      - CVSS v3.0 score
+      - CVSS v3.1 score
+      - CVSS v4.0 score
     Severity:
       type: string
       description: |-
