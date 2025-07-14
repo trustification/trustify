@@ -37,13 +37,7 @@ impl Score {
 
     /// Convert the numeric score into a `Severity`
     pub fn severity(self) -> Severity {
-        match self.0 {
-            x if x < 0.1 => Severity::None,
-            x if x < 4.0 => Severity::Low,
-            x if x < 7.0 => Severity::Medium,
-            x if x < 9.0 => Severity::High,
-            _ => Severity::Critical,
-        }
+        Severity::from(self.0)
     }
 }
 
