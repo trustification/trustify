@@ -58,6 +58,13 @@ async fn issue_1840(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             "modified": "2025-01-07T01:43:37Z",
             "published": "2024-03-21T00:00:00Z",
             "title": "gnutls: vulnerable to Minerva side-channel information leak",
+            "scores": [
+                {
+                    "type": "3.1",
+                    "value": 5.3,
+                    "severity": "medium",
+                }
+            ]
         }])),
         "doesn't match: {json:#?}"
     );
