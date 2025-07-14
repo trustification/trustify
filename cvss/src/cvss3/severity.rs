@@ -41,6 +41,22 @@ impl Severity {
             Severity::Critical => "critical",
         }
     }
+
+    pub fn from_f64(value: f64) -> Severity {
+        match value {
+            x if x < 0.1 => Severity::None,
+            x if x < 4.0 => Severity::Low,
+            x if x < 7.0 => Severity::Medium,
+            x if x < 9.0 => Severity::High,
+            _ => Severity::Critical,
+        }
+    }
+}
+
+impl From<f64> for Severity {
+    fn from(value: f64) -> Self {
+        Self::from_f64(value)
+    }
 }
 
 impl FromStr for Severity {
@@ -65,9 +81,7 @@ impl fmt::Display for Severity {
 }
 
 impl<'de> Deserialize<'de> for Severity {
-    fn deserialize<D: de::Deserializer<'de>>(
-        deserializer: D,
-    ) -> core::result::Result<Self, D::Error> {
+    fn deserialize<D: de::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         String::deserialize(deserializer)?
             .parse()
             .map_err(de::Error::custom)
@@ -75,10 +89,7 @@ impl<'de> Deserialize<'de> for Severity {
 }
 
 impl Serialize for Severity {
-    fn serialize<S: ser::Serializer>(
-        &self,
-        serializer: S,
-    ) -> core::result::Result<S::Ok, S::Error> {
+    fn serialize<S: ser::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.as_str().serialize(serializer)
     }
 }
