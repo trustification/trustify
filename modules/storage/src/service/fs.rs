@@ -6,13 +6,13 @@ use bytes::Bytes;
 use futures::Stream;
 use std::{
     fmt::Debug,
-    io::ErrorKind,
+    io::{Error as IoError, ErrorKind, Result as IoResult},
     path::{Path, PathBuf},
 };
 use strum::IntoEnumIterator;
 use tempfile::{TempDir, tempdir};
 use tokio::{
-    fs::{File, create_dir_all},
+    fs::{File, create_dir_all, remove_file, try_exists},
     io::{AsyncRead, AsyncWriteExt},
 };
 use tokio_util::io::ReaderStream;
@@ -93,6 +93,20 @@ impl FileSystemBackend {
             .await
             .map(|result| (result, dir))
     }
+
+    async fn locate(
+        &self,
+        StorageKey(hash): StorageKey,
+    ) -> IoResult<Option<(PathBuf, Compression)>> {
+        let mut target = level_dir(&self.content, &hash, NUM_LEVELS).join(&hash);
+        for compression in &self.read_compressions {
+            target.set_extension(compression.extension());
+            if try_exists(&target).await? {
+                return Ok(Some((target, *compression)));
+            }
+        }
+        Ok(None)
+    }
 }
 
 impl StorageBackend for FileSystemBackend {
@@ -138,26 +152,24 @@ impl StorageBackend for FileSystemBackend {
 
     async fn retrieve<'a>(
         &self,
-        StorageKey(hash): StorageKey,
+        key: StorageKey,
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error> {
-        // try all compression types, return the first one we find
-        for compression in &self.read_compressions {
-            let target = level_dir(&self.content, &hash, NUM_LEVELS);
-            let mut target = target.join(&hash);
-            target.set_extension(compression.extension());
-
-            log::debug!("Opening file: {}", target.display());
-
-            let file = match File::open(&target).await {
-                Ok(file) => Some(file),
-                Err(err) if err.kind() == ErrorKind::NotFound => continue,
-                Err(err) => return Err(err),
-            };
-
-            return Ok(file.map(|r| ReaderStream::new(compression.reader(r))));
+        match self.locate(key).await? {
+            Some((path, compression)) => File::open(&path)
+                .await
+                .map(|f| Some(ReaderStream::new(compression.reader(f)))),
+            None => Ok(None),
         }
+    }
 
-        Ok(None)
+    async fn delete(&self, key: StorageKey) -> Result<(), Self::Error> {
+        match self.locate(key).await? {
+            Some((path, _)) => remove_file(path).await,
+            None => Err(IoError::new(
+                ErrorKind::NotFound,
+                "No document found in storage matching key",
+            )),
+        }
     }
 }
 
@@ -184,7 +196,7 @@ mod test {
     use super::*;
     use crate::service::{
         dispatch::DispatchBackend,
-        test::{test_read_not_found, test_store_and_read},
+        test::{test_read_not_found, test_store_read_and_delete},
     };
     use bytes::BytesMut;
     use futures::StreamExt;
@@ -238,10 +250,10 @@ mod test {
     #[rstest]
     #[case(Compression::None)]
     #[case(Compression::Zstd)]
-    async fn store_and_read(#[case] compression: Compression) {
+    async fn store_read_and_delete(#[case] compression: Compression) {
         let (backend, _dir) = backend(compression).await;
 
-        test_store_and_read(backend).await
+        test_store_read_and_delete(backend).await
     }
 
     /// This test should ensure that we can also read compression algorithm other than the

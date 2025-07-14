@@ -192,6 +192,26 @@ impl StorageBackend for S3Backend {
             },
         }
     }
+
+    async fn delete(&self, StorageKey(key): StorageKey) -> Result<(), Self::Error> {
+        match self
+            .client
+            .head_object()
+            .bucket(&self.bucket)
+            .key(&key)
+            .send()
+            .await
+        {
+            Err(err) => Err(Error::S3(err.into())),
+            _ => {
+                let req = self.client.delete_object().bucket(&self.bucket).key(&key);
+                match req.send().await {
+                    Ok(_) => Ok(()),
+                    Err(err) => Err(Error::S3(err.into())),
+                }
+            }
+        }
+    }
 }
 
 /// Cleanup the encoding header returned by the S3 storage.
@@ -236,7 +256,7 @@ mod test {
     use super::*;
     use crate::service::{
         dispatch::DispatchBackend,
-        test::{test_read_not_found, test_store_and_read},
+        test::{test_read_not_found, test_store_read_and_delete},
     };
     use rstest::rstest;
     use std::fmt::Write;
@@ -293,10 +313,10 @@ mod test {
     #[case(Compression::None)]
     #[case(Compression::Zstd)]
     #[cfg_attr(not(feature = "_test-s3"), ignore = "requires minio or s3")]
-    async fn store_and_read(#[case] compression: Compression) {
+    async fn store_read_and_delete(#[case] compression: Compression) {
         let backend = backend(compression).await;
 
-        test_store_and_read(backend).await
+        test_store_read_and_delete(backend).await
     }
 
     /// Ensure retrieving the information that the file does not exist works.
