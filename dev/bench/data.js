@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752243051105,
+  "lastUpdate": 1752477014485,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12522,6 +12522,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/48cf6187216ad0614df26ab4853fee4c478f293c"
         },
         "date": 1752243049301,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "47f7066261cbb7acfe157e54060493160d14cea0",
+          "message": "ci: give cargo llvm-cov a chance",
+          "timestamp": "2025-07-14T06:40:35Z",
+          "tree_id": "a1dc9859d8263be476a5c00b4084cb64f2cbf816",
+          "url": "https://github.com/trustification/trustify/commit/47f7066261cbb7acfe157e54060493160d14cea0"
+        },
+        "date": 1752477013173,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
