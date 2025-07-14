@@ -102,4 +102,7 @@ pub trait StorageBackend {
     ) -> impl Future<
         Output = Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error>,
     >;
+
+    /// Delete the stored content
+    fn delete(&self, key: StorageKey) -> impl Future<Output = Result<(), Self::Error>>;
 }

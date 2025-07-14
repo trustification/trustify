@@ -50,6 +50,13 @@ impl StorageBackend for DispatchBackend {
                 .map_err(anyhow::Error::from),
         }
     }
+
+    async fn delete(&self, key: StorageKey) -> Result<(), Self::Error> {
+        match self {
+            Self::Filesystem(backend) => backend.delete(key).await.map_err(anyhow::Error::from),
+            Self::S3(backend) => backend.delete(key).await.map_err(anyhow::Error::from),
+        }
+    }
 }
 
 impl DispatchBackend {

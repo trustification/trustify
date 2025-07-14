@@ -5,7 +5,7 @@ use bytes::BytesMut;
 use futures::TryStreamExt;
 use trustify_common::id::Id;
 
-pub async fn test_store_and_read<B: StorageBackend>(backend: B) {
+pub async fn test_store_read_and_delete<B: StorageBackend>(backend: B) {
     const DIGEST: &str = "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e";
 
     let digest = backend
@@ -24,6 +24,16 @@ pub async fn test_store_and_read<B: StorageBackend>(backend: B) {
     let content = stream.try_collect::<BytesMut>().await.unwrap();
 
     assert_eq!(content.as_ref(), b"Hello World");
+
+    backend
+        .delete(digest.key())
+        .await
+        .expect("delete must succeed");
+
+    assert!(
+        backend.delete(digest.key()).await.is_err(),
+        "delete of missing file should fail"
+    );
 }
 
 pub async fn test_read_not_found<B: StorageBackend>(backend: B) {
