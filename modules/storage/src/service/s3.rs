@@ -171,7 +171,7 @@ impl StorageBackend for S3Backend {
 
         match req.send().await {
             Ok(resp) => {
-                let content_encoding = resp.content_encoding().map(cleanup);
+                let content_encoding = resp.content_encoding().and_then(cleanup);
                 log::debug!("Content encoding: {content_encoding:?}");
 
                 let compression = match content_encoding {
@@ -198,14 +198,19 @@ impl StorageBackend for S3Backend {
 ///
 /// Today, this removes the `aws-chunked` encoding, which should not be present in the metadata, but
 /// for ODF it is.
-fn cleanup(encoding: &str) -> String {
+fn cleanup(encoding: &str) -> Option<String> {
     let items = encoding
         .split(',')
         .map(|s| s.trim())
         .filter(|s| !matches!(*s, "aws-chunked"))
+        .filter(|s| !s.is_empty())
         .collect::<Vec<_>>();
 
-    items.join(", ")
+    if items.is_empty() {
+        None
+    } else {
+        Some(items.join(", "))
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -301,10 +306,13 @@ mod test {
 
     #[test]
     fn cleanup() {
-        assert_eq!(super::cleanup(""), "");
-        assert_eq!(super::cleanup("none"), "none");
-        assert_eq!(super::cleanup("aws-chunked"), "");
-        assert_eq!(super::cleanup("aws-chunked, none"), "none");
-        assert_eq!(super::cleanup("foo, aws-chunked, bar"), "foo, bar");
+        assert_eq!(super::cleanup(""), None);
+        assert_eq!(super::cleanup("none").as_deref(), Some("none"));
+        assert_eq!(super::cleanup("aws-chunked"), None);
+        assert_eq!(super::cleanup("aws-chunked, none").as_deref(), Some("none"));
+        assert_eq!(
+            super::cleanup("foo, aws-chunked, bar").as_deref(),
+            Some("foo, bar")
+        );
     }
 }
