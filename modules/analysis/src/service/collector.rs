@@ -134,8 +134,9 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                 let Some(external_graph) = self.graph_cache.get(&external_sbom_id.to_string())
                 else {
                     log::warn!(
-                        "external sbom graph {:?} not found.",
-                        &external_sbom_id.to_string()
+                        "external sbom graph {:?} for {:?} not found during collection.",
+                        &external_sbom_id.to_string(),
+                        &external_node_id.to_string()
                     );
                     return None;
                 };
