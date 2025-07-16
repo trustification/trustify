@@ -234,13 +234,16 @@ impl From<Error> for StoreError<Error> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::service::test::{test_read_not_found, test_store_and_read};
+    use crate::service::{
+        dispatch::DispatchBackend,
+        test::{test_read_not_found, test_store_and_read},
+    };
     use rstest::rstest;
     use std::fmt::Write;
     use test_log::test;
     use uuid::Uuid;
 
-    async fn backend(compression: Compression) -> S3Backend {
+    async fn backend(compression: Compression) -> DispatchBackend {
         let bucket: String = Uuid::new_v4()
             .as_bytes()
             .iter()
@@ -282,7 +285,7 @@ mod test {
             .await
             .unwrap();
 
-        backend
+        backend.into()
     }
 
     #[test(tokio::test)]
