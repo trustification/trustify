@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752661382649,
+  "lastUpdate": 1752664826371,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12667,6 +12667,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/04d0ad4a564a5097fdee13578f1b25b6a6e3f65e"
         },
         "date": 1752661381469,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "988fdb3e8d046965a45f908a792f4338c8d36fe9",
+          "message": "chore: ensure recursion of external sboms is constrained",
+          "timestamp": "2025-07-16T10:58:35Z",
+          "tree_id": "c6b5e2cc774ae23af2afd492f3cd3f324a271c1e",
+          "url": "https://github.com/trustification/trustify/commit/988fdb3e8d046965a45f908a792f4338c8d36fe9"
+        },
+        "date": 1752664825271,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
