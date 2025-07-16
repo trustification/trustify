@@ -686,10 +686,23 @@ impl InnerService {
         connection: &C,
         distinct_sbom_ids: &[impl AsRef<str> + Debug],
     ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
-        log::info!("loading {} SBOMs", distinct_sbom_ids.len());
+        log::info!(
+            "Initiating SBOM graph loading for {} SBOM(s)",
+            distinct_sbom_ids.len()
+        );
 
-        let mut results = Vec::new();
         let mut seen_sbom_ids: HashSet<String> = HashSet::new();
+        self.load_graphs_inner(connection, distinct_sbom_ids, &mut seen_sbom_ids)
+            .await
+    }
+
+    pub async fn load_graphs_inner<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+        distinct_sbom_ids: &[impl AsRef<str> + Debug],
+        seen_sbom_ids: &mut HashSet<String>,
+    ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
+        let mut results = Vec::new();
 
         for distinct_sbom_id in distinct_sbom_ids.iter().map(AsRef::as_ref) {
             log::debug!("loading sbom: {:?}", distinct_sbom_id);
@@ -729,9 +742,10 @@ impl InnerService {
                                 .await?,
                             ));
                             // recurse into to find nested external sboms
-                            Box::pin(self.load_graphs(
+                            Box::pin(self.load_graphs_inner(
                                 connection,
                                 &[resolved_external_sbom.sbom_id.to_string()],
+                                seen_sbom_ids,
                             ))
                             .await?;
                         } else {
