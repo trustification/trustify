@@ -182,7 +182,10 @@ fn level_dir(base: impl AsRef<Path>, hash: &str, levels: usize) -> PathBuf {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::service::test::{test_read_not_found, test_store_and_read};
+    use crate::service::{
+        dispatch::DispatchBackend,
+        test::{test_read_not_found, test_store_and_read},
+    };
     use bytes::BytesMut;
     use futures::StreamExt;
     use rstest::rstest;
@@ -195,12 +198,13 @@ mod test {
         assert_eq!(level_dir("/", "1234567890", 2,), Path::new("/12/34"));
     }
 
-    async fn backend(compression: Compression) -> (FileSystemBackend, TempDir) {
+    async fn backend(compression: Compression) -> (DispatchBackend, TempDir) {
         let dir = tempdir().unwrap();
         (
             FileSystemBackend::new(dir.path(), compression)
                 .await
-                .unwrap(),
+                .unwrap()
+                .into(),
             dir,
         )
     }
