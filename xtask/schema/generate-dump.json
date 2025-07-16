@@ -117,13 +117,6 @@
     "SbomImporter": {
       "type": "object",
       "properties": {
-        "description": {
-          "description": "A description for users.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "disabled": {
           "description": "A flag to disable the importer, without deleting it.",
           "type": "boolean",
@@ -132,6 +125,13 @@
         "period": {
           "description": "The period the importer should be run.",
           "$ref": "#/$defs/HumantimeSerde"
+        },
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "labels": {
           "description": "Labels which will be applied to the ingested documents.",
@@ -202,13 +202,6 @@
     "CsafImporter": {
       "type": "object",
       "properties": {
-        "description": {
-          "description": "A description for users.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "disabled": {
           "description": "A flag to disable the importer, without deleting it.",
           "type": "boolean",
@@ -217,6 +210,13 @@
         "period": {
           "description": "The period the importer should be run.",
           "$ref": "#/$defs/HumantimeSerde"
+        },
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "labels": {
           "description": "Labels which will be applied to the ingested documents.",
@@ -255,13 +255,6 @@
     "OsvImporter": {
       "type": "object",
       "properties": {
-        "description": {
-          "description": "A description for users.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "disabled": {
           "description": "A flag to disable the importer, without deleting it.",
           "type": "boolean",
@@ -270,6 +263,13 @@
         "period": {
           "description": "The period the importer should be run.",
           "$ref": "#/$defs/HumantimeSerde"
+        },
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "labels": {
           "description": "Labels which will be applied to the ingested documents.",
@@ -321,13 +321,6 @@
     "CveImporter": {
       "type": "object",
       "properties": {
-        "description": {
-          "description": "A description for users.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "disabled": {
           "description": "A flag to disable the importer, without deleting it.",
           "type": "boolean",
@@ -336,6 +329,13 @@
         "period": {
           "description": "The period the importer should be run.",
           "$ref": "#/$defs/HumantimeSerde"
+        },
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "labels": {
           "description": "Labels which will be applied to the ingested documents.",
@@ -372,13 +372,6 @@
     "ClearlyDefinedImporter": {
       "type": "object",
       "properties": {
-        "description": {
-          "description": "A description for users.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "disabled": {
           "description": "A flag to disable the importer, without deleting it.",
           "type": "boolean",
@@ -387,6 +380,13 @@
         "period": {
           "description": "The period the importer should be run.",
           "$ref": "#/$defs/HumantimeSerde"
+        },
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "labels": {
           "description": "Labels which will be applied to the ingested documents.",
@@ -427,13 +427,6 @@
     "ClearlyDefinedCurationImporter": {
       "type": "object",
       "properties": {
-        "description": {
-          "description": "A description for users.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "disabled": {
           "description": "A flag to disable the importer, without deleting it.",
           "type": "boolean",
@@ -442,6 +435,13 @@
         "period": {
           "description": "The period the importer should be run.",
           "$ref": "#/$defs/HumantimeSerde"
+        },
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "labels": {
           "description": "Labels which will be applied to the ingested documents.",
@@ -466,13 +466,6 @@
     "CweImporter": {
       "type": "object",
       "properties": {
-        "description": {
-          "description": "A description for users.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "disabled": {
           "description": "A flag to disable the importer, without deleting it.",
           "type": "boolean",
@@ -481,6 +474,13 @@
         "period": {
           "description": "The period the importer should be run.",
           "$ref": "#/$defs/HumantimeSerde"
+        },
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "labels": {
           "description": "Labels which will be applied to the ingested documents.",
@@ -498,13 +498,6 @@
     "QuayImporter": {
       "type": "object",
       "properties": {
-        "description": {
-          "description": "A description for users.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
         "disabled": {
           "description": "A flag to disable the importer, without deleting it.",
           "type": "boolean",
@@ -513,6 +506,13 @@
         "period": {
           "description": "The period the importer should be run.",
           "$ref": "#/$defs/HumantimeSerde"
+        },
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "labels": {
           "description": "Labels which will be applied to the ingested documents.",
