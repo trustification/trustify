@@ -70,3 +70,9 @@ impl From<FileSystemBackend> for DispatchBackend {
         Self::Filesystem(value)
     }
 }
+
+impl From<S3Backend> for DispatchBackend {
+    fn from(value: S3Backend) -> Self {
+        Self::S3(value)
+    }
+}
