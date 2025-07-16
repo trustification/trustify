@@ -710,6 +710,7 @@ impl InnerService {
                     .filter(sbom_external_node::Column::SbomId.eq(distinct_sbom_id_uuid))
                     .all(connection)
                     .await?;
+
                 //resolve and load externally referenced sboms
                 for external_sbom in &external_sboms {
                     let resolved_external_sbom =
@@ -727,6 +728,12 @@ impl InnerService {
                                 )
                                 .await?,
                             ));
+                            // recurse into to find nested external sboms
+                            Box::pin(self.load_graphs(
+                                connection,
+                                &[resolved_external_sbom.sbom_id.to_string()],
+                            ))
+                            .await?;
                         } else {
                             log::debug!(
                                 "Skipping duplicate external SBOM ID: {}",
