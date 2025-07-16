@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "dev"
+        }
+      ]
+    },
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "component": {
+      "name": "3scale-tech-preview/authorino-rhel9",
+      "purl": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=3scale2.15.0",
+      "type": "container",
+      "description": "Image index manifest of pkg:oci/3scale-tech-preview-authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87"
+    },
+    "timestamp": "2025-05-13T08:15:28Z",
+    "properties": [
+      {
+        "name": "redhat:advisory_id",
+        "value": "149445"
+      }
+    ]
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "3scale-tech-preview/authorino-rhel9",
+      "purl": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=3scale2.15.0",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87"
+        }
+      ],
+      "bom-ref": "authorino-container_image-index",
+      "version": "sha256:a473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=3scale2.15"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=1.1.3"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=1.1.3-1"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=3scale2.15.0"
+          }
+        ]
+      },
+      "pedigree": {
+        "variants": [
+          {
+            "name": "3scale-tech-preview/authorino-rhel9",
+            "purl": "pkg:oci/authorino-rhel9@sha256%3A9b5e51705afe32370d90820d498c29b442cde0b12d07953c9bee9d1f1467f792?arch=amd64&os=linux&repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=3scale2.15.0",
+            "type": "container",
+            "hashes": [
+              {
+                "alg": "SHA-256",
+                "content": "9b5e51705afe32370d90820d498c29b442cde0b12d07953c9bee9d1f1467f792"
+              }
+            ],
+            "bom-ref": "authorino-container_amd64",
+            "version": "sha256:9b5e51705afe32370d90820d498c29b442cde0b12d07953c9bee9d1f1467f792",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          },
+          {
+            "name": "3scale-tech-preview/authorino-rhel9",
+            "purl": "pkg:oci/authorino-rhel9@sha256%3A3d73d6452a2b4d92d967bee392d9c9405791ed4e64f1f49df7fc45d680ca9b60?arch=ppc64le&os=linux&repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=3scale2.15.0",
+            "type": "container",
+            "hashes": [
+              {
+                "alg": "SHA-256",
+                "content": "3d73d6452a2b4d92d967bee392d9c9405791ed4e64f1f49df7fc45d680ca9b60"
+              }
+            ],
+            "bom-ref": "authorino-container_ppc64le",
+            "version": "sha256:3d73d6452a2b4d92d967bee392d9c9405791ed4e64f1f49df7fc45d680ca9b60",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          },
+          {
+            "name": "3scale-tech-preview/authorino-rhel9",
+            "purl": "pkg:oci/authorino-rhel9@sha256%3A83cbea23a02963dcd6250585200d0050e925c7dadb3a611ecaf6353565259d45?arch=s390x&os=linux&repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=3scale2.15.0",
+            "type": "container",
+            "hashes": [
+              {
+                "alg": "SHA-256",
+                "content": "83cbea23a02963dcd6250585200d0050e925c7dadb3a611ecaf6353565259d45"
+              }
+            ],
+            "bom-ref": "authorino-container_s390x",
+            "version": "sha256:83cbea23a02963dcd6250585200d0050e925c7dadb3a611ecaf6353565259d45",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "properties": [
+        {
+          "name": "sbomer:image:labels:com.redhat.component",
+          "value": "authorino-container"
+        },
+        {
+          "name": "sbomer:image:labels:name",
+          "value": "3scale-tech-preview/authorino-rhel9"
+        },
+        {
+          "name": "sbomer:image:labels:release",
+          "value": "1"
+        },
+        {
+          "name": "sbomer:image:labels:version",
+          "value": "1.1.3"
+        }
+      ]
+    }
+  ],
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:c687621f-7955-309e-ab6c-bd32b7f96c3f"
+}
