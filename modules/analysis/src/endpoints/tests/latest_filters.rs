@@ -338,3 +338,82 @@ async fn test_tc2606(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     })));
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn test_tc2677(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_documents([
+        "cyclonedx/rh/latest_filters/TC-2677/54FE396D61CE4E1.json",
+        "cyclonedx/rh/latest_filters/TC-2677/A875C1FFA263483.json",
+        "cyclonedx/rh/latest_filters/TC-2677/D52B5B9527D4447.json",
+    ])
+    .await?;
+
+    let uri: String = "/api/v2/analysis/component".to_string();
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
+    // latest cpe search
+    let uri: String = format!(
+        "/api/v2/analysis/latest/component/{}?descendants=10",
+        urlencoding::encode("cpe:/a:redhat:3scale:2.15::el9")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    log::info!("{response:#?}");
+    assert_eq!(response["total"], 1);
+
+    assert!(response.contains_subset(json!(
+    {
+  "items": [
+    {
+      "node_id": "3SCALE-2.15-RHEL-9",
+      "cpe": [
+        "cpe:/a:redhat:3scale:2.15:*:el9:*"
+      ],
+      "name": "3scale API Management 2.15 on RHEL 9",
+      "version": "3SCALE-2.15-RHEL-9",
+      "published": "2025-05-27 20:11:20+00",
+      "document_id": "urn:uuid:57334e7f-c34c-3e4e-a565-d83d45fd4399/1",
+      "product_name": "3scale API Management 2.15 on RHEL 9",
+      "product_version": "3SCALE-2.15-RHEL-9",
+      "descendants": [
+        {
+          "node_id": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87",
+          "purl": [
+            "pkg:oci/authorino-rhel9@sha256:a473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com/3scale-tech-preview/authorino-rhel9&tag=3scale2.15.0",
+            "pkg:oci/authorino-rhel9@sha256:a473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com/3scale-tech-preview/authorino-rhel9&tag=1.1.3",
+            "pkg:oci/authorino-rhel9@sha256:a473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com/3scale-tech-preview/authorino-rhel9&tag=1.1.3-1",
+            "pkg:oci/authorino-rhel9@sha256:a473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87",
+            "pkg:oci/authorino-rhel9@sha256:a473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com/3scale-tech-preview/authorino-rhel9&tag=3scale2.15"
+          ],
+          "name": "3scale-tech-preview/authorino-rhel9",
+          "version": "sha256:a473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87",
+          "published": "2025-05-27 20:11:20+00",
+          "document_id": "urn:uuid:57334e7f-c34c-3e4e-a565-d83d45fd4399/1",
+          "product_name": "3scale API Management 2.15 on RHEL 9",
+          "product_version": "3SCALE-2.15-RHEL-9",
+          "relationship": "generates",
+          "descendants": [
+            {
+              "node_id": "3SCALE-2.15-RHEL-9:pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87",
+              "name": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87",
+              "version": "",
+              "published": "2025-05-27 20:11:20+00",
+              "document_id": "urn:uuid:57334e7f-c34c-3e4e-a565-d83d45fd4399/1",
+              "product_name": "3scale API Management 2.15 on RHEL 9",
+              "product_version": "3SCALE-2.15-RHEL-9",
+              "relationship": "package",
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "total": 1
+})));
+    Ok(())
+}
