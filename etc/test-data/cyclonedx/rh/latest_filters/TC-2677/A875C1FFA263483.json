@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "dev"
+        }
+      ]
+    },
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "component": {
+      "name": "3scale API Management 2.15 on RHEL 9",
+      "type": "framework",
+      "bom-ref": "3SCALE-2.15-RHEL-9",
+      "version": "3SCALE-2.15-RHEL-9",
+      "evidence": {
+        "identity": [
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/a:redhat:3scale:2.15::el9"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    },
+    "timestamp": "2025-05-27T20:11:20Z",
+    "properties": [
+      {
+        "name": "redhat:advisory_id",
+        "value": "149445"
+      }
+    ]
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "3scale-tech-preview/authorino-rhel9",
+      "purl": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87"
+        }
+      ],
+      "bom-ref": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87",
+      "version": "sha256:a473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=3scale2.15.0"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=3scale2.15"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=1.1.3-1"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9&tag=1.1.3"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "3scale-tech-preview/authorino-rhel9-operator",
+      "purl": "pkg:oci/authorino-rhel9-operator@sha256%3Aeb574781cf39917f8f5d9e5c806f520534601f819ee1ebcbb751832da8938008",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "eb574781cf39917f8f5d9e5c806f520534601f819ee1ebcbb751832da8938008"
+        }
+      ],
+      "bom-ref": "pkg:oci/authorino-rhel9-operator@sha256%3Aeb574781cf39917f8f5d9e5c806f520534601f819ee1ebcbb751832da8938008",
+      "version": "sha256:eb574781cf39917f8f5d9e5c806f520534601f819ee1ebcbb751832da8938008",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9-operator@sha256%3Aeb574781cf39917f8f5d9e5c806f520534601f819ee1ebcbb751832da8938008?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9-operator&tag=3scale2.15.0"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9-operator@sha256%3Aeb574781cf39917f8f5d9e5c806f520534601f819ee1ebcbb751832da8938008?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9-operator&tag=3scale2.15"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9-operator@sha256%3Aeb574781cf39917f8f5d9e5c806f520534601f819ee1ebcbb751832da8938008?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9-operator&tag=1.1.3-1"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-rhel9-operator@sha256%3Aeb574781cf39917f8f5d9e5c806f520534601f819ee1ebcbb751832da8938008?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-rhel9-operator&tag=1.1.3"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "3scale-tech-preview/authorino-operator-bundle",
+      "purl": "pkg:oci/authorino-operator-bundle@sha256%3A1223266b391e1394b9bef70317c7edb813a97c5b7705fd88cee20a2bebf9bec2",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1223266b391e1394b9bef70317c7edb813a97c5b7705fd88cee20a2bebf9bec2"
+        }
+      ],
+      "bom-ref": "pkg:oci/authorino-operator-bundle@sha256%3A1223266b391e1394b9bef70317c7edb813a97c5b7705fd88cee20a2bebf9bec2",
+      "version": "sha256:1223266b391e1394b9bef70317c7edb813a97c5b7705fd88cee20a2bebf9bec2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-operator-bundle@sha256%3A1223266b391e1394b9bef70317c7edb813a97c5b7705fd88cee20a2bebf9bec2?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-operator-bundle&tag=3scale2.15.0"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-operator-bundle@sha256%3A1223266b391e1394b9bef70317c7edb813a97c5b7705fd88cee20a2bebf9bec2?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-operator-bundle&tag=3scale2.15"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/authorino-operator-bundle@sha256%3A1223266b391e1394b9bef70317c7edb813a97c5b7705fd88cee20a2bebf9bec2?repository_url=registry.access.redhat.com%2F3scale-tech-preview%2Fauthorino-operator-bundle&tag=1.1.3-1"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "3SCALE-2.15-RHEL-9",
+      "provides": [
+        "pkg:oci/authorino-rhel9@sha256%3Aa473dae20e71e3e813ac30ba978f2ab3c5e19d7d39b501ae9103dca892107c87",
+        "pkg:oci/authorino-rhel9-operator@sha256%3Aeb574781cf39917f8f5d9e5c806f520534601f819ee1ebcbb751832da8938008",
+        "pkg:oci/authorino-operator-bundle@sha256%3A1223266b391e1394b9bef70317c7edb813a97c5b7705fd88cee20a2bebf9bec2"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "serialNumber": "urn:uuid:57334e7f-c34c-3e4e-a565-d83d45fd4399"
+}
