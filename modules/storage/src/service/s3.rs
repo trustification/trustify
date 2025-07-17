@@ -194,22 +194,10 @@ impl StorageBackend for S3Backend {
     }
 
     async fn delete(&self, StorageKey(key): StorageKey) -> Result<(), Self::Error> {
-        match self
-            .client
-            .head_object()
-            .bucket(&self.bucket)
-            .key(&key)
-            .send()
-            .await
-        {
+        let req = self.client.delete_object().bucket(&self.bucket).key(&key);
+        match req.send().await {
+            Ok(_) => Ok(()),
             Err(err) => Err(Error::S3(err.into())),
-            _ => {
-                let req = self.client.delete_object().bucket(&self.bucket).key(&key);
-                match req.send().await {
-                    Ok(_) => Ok(()),
-                    Err(err) => Err(Error::S3(err.into())),
-                }
-            }
         }
     }
 }

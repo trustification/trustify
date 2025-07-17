@@ -103,6 +103,10 @@ pub trait StorageBackend {
         Output = Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error>,
     >;
 
-    /// Delete the stored content
+    /// Delete the stored content.
+    ///
+    /// This operation MUST be idempotent: deleting a non-existent key should succeed
+    /// (i.e., return `Ok(())`) and not result in an error. This ensures consistent
+    /// behavior across all backends.
     fn delete(&self, key: StorageKey) -> impl Future<Output = Result<(), Self::Error>>;
 }
