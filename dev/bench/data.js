@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752676473679,
+  "lastUpdate": 1752764765366,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12725,6 +12725,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/e07d93cacdd532a1bfa80bea9cf0e61c599e4b0e"
         },
         "date": 1752676472522,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "c2fccb93744121785f202ef3890e30bdcae1e671",
+          "message": "Make storage delete idempotent\n\nrelates #1864",
+          "timestamp": "2025-07-17T14:41:42Z",
+          "tree_id": "05a74cc207f9dbe9a5c6f1aba5b7e1d4d4533ff4",
+          "url": "https://github.com/trustification/trustify/commit/c2fccb93744121785f202ef3890e30bdcae1e671"
+        },
+        "date": 1752764763599,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
