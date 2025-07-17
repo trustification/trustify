@@ -29,11 +29,11 @@ pub async fn test_store_read_and_delete<B: StorageBackend>(backend: B) {
         .delete(digest.key())
         .await
         .expect("delete must succeed");
-
-    assert!(
-        backend.delete(digest.key()).await.is_err(),
-        "delete of missing file should fail"
-    );
+    assert!(backend.retrieve(digest.key()).await.unwrap().is_none());
+    backend
+        .delete(digest.key())
+        .await
+        .expect("delete should be idempotent");
 }
 
 pub async fn test_read_not_found<B: StorageBackend>(backend: B) {

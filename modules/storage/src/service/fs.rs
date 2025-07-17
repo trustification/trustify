@@ -6,7 +6,7 @@ use bytes::Bytes;
 use futures::Stream;
 use std::{
     fmt::Debug,
-    io::{Error as IoError, ErrorKind, Result as IoResult},
+    io::{ErrorKind, Result as IoResult},
     path::{Path, PathBuf},
 };
 use strum::IntoEnumIterator;
@@ -165,10 +165,7 @@ impl StorageBackend for FileSystemBackend {
     async fn delete(&self, key: StorageKey) -> Result<(), Self::Error> {
         match self.locate(key).await? {
             Some((path, _)) => remove_file(path).await,
-            None => Err(IoError::new(
-                ErrorKind::NotFound,
-                "No document found in storage matching key",
-            )),
+            None => Ok(()),
         }
     }
 }
