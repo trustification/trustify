@@ -1,10 +1,9 @@
 use super::SbomService;
-use crate::sbom::model::LicenseRefMapping;
 use crate::{
     Error,
     sbom::model::{
-        SbomExternalPackageReference, SbomNodeReference, SbomPackage, SbomPackageRelation,
-        SbomSummary, Which, details::SbomDetails,
+        LicenseRefMapping, SbomExternalPackageReference, SbomNodeReference, SbomPackage,
+        SbomPackageRelation, SbomSummary, Which, details::SbomDetails,
     },
 };
 use futures_util::{StreamExt, TryStreamExt, stream};
@@ -16,8 +15,10 @@ use sea_orm::{
 use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::BTreeMap;
-use std::{collections::HashMap, fmt::Debug};
+use std::{
+    collections::{BTreeMap, HashMap},
+    fmt::Debug,
+};
 use tracing::instrument;
 use trustify_common::{
     cpe::Cpe,
@@ -29,6 +30,7 @@ use trustify_common::{
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
     purl::Purl,
+    service::{Mappable, Resulting},
 };
 use trustify_entity::{
     advisory, advisory_vulnerability, base_purl,
@@ -77,6 +79,7 @@ impl SbomService {
     }
 
     /// fetch the summary of one sbom
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
     pub async fn fetch_sbom_summary<C: ConnectionTrait>(
         &self,
         id: Id,
@@ -233,6 +236,7 @@ impl SbomService {
     }
 
     /// Get all the tuples License ID, License Name from the licensing_infos table for a single SBOM
+    #[instrument(skip(connection), err(level=tracing::Level::INFO))]
     async fn get_licensing_infos<C: ConnectionTrait>(
         connection: &C,
         sbom_id: Uuid,
@@ -250,12 +254,16 @@ impl SbomService {
 
     /// Get all packages describing the SBOM.
     #[instrument(skip(self, db), err(level=tracing::Level::INFO))]
-    pub async fn describes_packages<C: ConnectionTrait>(
+    pub async fn describes_packages<C, R>(
         &self,
         sbom_id: Uuid,
-        paginated: Paginated,
+        paginated: R,
         db: &C,
-    ) -> Result<PaginatedResults<SbomPackage>, Error> {
+    ) -> Result<R::Output<SbomPackage>, Error>
+    where
+        C: ConnectionTrait,
+        R: Resulting,
+    {
         self.fetch_related_packages(
             sbom_id,
             Default::default(),
@@ -266,7 +274,7 @@ impl SbomService {
             db,
         )
         .await
-        .map(|r| r.map(|rel| rel.package))
+        .map(|r| r.map_all(|rel| rel.package))
     }
 
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
@@ -398,16 +406,20 @@ impl SbomService {
     /// Fetch all related packages in the context of an SBOM.
     #[allow(clippy::too_many_arguments)]
     #[instrument(skip(self, db), err(level=tracing::Level::INFO))]
-    pub async fn fetch_related_packages<C: ConnectionTrait>(
+    pub async fn fetch_related_packages<C, R>(
         &self,
         sbom_id: Uuid,
         search: Query,
-        paginated: Paginated,
+        options: R,
         which: Which,
         reference: impl Into<SbomNodeReference<'_>> + Debug,
         relationship: Option<Relationship>,
         db: &C,
-    ) -> Result<PaginatedResults<SbomPackageRelation>, Error> {
+    ) -> Result<R::Output<SbomPackageRelation>, Error>
+    where
+        C: ConnectionTrait,
+        R: Resulting,
+    {
         // which way
 
         log::debug!("Which: {which:?}");
@@ -477,34 +489,18 @@ impl SbomService {
             query = query.filter(package_relates_to_package::Column::Relationship.eq(relationship));
         }
 
-        // limit and execute
-
-        let limiter = limit_selector::<'_, _, _, _, PackageCatcher>(
-            db,
-            query,
-            paginated.offset,
-            paginated.limit,
-        );
-
-        let total = limiter.total().await?;
-        let packages = limiter.fetch().await?;
-
-        // collect results
-
-        let mut items = Vec::new();
+        // execute
 
         let licensing_infos = Self::get_licensing_infos(db, sbom_id).await?;
 
-        for row in packages {
-            if let Some(relationship) = row.relationship {
-                items.push(SbomPackageRelation {
-                    relationship,
-                    package: package_from_row(row, licensing_infos.clone()),
-                });
-            }
-        }
+        let r: R::Output<PackageCatcher> = R::get(options, db, query).await?;
 
-        Ok(PaginatedResults { items, total })
+        Ok(r.flat_map_all(|row| {
+            Some(SbomPackageRelation {
+                relationship: row.relationship?,
+                package: package_from_row(row, licensing_infos.clone()),
+            })
+        }))
     }
 
     /// A simplified version of [`Self::fetch_related_packages`].
@@ -521,7 +517,7 @@ impl SbomService {
             .fetch_related_packages(
                 sbom_id,
                 Default::default(),
-                Default::default(),
+                (),
                 Which::Left,
                 pkg,
                 relationship.into(),
@@ -529,12 +525,9 @@ impl SbomService {
             )
             .await?;
 
-        // TODO: this will break when adding pagination, as we effectively only process a single page
-
         // turn into a map, removing duplicates
 
         let result: HashMap<_, _> = result
-            .items
             .into_iter()
             .map(|r| (r.package.id.clone(), r.package))
             .collect();
@@ -635,6 +628,8 @@ struct PackageCatcher {
     version: Option<String>,
     purls: Vec<Value>,
     cpes: Value,
+    /// The field is optional as the struct is re-used between queries which use this column and
+    /// some that don't.
     relationship: Option<Relationship>,
     licenses: Vec<LicenseBasicInfo>,
 }

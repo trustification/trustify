@@ -21,7 +21,7 @@ async fn test_parse_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error
         "zookeeper-3.9.2-cyclonedx.json",
         async move |WithContext { service, sbom, .. }| {
             let described = service
-                .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
+                .describes_packages(sbom.sbom.sbom_id, Paginated::default(), &ctx.db)
                 .await?;
 
             assert_eq!(1, described.items.len());
@@ -95,7 +95,7 @@ async fn parse_cyclonedx_1dot6(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
         "cyclonedx/simple_1dot6.json",
         async move |WithContext { service, sbom, .. }| {
             let described = service
-                .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
+                .describes_packages(sbom.sbom.sbom_id, Paginated::default(), &ctx.db)
                 .await?;
 
             assert_eq!(1, described.items.len());

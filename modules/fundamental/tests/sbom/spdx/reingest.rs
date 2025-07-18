@@ -5,6 +5,7 @@ use sea_orm::EntityTrait;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::id::Id;
+use trustify_common::model::Paginated;
 use trustify_entity::sbom;
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::model::IngestResult;
@@ -26,7 +27,7 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         let service = SbomService::new(ctx.db.clone());
 
         let packages = service
-            .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
+            .describes_packages(sbom.sbom.sbom_id, Paginated::default(), &ctx.db)
             .await?;
 
         // check CPEs
