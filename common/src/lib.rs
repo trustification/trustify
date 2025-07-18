@@ -13,6 +13,7 @@ pub mod purl;
 pub mod reqwest;
 pub mod sbom;
 pub mod serde;
+pub mod service;
 pub mod time;
 pub mod tls;
 pub mod uuid;

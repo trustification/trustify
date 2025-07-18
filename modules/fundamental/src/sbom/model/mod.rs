@@ -11,7 +11,7 @@ use sea_query::FromValueTuple;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::{cpe::Cpe, model::Paginated, purl::Purl};
+use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::{
     labels::Labels, relationship::Relationship, sbom, sbom_node, sbom_package,
     sbom_package_license::LicenseCategory, source_document,
@@ -92,10 +92,7 @@ impl SbomSummary {
         db: &C,
     ) -> Result<Option<SbomSummary>, Error> {
         // TODO: consider improving the n-select issues here
-        let described_by = service
-            .describes_packages(sbom.sbom_id, Paginated::default(), db)
-            .await?
-            .items;
+        let described_by = service.describes_packages(sbom.sbom_id, (), db).await?;
 
         let source_document = sbom.find_related(source_document::Entity).one(db).await?;
 

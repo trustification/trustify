@@ -6,7 +6,6 @@ mod test;
 
 pub use query::*;
 
-use crate::sbom::model::LicenseRefMapping;
 use crate::{
     Error::{self, Internal},
     license::{
@@ -16,8 +15,8 @@ use crate::{
     purl::service::PurlService,
     sbom::{
         model::{
-            SbomExternalPackageReference, SbomNodeReference, SbomPackage, SbomPackageRelation,
-            SbomSummary, Which, details::SbomAdvisory,
+            LicenseRefMapping, SbomExternalPackageReference, SbomNodeReference, SbomPackage,
+            SbomPackageRelation, SbomSummary, Which, details::SbomAdvisory,
         },
         service::SbomService,
     },
@@ -39,10 +38,9 @@ use trustify_common::{
     model::{BinaryData, Paginated, PaginatedResults},
 };
 use trustify_entity::{labels::Labels, relationship::Relationship};
-use trustify_module_ingestor::service::Cache;
 use trustify_module_ingestor::{
     model::IngestResult,
-    service::{Format, IngestorService},
+    service::{Cache, Format, IngestorService},
 };
 use trustify_module_storage::service::StorageBackend;
 

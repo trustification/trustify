@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use test_context::test_context;
 use test_log::test;
+use trustify_common::model::Paginated;
 use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::sbom::model::{SbomNodeReference, Which};
 use trustify_module_fundamental::{
@@ -31,7 +32,7 @@ async fn simple_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // fetch describes
 
     let packages = service
-        .describes_packages(sbom_id, Default::default(), &ctx.db)
+        .describes_packages(sbom_id, Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(packages.total, 1);
@@ -53,7 +54,7 @@ async fn simple_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .fetch_related_packages(
             sbom_id,
             Default::default(),
-            Default::default(),
+            Paginated::default(),
             Which::Right,
             SbomNodeReference::Package("pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src" /* this is actually the bom-ref value */),
             Some(Relationship::AncestorOf),

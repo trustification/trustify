@@ -14,6 +14,7 @@ use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
 use tracing::instrument;
+use trustify_common::model::Paginated;
 use trustify_common::{id::Id, purl::Purl, sbom::spdx::parse_spdx};
 use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::{
@@ -31,7 +32,7 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         "quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json",
         |WithContext { service, sbom, .. }| async move {
             let described = service
-                .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
+                .describes_packages(sbom.sbom.sbom_id, Paginated::default(), &ctx.db)
                 .await?;
             log::debug!("{described:#?}");
             assert_eq!(1, described.items.len());
@@ -87,7 +88,7 @@ async fn test_parse_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         "ubi9-9.2-755.1697625012.json",
         |WithContext { service, sbom, .. }| async move {
             let described = service
-                .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
+                .describes_packages(sbom.sbom.sbom_id, Paginated::default(), &ctx.db)
                 .await?;
 
             assert_eq!(1, described.total);
@@ -97,7 +98,7 @@ async fn test_parse_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 .fetch_related_packages(
                     sbom.sbom.sbom_id,
                     Default::default(),
-                    Default::default(),
+                    Paginated::default(),
                     Which::Left,
                     first,
                     Some(Relationship::Contains),

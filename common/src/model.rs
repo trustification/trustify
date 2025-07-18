@@ -71,7 +71,6 @@ mod default {
     }
 }
 
-// NOTE: This struct must be aligned with the struct in the [`paginated`] macro below.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PaginatedResults<R> {
@@ -98,7 +97,7 @@ impl<R> PaginatedResults<R> {
         })
     }
 
-    pub fn map<O, F: Fn(R) -> O>(self, f: F) -> PaginatedResults<O> {
+    pub fn map<O, F: FnMut(R) -> O>(self, f: F) -> PaginatedResults<O> {
         PaginatedResults {
             items: self.items.into_iter().map(f).collect(),
             total: self.total,
@@ -112,7 +111,7 @@ pub struct BinaryData(PhantomData<Vec<u8>>);
 
 #[cfg(test)]
 mod test {
-    use crate::model::Paginated;
+    use crate::model::{Paginated, PaginatedResults};
 
     #[test_log::test(test)]
     fn paginated_vec() {
@@ -153,5 +152,21 @@ mod test {
 
         assert_eq!(10, paginated.total);
         assert_eq!(0, paginated.items.len());
+    }
+
+    #[test]
+    fn map() {
+        let input = PaginatedResults {
+            items: vec![1, 2, 3],
+            total: 10,
+        };
+
+        assert_eq!(
+            input.map(|n| n.to_string()),
+            PaginatedResults {
+                items: vec!["1".to_string(), "2".to_string(), "3".to_string()],
+                total: 10
+            }
+        )
     }
 }

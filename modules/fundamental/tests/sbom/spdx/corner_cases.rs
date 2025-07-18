@@ -9,6 +9,7 @@ use sea_orm::ConnectionTrait;
 use strum::VariantArray;
 use test_context::test_context;
 use test_log::test;
+use trustify_common::model::Paginated;
 use trustify_common::{id::Id, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::{
@@ -64,7 +65,7 @@ async fn infinite_loop(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.len(), 3);
 
     let packages = service
-        .describes_packages(id, Default::default(), &ctx.db)
+        .describes_packages(id, Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(packages.total, 1);

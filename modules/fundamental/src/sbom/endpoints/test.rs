@@ -944,7 +944,7 @@ async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .to_string();
 
     async fn query(app: &impl CallService, id: &str, q: &str) -> PaginatedResults<SbomPackage> {
-        let uri = format!("/api/v2/sbom/{id}/packages?q={}", urlencoding::encode(q));
+        let uri = format!("/api/v2/sbom/{id}/packages?q={}", encode(q));
         let req = TestRequest::get().uri(&uri).to_request();
         app.call_and_read_body_json(req).await
     }
