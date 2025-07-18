@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752764765366,
+  "lastUpdate": 1752830251217,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12754,6 +12754,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/c2fccb93744121785f202ef3890e30bdcae1e671"
         },
         "date": 1752764763599,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "41490755448bfb799bdbb33609938b36ee55e02c",
+          "message": "fix: properly filter cvss scores for the advisory\n\nCurrently the logic incorrectly filters CVSS scores based on the vulnerability ID instead of the advisory ID.\nThis change ensures that only CVSS scores related to the specific advisory are included in the advisory summary.",
+          "timestamp": "2025-07-18T08:54:07Z",
+          "tree_id": "dfa7fa6ceae7fbb94abb732bdd36c2f68052fa80",
+          "url": "https://github.com/trustification/trustify/commit/41490755448bfb799bdbb33609938b36ee55e02c"
+        },
+        "date": 1752830250351,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
