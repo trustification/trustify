@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1752830251217,
+  "lastUpdate": 1753103970695,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12783,6 +12783,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/41490755448bfb799bdbb33609938b36ee55e02c"
         },
         "date": 1752830250351,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "ccf1cb8f91b45656d5318c8a298d72e66587670c",
+          "message": "fix: prevent calculating the total if we don't need it\n\nIn some cases we calculate a \"total number of items\" although we don't\nneed it. This is due to the fact that we support pagination, and for\nthis we need to execute the SQL statement twice: once for getting\nthe page of items, and once for getting the total number of items.\n\nIn some cases however, we just drop the total, without ever using it. In\nsuch cases executing the count() statement is a wast of time and\nresources.\n\nThis change allows the caller of a function to influence the output type\nand with that trigger an executing of the count() variant, or skip it.",
+          "timestamp": "2025-07-21T12:56:56Z",
+          "tree_id": "b4f2999bea7d5c14deaf4b25969c3406dbb2b7ad",
+          "url": "https://github.com/trustification/trustify/commit/ccf1cb8f91b45656d5318c8a298d72e66587670c"
+        },
+        "date": 1753103969547,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
