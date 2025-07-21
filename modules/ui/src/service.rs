@@ -1,6 +1,7 @@
 use crate::model::ExtractPackage;
 use serde_cyclonedx::cyclonedx::v_1_6::{Component, ComponentEvidenceIdentity};
 use std::collections::BTreeMap;
+use trustify_common::purl::Purl;
 
 /// Extract PURLs from a SPDX file
 pub fn extract_spdx_purls(sbom: spdx_rs::models::SPDX) -> BTreeMap<String, ExtractPackage> {
@@ -10,7 +11,7 @@ pub fn extract_spdx_purls(sbom: spdx_rs::models::SPDX) -> BTreeMap<String, Extra
         let mut purls = vec![];
         for er in pkg.external_reference {
             if er.reference_type == "purl" {
-                purls.push(er.reference_locator);
+                purls.extend(filter_purl(er.reference_locator));
             }
         }
 
@@ -32,7 +33,7 @@ pub fn extract_cyclonedx_purls(
 
     fn scan_comps(result: &mut BTreeMap<String, ExtractPackage>, component: Component) {
         let mut purls = vec![];
-        if let Some(purl) = component.purl {
+        if let Some(purl) = component.purl.and_then(filter_purl) {
             purls.push(purl);
         }
 
@@ -46,7 +47,8 @@ pub fn extract_cyclonedx_purls(
                     ComponentEvidenceIdentity::Variant1(id) => vec![id],
                 })
                 .filter(|id| id.field == "purl")
-                .flat_map(|id| id.concluded_value),
+                .flat_map(|id| id.concluded_value)
+                .flat_map(filter_purl),
         );
 
         result
@@ -69,4 +71,30 @@ pub fn extract_cyclonedx_purls(
     }
 
     result
+}
+
+/// Filter out invalid PURLs
+///
+/// If the PURL is valid, return the `Some(input)`, otherwise return `None`.
+fn filter_purl(purl: String) -> Option<String> {
+    Purl::try_from(purl.as_str()).ok().map(|_| purl)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn invalid() {
+        assert_eq!(filter_purl("".into()), None);
+        assert_eq!(filter_purl("pkg:".into()), None);
+    }
+
+    #[test]
+    fn valid() {
+        assert_eq!(
+            filter_purl("pkg:golang/archive/tar".into()),
+            Some("pkg:golang/archive/tar".into())
+        );
+    }
 }
