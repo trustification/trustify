@@ -31,7 +31,6 @@ default = ["pm"]
 
 bundled = ["postgresql_embedded/bundled"]
 garage-door = ["trustify-server/garage-door"]
-ai = ["trustify-server/ai"]
 
 vendored = [
     "openssl/vendored",

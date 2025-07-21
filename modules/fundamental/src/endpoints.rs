@@ -24,8 +24,6 @@ pub fn configure(
 
     crate::advisory::endpoints::configure(svc, db.clone(), config.advisory_upload_limit);
     crate::license::endpoints::configure(svc);
-    #[cfg(feature = "ai")]
-    crate::ai::endpoints::configure(svc, db.clone());
     crate::organization::endpoints::configure(svc, db.clone());
     crate::purl::endpoints::configure(svc, db.clone());
     crate::product::endpoints::configure(svc, db.clone());

@@ -78,7 +78,6 @@ itertools = "0.14"
 jsn = "0.14"
 json-merge-patch = "0.0.1"
 jsonpath-rust = "1.0.1"
-langchain-rust = { version = "4.6.0" }
 lenient_semver = "0.4.2"
 liblzma = "0.4"
 libz-sys = "*"
@@ -205,10 +204,6 @@ postgresql_commands = { version = "0.18.0", default-features = false, features =
 csaf = { git = "https://github.com/trustification/csaf-rs" }
 # required due to https://github.com/gcmurphy/osv/pull/58
 #osv = { git = "https://github.com/ctron/osv", branch = "feature/drop_deps_1" }
-
-# to pickup fix: https://github.com/Abraxas-365/langchain-rust/pull/246
-#       and fix: https://github.com/Abraxas-365/langchain-rust/pull/250
-langchain-rust = { git = "https://github.com/chirino/langchain-rust", branch = "main" }
 
 # required due to https://github.com/doubleopen-project/spdx-rs/pull/35
 spdx-rs = { git = "https://github.com/ctron/spdx-rs", branch = "feature/add_alias_2" }

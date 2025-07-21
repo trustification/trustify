@@ -9,9 +9,6 @@ license.workspace = true
 name = "migration"
 path = "src/lib.rs"
 
-[features]
-ai = ["trustify-common/ai"]
-
 [dependencies]
 sea-orm-migration = { workspace = true, features = ["runtime-tokio-rustls", "sqlx-postgres", "with-uuid"] }
 tokio = { workspace = true, features = ["full"] }

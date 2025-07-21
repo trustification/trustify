@@ -1,10 +1,14 @@
 #![recursion_limit = "256"]
 
 use clap::Parser;
-use std::env;
-use std::process::{ExitCode, Termination};
-use tokio::select;
-use tokio::task::{LocalSet, spawn_local};
+use std::{
+    env,
+    process::{ExitCode, Termination},
+};
+use tokio::{
+    select,
+    task::{LocalSet, spawn_local},
+};
 
 mod db;
 mod openapi;

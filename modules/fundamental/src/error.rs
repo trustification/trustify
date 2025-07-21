@@ -1,5 +1,4 @@
 use actix_web::{HttpResponse, ResponseError, body::BoxBody};
-use langchain_rust::{agent::AgentError, chain::ChainError};
 use sea_orm::DbErr;
 use trustify_common::{decompress, error::ErrorInformation, id::IdError, purl::PurlErr};
 use trustify_entity::labels;
@@ -37,10 +36,6 @@ pub enum Error {
     Compression(#[from] decompress::Error),
     #[error(transparent)]
     Join(#[from] tokio::task::JoinError),
-    #[error(transparent)]
-    AgentError(AgentError),
-    #[error(transparent)]
-    ChainError(ChainError),
     #[error(transparent)]
     CsvError(#[from] csv::Error),
     #[error("error from csv inner error: {0}")]

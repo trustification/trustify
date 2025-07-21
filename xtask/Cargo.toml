@@ -7,13 +7,11 @@ license.workspace = true
 
 [features]
 default = []
-ai = [ "trustify-common/ai", "trustify-module-fundamental/ai" ]
 
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
-langchain-rust = { workspace = true, features = ["ollama"] }
 log = { workspace = true }
 nu-ansi-term = { workspace = true }
 postgresql_commands = { workspace = true }
