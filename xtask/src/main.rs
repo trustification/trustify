@@ -4,8 +4,6 @@
 use crate::log::init_log;
 use clap::{Parser, Subcommand};
 
-#[cfg(feature = "ai")]
-mod ai;
 mod dataset;
 mod log;
 mod openapi;
@@ -25,8 +23,6 @@ impl Xtask {
             Command::GenerateDump(command) => command.run().await,
             Command::GenerateSchemas(command) => command.run(),
             Command::Precommit(command) => command.run().await,
-            #[cfg(feature = "ai")]
-            Command::Ai(command) => command.run().await,
         }
     }
 }
@@ -41,9 +37,6 @@ pub enum Command {
     GenerateSchemas(schema::GenerateSchema),
     /// Run precommit checks
     Precommit(precommit::Precommit),
-    /// Run ai tool
-    #[cfg(feature = "ai")]
-    Ai(ai::Ai),
 }
 
 #[tokio::main]

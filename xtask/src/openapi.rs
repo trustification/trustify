@@ -1,7 +1,7 @@
 use anyhow::{Context, anyhow};
 use clap::Parser;
-use std::env::current_dir;
 use std::{
+    env::current_dir,
     fs,
     path::{Path, PathBuf},
     process::Command,

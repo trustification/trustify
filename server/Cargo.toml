@@ -6,7 +6,6 @@ publish.workspace = true
 license.workspace = true
 
 [features]
-ai = ["trustify-module-fundamental/ai"]
 graphql = ["trustify-module-graphql"]
 
 [dependencies]

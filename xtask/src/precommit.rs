@@ -1,9 +1,7 @@
-use crate::openapi::Openapi;
-use crate::schema::GenerateSchema;
+use crate::{openapi::Openapi, schema::GenerateSchema};
 use anyhow::anyhow;
 use clap::Parser;
-use std::path::Path;
-use std::process::Command;
+use std::{path::Path, process::Command};
 
 #[derive(Debug, Parser)]
 pub struct Precommit {}

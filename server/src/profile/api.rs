@@ -1,8 +1,7 @@
 #[cfg(feature = "garage-door")]
 use crate::embedded_oidc;
 
-use crate::profile::spawn_db_check;
-use crate::{endpoints, sample_data};
+use crate::{endpoints, profile::spawn_db_check, sample_data};
 use actix_web::{
     HttpRequest, HttpResponse, Responder, Result,
     body::MessageBody,
