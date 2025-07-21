@@ -66,6 +66,7 @@ jobs:
       - name: Run
         env:
           NO_COLOR: "true"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
           nohup cargo run --bin trustd --release &> trustd.log &
 
