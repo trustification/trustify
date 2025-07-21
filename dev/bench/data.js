@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753103970695,
+  "lastUpdate": 1753108137316,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12812,6 +12812,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/ccf1cb8f91b45656d5318c8a298d72e66587670c"
         },
         "date": 1753103969547,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "ecc14e850b4cb470cada306a29fe82ce63e38601",
+          "message": "ci: provide github token to postgres download",
+          "timestamp": "2025-07-21T16:22:20+02:00",
+          "tree_id": "5fa0f90f862ddce36340c9dc4bdd48d032d156a0",
+          "url": "https://github.com/trustification/trustify/commit/ecc14e850b4cb470cada306a29fe82ce63e38601"
+        },
+        "date": 1753108136151,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
