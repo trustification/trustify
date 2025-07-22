@@ -3471,11 +3471,23 @@ components:
     AnalysisResponse:
       type: object
       additionalProperties:
-        type: array
-        items:
-          $ref: '#/components/schemas/AnalysisDetails'
+        $ref: '#/components/schemas/AnalysisResult'
       propertyNames:
         type: string
+    AnalysisResult:
+      type: object
+      required:
+      - details
+      - warnings
+      properties:
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnalysisDetails'
+        warnings:
+          type: array
+          items:
+            type: string
     AnalysisStatus:
       type: object
       required:
@@ -3804,6 +3816,7 @@ components:
       required:
       - format
       - packages
+      - warnings
       properties:
         format:
           $ref: '#/components/schemas/Format'
@@ -3815,6 +3828,11 @@ components:
             $ref: '#/components/schemas/ExtractPackage'
           propertyNames:
             type: string
+        warnings:
+          type: array
+          items:
+            type: string
+          description: warnings while parsing
     Format:
       type: string
       enum:

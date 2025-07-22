@@ -28,9 +28,14 @@ async fn issue_1840(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let entry = &result["pkg:rpm/redhat/gnutls@3.7.6-23.el9?arch=aarch64"];
 
+    // test for warnings (should be none)
+
+    assert!(entry.warnings.is_empty());
+
     // test for vulnerability IDs
 
     let ids = entry
+        .details
         .iter()
         .map(|vuln| &vuln.head.identifier)
         .sorted()
@@ -41,6 +46,7 @@ async fn issue_1840(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // now check advisories
 
     let vuln_entry = entry
+        .details
         .iter()
         .find(|e| e.head.identifier == "CVE-2024-28834")
         .expect("must find entry");
