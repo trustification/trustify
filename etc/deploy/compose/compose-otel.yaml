@@ -24,11 +24,12 @@ services:
     volumes:
       - ./grafana/datasources:/etc/grafana/provisioning/datasources:z
       - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:z
-      - ./grafana/dashboards/traces.json:/var/lib/grafana/dashboards/traces.json:z
-      - ./grafana/dashboards/metrics.json:/var/lib/grafana/dashboards/metrics.json:z
+      - ./grafana/dashboards/trustify-traces.json:/var/lib/grafana/dashboards/trustify-traces.json:z
+      - ./grafana/dashboards/trustify-performance.json:/var/lib/grafana/dashboards/trustify-performance.json:z
+      - ./grafana/dashboards/trustify-slos.json:/var/lib/grafana/dashboards/trustify-slos.json:z
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_DISABLE_LOGIN_FORM=false
       - GF_LOG_LEVEL=error
     restart: unless-stopped
