@@ -30,6 +30,16 @@ async fn assert_extract(
     packages: Value,
     expected_format: &str,
 ) -> anyhow::Result<()> {
+    assert_extract_with(format, file, packages, json!([]), expected_format).await
+}
+
+async fn assert_extract_with(
+    format: impl Into<Option<&str>>,
+    file: &str,
+    packages: Value,
+    warnings: Value,
+    expected_format: &str,
+) -> anyhow::Result<()> {
     use actix_web::body::MessageBody;
 
     assert_extract_fn(format, file, async |result| {
@@ -44,6 +54,7 @@ async fn assert_extract(
             json! ({
                 "format": expected_format,
                 "packages": packages,
+                "warnings": warnings,
             })
         )
     })
@@ -82,12 +93,12 @@ fn simple_spdx_json() -> Value {
         "A": {
             "purls": [
                 "pkg:rpm/redhat/A@0.0.0?arch=src",
-            ]
+            ],
         },
         "AA": {
             "purls": [
                 "pkg:rpm/redhat/AA@0.0.0?arch=src",
-            ]
+            ],
         },
         "B": {
             "purls": [
@@ -97,17 +108,17 @@ fn simple_spdx_json() -> Value {
         "BB": {
             "purls": [
                 "pkg:rpm/redhat/BB@0.0.0",
-            ]
+            ],
         },
         "CC": {
             "purls": [
                 "pkg:rpm/redhat/CC@0.0.0",
-            ]
+            ],
         },
         "DD": {
             "purls": [
                 "pkg:rpm/redhat/DD@0.0.0",
-            ]
+            ],
         },
         "EE": {
             "purls": [
@@ -125,12 +136,12 @@ fn simple_cdx_json() -> Value {
         "A": {
             "purls": [
                 "pkg:rpm/redhat/A@0.0.0?arch=src",
-            ]
+            ],
         },
         "AA": {
             "purls": [
                 "pkg:rpm/redhat/AA@0.0.0?arch=src",
-            ]
+            ],
         },
         "B": {
             "purls": [
@@ -140,17 +151,17 @@ fn simple_cdx_json() -> Value {
         "BB": {
             "purls": [
                 "pkg:rpm/redhat/BB@0.0.0?arch=src",
-            ]
+            ],
         },
         "CC": {
             "purls": [
                 "pkg:rpm/redhat/CC@0.0.0?arch=src",
-            ]
+            ],
         },
         "DD": {
             "purls": [
                 "pkg:rpm/redhat/DD@0.0.0?arch=src",
-            ]
+            ],
         },
         "EE": {
             "purls": [
@@ -246,5 +257,25 @@ async fn extract_advisory() -> anyhow::Result<()> {
     assert_extract_fn("advisory", "csaf/cve-2023-0044.json", async |result| {
         assert_eq!(result.status(), 400)
     })
+    .await
+}
+
+/// Asking for advisory, which must fail
+#[test(tokio::test)]
+async fn invalid_purl() -> anyhow::Result<()> {
+    assert_extract_with(
+        "cyclonedx",
+        "cyclonedx/invalid-purl.json",
+        json!({
+            "A": {
+                "purls": [],
+            },
+            "simple": {
+                "purls": [],
+            }
+        }),
+        json!(["failed to parse purl: packageurl problem missing scheme"]),
+        "cyclonedx",
+    )
     .await
 }

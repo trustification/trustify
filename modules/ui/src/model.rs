@@ -8,6 +8,8 @@ pub struct ExtractResult {
     pub format: Format,
     /// packages of the SBOM
     pub packages: BTreeMap<String, ExtractPackage>,
+    /// warnings while parsing
+    pub warnings: Vec<String>,
 }
 
 /// Information extracted from a package
