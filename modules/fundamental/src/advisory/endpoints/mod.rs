@@ -15,8 +15,11 @@ use crate::{
 use actix_web::{HttpResponse, Responder, delete, get, http::header, post, web};
 use config::Config;
 use futures_util::TryStreamExt;
+use query_doc::{QueryDoc, TrustifyQuery};
+use query_doc_derive::QueryDoc;
 use sea_orm::TransactionTrait;
 use std::str::FromStr;
+use time::Date;
 use trustify_auth::{CreateAdvisory, DeleteAdvisory, ReadAdvisory, authorizer::Require};
 use trustify_common::{
     db::{Database, query::Query},
@@ -52,11 +55,20 @@ pub fn configure(
         .service(label::all);
 }
 
+#[allow(dead_code)]
+#[derive(QueryDoc)]
+struct AdvisoryQuery {
+    average_score: i32,
+    average_severity: String,
+    modified: Date,
+    title: String,
+}
+
 #[utoipa::path(
     tag = "advisory",
     operation_id = "listAdvisories",
     params(
-        Query,
+        TrustifyQuery<AdvisoryQuery>,
         Paginated,
         Deprecation,
     ),
