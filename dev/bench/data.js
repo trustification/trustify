@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753108137316,
+  "lastUpdate": 1753273867625,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12841,6 +12841,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/ecc14e850b4cb470cada306a29fe82ce63e38601"
         },
         "date": 1753108136151,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "da07c387f72c2edd51a02be9fb3f109c145d0af5",
+          "message": "chore: remove AI feature, moving on to MCP",
+          "timestamp": "2025-07-23T11:48:33Z",
+          "tree_id": "42acc22b49f496f13d047fc6872884b52a4117bc",
+          "url": "https://github.com/trustification/trustify/commit/da07c387f72c2edd51a02be9fb3f109c145d0af5"
+        },
+        "date": 1753273866256,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
