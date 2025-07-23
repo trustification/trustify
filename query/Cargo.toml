@@ -1,5 +1,5 @@
 [package]
-name = "query-doc"
+name = "query"
 version.workspace = true
 edition.workspace = true
 publish.workspace = true

@@ -15,8 +15,8 @@ use crate::{
 use actix_web::{HttpResponse, Responder, delete, get, http::header, post, web};
 use config::Config;
 use futures_util::TryStreamExt;
-use query_doc::{QueryDoc, TrustifyQuery};
-use query_doc_derive::QueryDoc;
+use query::TrustifyQuery;
+use query_derive::Query;
 use sea_orm::TransactionTrait;
 use std::str::FromStr;
 use time::Date;
@@ -56,7 +56,7 @@ pub fn configure(
 }
 
 #[allow(dead_code)]
-#[derive(QueryDoc)]
+#[derive(Query)]
 struct AdvisoryQuery {
     average_score: i32,
     average_severity: String,
