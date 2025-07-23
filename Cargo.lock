@@ -5874,14 +5874,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "query-doc"
+name = "query"
 version = "0.3.5"
 dependencies = [
  "utoipa",
 ]
 
 [[package]]
-name = "query-doc-derive"
+name = "query-derive"
 version = "0.3.5"
 dependencies = [
  "quote",
@@ -8777,8 +8777,8 @@ dependencies = [
  "opentelemetry_sdk",
  "osv",
  "packageurl",
- "query-doc",
- "query-doc-derive",
+ "query",
+ "query-derive",
  "regex",
  "reqwest",
  "roxmltree",

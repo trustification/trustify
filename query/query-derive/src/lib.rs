@@ -2,16 +2,16 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Data, DeriveInput, parse_macro_input};
 
-#[proc_macro_derive(QueryDoc)]
-pub fn query_doc_derive(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(Query)]
+pub fn query_derive(input: TokenStream) -> TokenStream {
     // Construct a representation of Rust code as a abstract syntax tree
     // that we can manipulate.
     let ast = parse_macro_input!(input as DeriveInput);
     // Build the trait QueryDoc implementation.
-    impl_query_doc(&ast)
+    impl_query(&ast)
 }
 
-fn impl_query_doc(ast: &syn::DeriveInput) -> TokenStream {
+fn impl_query(ast: &syn::DeriveInput) -> TokenStream {
     let name = &ast.ident;
     let fields = match &ast.data {
         Data::Struct(data_struct) => data_struct
@@ -27,7 +27,7 @@ fn impl_query_doc(ast: &syn::DeriveInput) -> TokenStream {
         Data::Union(_) => vec![],
     };
     let field_names = format!("\"{}\"", fields.join("\" | \""));
-    let query_doc = format!(
+    let query_description = format!(
         "Query for advisories defined using the following EBNF grammar (ISO/IEC 14977):
 (* Query Grammar - EBNF Compliant *)
 query = ( values | filter ) , {{ \"&\" , query }} ;
@@ -48,7 +48,7 @@ special_char = \"&\" | \"|\" | \"=\" | \"!\" | \"~\" | \">\" | \"<\" | \"\\\" ;
     - Escaped characters: title=foo\\&bar
 *)"
     );
-    let sort_doc = format!(
+    let sort_description = format!(
         "EBNF grammar for the _sort_ parameter:
 ```text
     sort = field [ ':', order ] {{ ',' sort }}
@@ -66,13 +66,13 @@ e.g. `purl:qualifiers:type:desc`"
     );
 
     let generated = quote! {
-        impl QueryDoc for #name {
-            fn generate_query_doc() -> String {
-                #query_doc.to_string()
+        impl query::Query for #name {
+            fn generate_query_description() -> String {
+                #query_description.to_string()
             }
 
-            fn generate_sort_doc() -> String {
-                #sort_doc.to_string()
+            fn generate_sort_description() -> String {
+                #sort_description.to_string()
             }
         }
     };

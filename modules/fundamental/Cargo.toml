@@ -17,8 +17,8 @@ trustify-entity = { workspace = true }
 trustify-module-analysis = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
-query-doc = { workspace = true }
-query-doc-derive = { workspace = true }
+query = { workspace = true }
+query-derive = { workspace = true }
 
 actix-http = { workspace = true }
 actix-web = { workspace = true }
