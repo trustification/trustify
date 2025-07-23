@@ -5,7 +5,7 @@ use crate::runner::context::RunContext;
 use crate::runner::progress::{Progress, ProgressInstance};
 use crate::runner::quay::oci;
 use crate::runner::report::{Message, Phase, ReportBuilder};
-use futures::{StreamExt, TryStreamExt, future, stream};
+use futures::{Stream, StreamExt, TryStreamExt, future, stream};
 use reqwest::header;
 use serde::Deserialize;
 use std::{collections::HashMap, sync::Arc};
@@ -140,20 +140,22 @@ impl<C: RunContext> QuayWalker<C> {
     }
 
     async fn sboms(&self) -> Result<Vec<Reference>, Error> {
-        let tags: Vec<(Reference, u64)> =
-            stream::iter(self.repositories(Some(String::new())).await?)
-                .filter(|repo| {
-                    future::ready(repo.is_public && self.modified_since(repo.last_modified))
-                })
-                .map(|repo| self.repository(repo.namespace, repo.name))
-                .buffer_unordered(32) // TODO: make configurable
-                .filter_map(|repo| {
-                    future::ready(repo.unwrap_or_default().sboms(&self.importer.source))
-                })
-                .map(stream::iter)
-                .flatten()
-                .collect()
-                .await;
+        let repositories = self
+            .repositories(Some(String::new()))
+            .try_fold(vec![], |mut acc, repo| async move {
+                if repo.is_public && self.modified_since(repo.last_modified) {
+                    acc.push(self.repository(repo.namespace, repo.name));
+                }
+                Ok(acc)
+            })
+            .await?;
+        let tags: Vec<(Reference, u64)> = stream::iter(repositories)
+            .buffer_unordered(32) // TODO: make configurable
+            .filter_map(|repo| future::ready(repo.unwrap_or_default().sboms(&self.importer.source)))
+            .map(stream::iter)
+            .flatten()
+            .collect()
+            .await;
         Ok(tags
             .into_iter()
             .filter_map(|(reference, size)| {
@@ -166,7 +168,7 @@ impl<C: RunContext> QuayWalker<C> {
             .collect())
     }
 
-    async fn repositories(&self, page: Option<String>) -> Result<Vec<Repository>, Error> {
+    fn repositories(&self, page: Option<String>) -> impl Stream<Item = Result<Repository, Error>> {
         stream::try_unfold(page, async |state| match state {
             Some(page) => {
                 if self.context.is_canceled().await {
@@ -187,8 +189,6 @@ impl<C: RunContext> QuayWalker<C> {
             None => Ok(None),
         })
         .try_flatten()
-        .try_collect()
-        .await
     }
 
     async fn repository(&self, namespace: String, name: String) -> Result<Repository, Error> {
