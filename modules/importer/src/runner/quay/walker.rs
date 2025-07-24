@@ -5,9 +5,10 @@ use crate::runner::context::RunContext;
 use crate::runner::progress::{Progress, ProgressInstance};
 use crate::runner::quay::oci;
 use crate::runner::report::{Message, Phase, ReportBuilder};
-use futures::{Stream, StreamExt, TryStreamExt, stream};
+use futures::{Stream, TryStreamExt, stream};
 use reqwest::header;
 use serde::Deserialize;
+use std::future;
 use std::{collections::HashMap, sync::Arc};
 use time::OffsetDateTime;
 use tokio::sync::Mutex;
@@ -140,42 +141,21 @@ impl<C: RunContext> QuayWalker<C> {
     }
 
     async fn sboms(&self) -> Result<Vec<Reference>, Error> {
-        let repositories = self
-            .repositories(Some(String::new()))
-            .try_fold(vec![], |mut acc, repo| async move {
-                if repo.is_public && self.modified_since(repo.last_modified) {
-                    acc.push(self.repository(repo.namespace, repo.name));
-                }
-                Ok(acc)
+        self.repositories(Some(String::new()))
+            .try_filter(|v| future::ready(v.is_public && self.modified_since(v.last_modified)))
+            .map_ok(|v| self.repository(v.namespace, v.name))
+            .try_buffer_unordered(32)
+            .map_ok(|repo| {
+                stream::iter(
+                    repo.sboms(&self.importer.source)
+                        .into_iter()
+                        .map(Ok::<_, Error>), // try_flatten expects Results
+                )
             })
-            .await?;
-        let tags: Vec<(Reference, u64)> = stream::iter(repositories)
-            .buffer_unordered(32) // TODO: make configurable
-            .filter_map(|repo_result| async move {
-                match repo_result {
-                    Ok(repo) => repo.sboms(&self.importer.source),
-                    Err(e) => {
-                        log::warn!("Error retrieving repository: {e}");
-                        let mut report = self.report.lock().await;
-                        report.add_error(Phase::Retrieval, "repository", e.to_string());
-                        None
-                    }
-                }
-            })
-            .map(stream::iter)
-            .flatten()
-            .collect()
-            .await;
-        Ok(tags
-            .into_iter()
-            .filter_map(|(reference, size)| {
-                if self.too_big(size) {
-                    None
-                } else {
-                    Some(reference)
-                }
-            })
-            .collect())
+            .try_flatten()
+            .try_filter_map(|sbom| future::ready(Ok(self.valid(&sbom).then_some(sbom.reference))))
+            .try_collect()
+            .await
     }
 
     fn repositories(&self, page: Option<String>) -> impl Stream<Item = Result<Repository, Error>> {
@@ -222,10 +202,10 @@ impl<C: RunContext> QuayWalker<C> {
         }
     }
 
-    fn too_big(&self, size: u64) -> bool {
+    fn valid(&self, sbom: &SBOM) -> bool {
         match self.importer.size_limit {
-            None => false,
-            Some(max) => size > max.as_u64(),
+            None => true,
+            Some(max) => sbom.size <= max.as_u64(),
         }
     }
 }
@@ -251,22 +231,22 @@ struct Repository {
 }
 
 impl Repository {
-    fn sboms(&self, registry: &str) -> Option<Vec<(Reference, u64)>> {
-        self.tags.as_ref().map(|tags| {
-            tags.values()
+    fn sboms(&self, registry: &str) -> Vec<SBOM> {
+        match &self.tags {
+            Some(tags) => tags
+                .values()
                 .filter(|t| t.name.ends_with(".sbom"))
-                .map(|t| {
-                    (
-                        Reference::with_tag(
-                            registry.to_string(),
-                            format!("{}/{}", self.namespace, self.name),
-                            t.name.clone(),
-                        ),
-                        t.size.unwrap_or(u64::MAX),
-                    )
+                .map(|t| SBOM {
+                    reference: Reference::with_tag(
+                        registry.to_string(),
+                        format!("{}/{}", self.namespace, self.name),
+                        t.name.clone(),
+                    ),
+                    size: t.size.unwrap_or(u64::MAX),
                 })
-                .collect()
-        })
+                .collect(),
+            None => vec![],
+        }
     }
 }
 
@@ -280,6 +260,12 @@ struct Batch {
 struct Tag {
     name: String,
     size: Option<u64>,
+}
+
+#[derive(Debug)]
+struct SBOM {
+    reference: Reference,
+    size: u64,
 }
 
 #[cfg(test)]
@@ -297,7 +283,7 @@ mod test {
             QuayImporter {
                 source: "quay.io".into(),
                 namespace: Some("redhat-user-workloads".into()),
-                size_limit: Some(ByteSize::kib(3).into()),
+                size_limit: Some(ByteSize::kib(5).into()),
                 ..Default::default()
             },
             ctx.ingestor.clone(),
