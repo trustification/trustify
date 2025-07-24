@@ -5,19 +5,12 @@ edition.workspace = true
 publish.workspace = true
 license.workspace = true
 
-[features]
-default = []
-
 [dependencies]
 anyhow = { workspace = true }
-async-trait = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 log = { workspace = true }
-nu-ansi-term = { workspace = true }
 postgresql_commands = { workspace = true }
 schemars = { workspace = true }
-reedline = { workspace = true }
-reqwest = {workspace = true, features = ["json"]}
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_yml = { workspace = true }
@@ -26,7 +19,6 @@ tracing-subscriber = { workspace = true, features = ["env-filter", "tracing-log"
 
 trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
-trustify-module-fundamental = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-module-storage = { workspace = true }
 trustify-server = { workspace = true }
