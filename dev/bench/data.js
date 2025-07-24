@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753360903299,
+  "lastUpdate": 1753363700624,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12928,6 +12928,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/704fdb15b3887aa84a67aa20d537bdd482bde88a"
         },
         "date": 1753360902186,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "5a4c127aca7a0df4b3ed941fc0448939b2045904",
+          "message": "chore: removes unused AI dev-dependency",
+          "timestamp": "2025-07-24T13:04:16Z",
+          "tree_id": "7ba1e5afb7cf13a21efab8fcd8e269ff1ea20eb7",
+          "url": "https://github.com/trustification/trustify/commit/5a4c127aca7a0df4b3ed941fc0448939b2045904"
+        },
+        "date": 1753363699211,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
