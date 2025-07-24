@@ -40,7 +40,7 @@ paths:
           values = value , { "|" , value } ;
           filter = field , operator , values ;
           operator = "=" | "!=" | "~" | "!~" | ">=" | ">" | "<=" | "<" ;
-          field = ("average_score" | "average_severity" | "modified" | "title")
+          field = ("id" | "identifier" | "version" | "document_id" | "deprecated" | "issuer_id" | "published" | "modified" | "withdrawn" | "title" | "ingested" | "label")
           value = { value_char } ;
           value_char = escaped_char | normal_char ;
           escaped_char = "\" , special_char ;
@@ -63,7 +63,7 @@ paths:
           ```text
               sort = field [ ':', order ] { ',' sort }
               order = ( "asc" | "desc" )
-              field = ("average_score" | "average_severity" | "modified" | "title")
+              field = ("id" | "identifier" | "version" | "document_id" | "deprecated" | "issuer_id" | "published" | "modified" | "withdrawn" | "title" | "ingested" | "label")
           ```
           The optional _order_ should be one of "asc" or "desc". If
           omitted, the order defaults to "asc".
@@ -2955,7 +2955,7 @@ paths:
           values = value , { "|" , value } ;
           filter = field , operator , values ;
           operator = "=" | "!=" | "~" | "!~" | ">=" | ">" | "<=" | "<" ;
-          field = ("base_score" | "base_severity" | "modified" | "title")
+          field = ("id" | "title" | "reserved" | "published" | "modified" | "withdrawn" | "cwes" | "base_score" | "base_severity")
           value = { value_char } ;
           value_char = escaped_char | normal_char ;
           escaped_char = "\" , special_char ;
@@ -2978,7 +2978,7 @@ paths:
           ```text
               sort = field [ ':', order ] { ',' sort }
               order = ( "asc" | "desc" )
-              field = ("base_score" | "base_severity" | "modified" | "title")
+              field = ("id" | "title" | "reserved" | "published" | "modified" | "withdrawn" | "cwes" | "base_score" | "base_severity")
           ```
           The optional _order_ should be one of "asc" or "desc". If
           omitted, the order defaults to "asc".

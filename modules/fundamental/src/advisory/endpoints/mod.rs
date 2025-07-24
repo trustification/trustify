@@ -19,7 +19,7 @@ use query::TrustifyQuery;
 use query_derive::Query;
 use sea_orm::TransactionTrait;
 use std::str::FromStr;
-use time::Date;
+use time::OffsetDateTime;
 use trustify_auth::{CreateAdvisory, DeleteAdvisory, ReadAdvisory, authorizer::Require};
 use trustify_common::{
     db::{Database, query::Query},
@@ -31,6 +31,7 @@ use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Cache, Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::IntoParams;
+use uuid::Uuid;
 
 pub fn configure(
     config: &mut utoipa_actix_web::service_config::ServiceConfig,
@@ -58,10 +59,18 @@ pub fn configure(
 #[allow(dead_code)]
 #[derive(Query)]
 struct AdvisoryQuery {
-    average_score: i32,
-    average_severity: String,
-    modified: Date,
-    title: String,
+    id: Uuid,
+    identifier: String,
+    version: Option<String>,
+    document_id: String,
+    deprecated: bool,
+    issuer_id: Option<Uuid>,
+    published: Option<OffsetDateTime>,
+    modified: Option<OffsetDateTime>,
+    withdrawn: Option<OffsetDateTime>,
+    title: Option<String>,
+    ingested: OffsetDateTime,
+    label: String,
 }
 
 #[utoipa::path(
