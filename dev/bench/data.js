@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753351335957,
+  "lastUpdate": 1753360903299,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12899,6 +12899,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/82c3738c8b165fdb3ba5f919c0d079800677f89a"
         },
         "date": 1753351334182,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "704fdb15b3887aa84a67aa20d537bdd482bde88a",
+          "message": "chore: add warnings when invalid PURLs are detected",
+          "timestamp": "2025-07-24T12:19:55Z",
+          "tree_id": "f176ef52a1c9ebf4b2e932ed355b37e79c32ceed",
+          "url": "https://github.com/trustification/trustify/commit/704fdb15b3887aa84a67aa20d537bdd482bde88a"
+        },
+        "date": 1753360902186,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
