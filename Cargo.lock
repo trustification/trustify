@@ -1910,7 +1910,7 @@ version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "980c2afde4af43d6a05c5be738f9eae595cff86dce1f38f88b95058a98c027f3"
 dependencies = [
- "crossterm 0.29.0",
+ "crossterm",
 ]
 
 [[package]]
@@ -2046,7 +2046,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5282b45c96c5978c8723ea83385cb9a488b64b7d175733f48d07bf9da514a863"
 dependencies = [
  "crokey-proc_macros",
- "crossterm 0.29.0",
+ "crossterm",
  "once_cell",
  "serde",
  "strict",
@@ -2058,7 +2058,7 @@ version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ea0218d3fedf0797fa55676f1964ef5d27103d41ed0281b4bbd2a6e6c3d8d28"
 dependencies = [
- "crossterm 0.29.0",
+ "crossterm",
  "proc-macro2",
  "quote",
  "strict",
@@ -2120,23 +2120,6 @@ name = "crossbeam-utils"
 version = "0.8.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28"
-
-[[package]]
-name = "crossterm"
-version = "0.28.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "829d955a0bb380ef178a640b91779e3987da38c9aea133b20614cfed8cdea9c6"
-dependencies = [
- "bitflags 2.9.1",
- "crossterm_winapi",
- "mio",
- "parking_lot 0.12.4",
- "rustix 0.38.44",
- "serde",
- "signal-hook",
- "signal-hook-mio",
- "winapi",
-]
 
 [[package]]
 name = "crossterm"
@@ -2873,17 +2856,6 @@ name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
-
-[[package]]
-name = "fd-lock"
-version = "4.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ce92ff622d6dadf7349484f42c93271a0d49b7cc4d466a936405bacbe10aa78"
-dependencies = [
- "cfg-if",
- "rustix 1.0.7",
- "windows-sys 0.59.0",
-]
 
 [[package]]
 name = "ff"
@@ -4725,15 +4697,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nu-ansi-term"
-version = "0.50.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4a28e057d01f97e61255210fcff094d74ed0466038633e95017f5beb68e4399"
-dependencies = [
- "windows-sys 0.52.0",
-]
-
-[[package]]
 name = "num-bigint"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5655,9 +5618,9 @@ checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
 
 [[package]]
 name = "postgresql_archive"
-version = "0.18.7"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6c1e2f490f528e4eb06be6e9494ad28ea2b3f376bac7a9ad7c99b9062a7358e"
+checksum = "b2b10a6a63e5f4ccf5d99d7d5db0829aec30a5e84b5c80883f6561c77a7521a6"
 dependencies = [
  "async-trait",
  "flate2",
@@ -5683,9 +5646,9 @@ dependencies = [
 
 [[package]]
 name = "postgresql_commands"
-version = "0.18.7"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56eae883251fb55f23ff8e9f16121cfb2b00a56ebe62c56183c67904af26fa1d"
+checksum = "9cc8653c31df5ffcd3bc114641dfae5390404d6e22bc21fd7473760f22cdc20b"
 dependencies = [
  "thiserror 2.0.12",
  "tokio",
@@ -5694,9 +5657,9 @@ dependencies = [
 
 [[package]]
 name = "postgresql_embedded"
-version = "0.18.7"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3aa5ce9babb49ac262752db7d1a4bda7b05b83eccd55559c7c20605447a6d9a"
+checksum = "4386829807c8dfbc190f8e53b91d2080f0f604bd4b9f0831281ccfbc06998123"
 dependencies = [
  "anyhow",
  "postgresql_archive",
@@ -6064,26 +6027,6 @@ dependencies = [
  "getrandom 0.2.16",
  "libredox",
  "thiserror 1.0.69",
-]
-
-[[package]]
-name = "reedline"
-version = "0.40.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5cdfab7494d13ebfb6ce64828648518205d3ce8541ef1f94a27887f29d2d50b"
-dependencies = [
- "chrono",
- "crossterm 0.28.1",
- "fd-lock",
- "itertools 0.13.0",
- "nu-ansi-term 0.50.1",
- "serde",
- "strip-ansi-escapes",
- "strum 0.26.3",
- "strum_macros 0.26.4",
- "thiserror 2.0.12",
- "unicode-segmentation",
- "unicode-width 0.2.1",
 ]
 
 [[package]]
@@ -7769,15 +7712,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "strip-ansi-escapes"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a8f8038e7e7969abb3f1b7c2a811225e9296da208539e0f79c5251d6cac0025"
-dependencies = [
- "vte",
-]
-
-[[package]]
 name = "strsim"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8498,7 +8432,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8189decb5ac0fa7bc8b96b7cb9b2701d60d48805aca84a238004d665fcc4008"
 dependencies = [
  "matchers",
- "nu-ansi-term 0.46.0",
+ "nu-ansi-term",
  "once_cell",
  "regex",
  "sharded-slab",
@@ -9497,15 +9431,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c3082ca00d5a5ef149bb8b555a72ae84c9c59f7250f013ac822ac2e49b19c64"
 
 [[package]]
-name = "vte"
-version = "0.14.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "231fdcd7ef3037e8330d8e17e61011a2c244126acc0a982f4040ac3f9f0bc077"
-dependencies = [
- "memchr",
-]
-
-[[package]]
 name = "walkdir"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10193,13 +10118,9 @@ name = "xtask"
 version = "0.3.5"
 dependencies = [
  "anyhow",
- "async-trait",
  "clap",
  "log",
- "nu-ansi-term 0.50.1",
  "postgresql_commands",
- "reedline",
- "reqwest",
  "schemars 1.0.4",
  "serde",
  "serde_json",
@@ -10208,7 +10129,6 @@ dependencies = [
  "tracing-subscriber",
  "trustify-auth",
  "trustify-common",
- "trustify-module-fundamental",
  "trustify-module-importer",
  "trustify-module-storage",
  "trustify-server",
