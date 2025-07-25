@@ -4738,6 +4738,12 @@ components:
             - string
             - 'null'
             description: The API token authorizing access to the quay registry
+          concurrency:
+            type:
+            - integer
+            - 'null'
+            description: The maximum concurrent repository fetches
+            minimum: 0
           namespace:
             type:
             - string
