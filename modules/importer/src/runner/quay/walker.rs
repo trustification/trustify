@@ -1,19 +1,27 @@
 use super::oci::Reference;
-use crate::model::QuayImporter;
-use crate::runner::common::Error;
-use crate::runner::context::RunContext;
-use crate::runner::progress::{Progress, ProgressInstance};
-use crate::runner::quay::oci;
-use crate::runner::report::{Message, Phase, ReportBuilder};
-use futures::{Stream, StreamExt, future, stream};
+use crate::{
+    model::QuayImporter,
+    runner::{
+        common::Error,
+        context::RunContext,
+        progress::{Progress, ProgressInstance},
+        quay::oci,
+        report::{Message, Phase, ReportBuilder},
+    },
+};
+use anyhow::anyhow;
+use futures::{Stream, TryStreamExt, stream};
 use reqwest::header;
 use serde::Deserialize;
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, future, sync::Arc};
 use time::OffsetDateTime;
 use tokio::sync::Mutex;
 use tracing::instrument;
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Cache, Format, IngestorService};
+
+/// Max number of concurrent repository fetches
+const DEFAULT_CONCURRENCY: usize = 32;
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct LastModified(Option<i64>);
@@ -24,6 +32,7 @@ pub struct QuayWalker<C: RunContext> {
     ingestor: IngestorService,
     report: Arc<Mutex<ReportBuilder>>,
     client: reqwest::Client,
+    oci: oci::Client,
     context: C,
 }
 
@@ -41,12 +50,14 @@ impl<C: RunContext> QuayWalker<C> {
                 Default::default()
             }
         };
+        let oci = oci::Client::new();
         Ok(Self {
             continuation: LastModified(None),
             importer,
             ingestor,
             report,
             client,
+            oci,
             context,
         })
     }
@@ -60,8 +71,6 @@ impl<C: RunContext> QuayWalker<C> {
     /// Run the walker
     #[instrument(skip(self), ret)]
     pub async fn run(self) -> Result<LastModified, Error> {
-        let oci = oci::Client::new();
-
         let progress = self.context.progress(format!(
             "Import SBOM attachments from: {}",
             self.importer.source
@@ -74,16 +83,16 @@ impl<C: RunContext> QuayWalker<C> {
             ))
             .await;
 
-        let references = self.sboms().await;
+        let references = self.sboms().await?;
         let mut progress = progress.start(references.len());
 
         for reference in references {
-            let bytes = oci.fetch(&reference).await?;
-            self.store(&reference, &bytes).await?;
+            if let Some(bytes) = self.fetch(&reference).await {
+                self.store(&reference, &bytes).await;
+            }
             progress.tick().await;
-            log::debug!("Ingested {reference}");
             if self.context.is_canceled().await {
-                break;
+                return Err(Error::Canceled);
             }
         }
         progress.finish().await;
@@ -93,10 +102,20 @@ impl<C: RunContext> QuayWalker<C> {
         )))
     }
 
-    async fn store(&self, file: impl ToString, data: &[u8]) -> Result<(), Error> {
-        let mut report = self.report.lock().await;
-        report.tick();
-        match self
+    async fn fetch(&self, reference: &Reference) -> Option<Vec<u8>> {
+        match self.oci.fetch(reference).await {
+            Ok(bytes) => Some(bytes),
+            Err(err) => {
+                log::warn!("Error fetching {reference}: {err}");
+                let mut report = self.report.lock().await;
+                report.add_error(Phase::Retrieval, reference.to_string(), err.to_string());
+                None
+            }
+        }
+    }
+
+    async fn store(&self, file: impl std::fmt::Display, data: &[u8]) {
+        let result = self
             .ingestor
             .ingest(
                 data,
@@ -109,73 +128,88 @@ impl<C: RunContext> QuayWalker<C> {
                 None,
                 Cache::Skip,
             )
-            .await
-        {
-            Ok(result) => report.extend_messages(
-                Phase::Upload,
-                file.to_string(),
-                result.warnings.into_iter().map(Message::warning),
-            ),
-            Err(err) => report.add_error(Phase::Upload, file.to_string(), err.to_string()),
-        };
-        Ok(())
-    }
-
-    async fn sboms(&self) -> Vec<Reference> {
-        let tags: Vec<(Reference, u64)> = self
-            .repositories(Some(String::new()))
-            .await
-            .filter(|repo| future::ready(repo.is_public && self.modified_since(repo.last_modified)))
-            .map(|repo| self.repository(repo.namespace, repo.name))
-            .buffer_unordered(32) // TODO: make configurable
-            .filter_map(|repo| future::ready(repo.unwrap_or_default().sboms(&self.importer.source)))
-            .map(stream::iter)
-            .flatten()
-            .collect()
             .await;
-        tags.into_iter()
-            .filter_map(|(reference, size)| {
-                if self.too_big(size) {
-                    None
-                } else {
-                    Some(reference)
-                }
-            })
-            .collect()
+        let mut report = self.report.lock().await;
+        match &result {
+            Ok(result) => {
+                log::debug!("Ingested {file}");
+                report.tick();
+                report.extend_messages(
+                    Phase::Upload,
+                    file.to_string(),
+                    result.warnings.iter().map(Message::warning),
+                );
+            }
+            Err(err) => {
+                log::warn!("Error storing {file}: {err}");
+                report.add_error(Phase::Upload, file.to_string(), err.to_string());
+            }
+        }
     }
 
-    async fn repositories(&self, page: Option<String>) -> impl Stream<Item = Repository> {
-        stream::unfold(page, async |state| match state {
-            None => None,
+    async fn sboms(&self) -> Result<Vec<Reference>, Error> {
+        self.repositories(Some(String::new()))
+            .try_filter(|repo| future::ready(self.ingestible(repo)))
+            .map_ok(|repo| self.repository_details(repo))
+            .try_buffer_unordered(self.importer.concurrency.unwrap_or(DEFAULT_CONCURRENCY))
+            .map_ok(|repo| {
+                stream::iter(
+                    repo.sboms(&self.importer.source)
+                        .into_iter()
+                        .map(Ok::<_, Error>), // try_flatten expects Results
+                )
+            })
+            .try_flatten()
+            .try_filter_map(|sbom| future::ready(Ok(self.valid(&sbom).then_some(sbom.reference))))
+            .try_collect()
+            .await
+    }
+
+    fn repositories(&self, page: Option<String>) -> impl Stream<Item = Result<Repository, Error>> {
+        stream::try_unfold(page, async |state| match state {
             Some(page) => {
-                let batch: Batch = match self
+                if self.context.is_canceled().await {
+                    return Err(Error::Canceled);
+                }
+                log::debug!("Fetching batch {page:?}");
+                let batch: Batch = self
                     .client
                     .get(self.importer.repositories_url(&page))
                     .send()
-                    .await
-                {
-                    Ok(response) => response.json().await.unwrap_or_default(),
-                    Err(e) => {
-                        log::warn!("Encountered error fetching Quay repositories: {e}");
-                        Batch::default()
-                    }
-                };
-                Some((stream::iter(batch.repositories), batch.next_page))
+                    .await?
+                    .json()
+                    .await?;
+                Ok::<_, Error>(Some((
+                    stream::iter(batch.repositories.into_iter().map(Ok)),
+                    batch.next_page,
+                )))
             }
+            None => Ok(None),
         })
-        .flatten()
-        .boxed_local()
+        .try_flatten()
     }
 
-    async fn repository(&self, namespace: String, name: String) -> Result<Repository, Error> {
-        log::debug!("Fetching {}/{namespace}/{name}", self.importer.source);
-        Ok(self
-            .client
-            .get(self.importer.repository_url(&namespace, &name))
-            .send()
-            .await?
-            .json()
-            .await?)
+    async fn repository_details(&self, repo: Repository) -> Result<Repository, Error> {
+        if self.context.is_canceled().await {
+            return Err(Error::Canceled);
+        }
+        match (repo.namespace, repo.name) {
+            (Some(namespace), Some(name)) => {
+                let url = self.importer.repository_url(&namespace, &name);
+                log::debug!("Fetching {url}");
+                Ok(self.client.get(url).send().await?.json().await?)
+            }
+            _ => Err(Error::Processing(anyhow!(
+                "Repository name and namespace are required"
+            ))),
+        }
+    }
+
+    fn ingestible(&self, repo: &Repository) -> bool {
+        repo.namespace.is_some()
+            && repo.name.is_some()
+            && repo.is_public.is_some_and(|x| x)
+            && self.modified_since(repo.last_modified)
     }
 
     fn modified_since(&self, last_modified: Option<i64>) -> bool {
@@ -188,10 +222,10 @@ impl<C: RunContext> QuayWalker<C> {
         }
     }
 
-    fn too_big(&self, size: u64) -> bool {
+    fn valid(&self, sbom: &Sbom) -> bool {
         match self.importer.size_limit {
-            None => false,
-            Some(max) => size > max.as_u64(),
+            None => true,
+            Some(max) => sbom.size <= max.as_u64(),
         }
     }
 }
@@ -207,36 +241,40 @@ fn authorized_client(token: &str) -> Result<reqwest::Client, Error> {
         .build()?)
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Deserialize)]
 struct Repository {
-    namespace: String,
-    name: String,
-    is_public: bool,
+    namespace: Option<String>,
+    name: Option<String>,
+    is_public: Option<bool>,
     last_modified: Option<i64>,
     tags: Option<HashMap<String, Tag>>,
 }
 
 impl Repository {
-    fn sboms(&self, registry: &str) -> Option<Vec<(Reference, u64)>> {
-        self.tags.as_ref().map(|tags| {
-            tags.values()
+    fn sboms(&self, registry: &str) -> Vec<Sbom> {
+        match &self.tags {
+            Some(tags) => tags
+                .values()
                 .filter(|t| t.name.ends_with(".sbom"))
-                .map(|t| {
-                    (
-                        Reference::with_tag(
-                            registry.to_string(),
-                            format!("{}/{}", self.namespace, self.name),
-                            t.name.clone(),
+                .map(|t| Sbom {
+                    reference: Reference::with_tag(
+                        registry.to_string(),
+                        format!(
+                            "{}/{}",
+                            self.namespace.clone().unwrap_or_default(),
+                            self.name.clone().unwrap_or_default()
                         ),
-                        t.size.unwrap_or(u64::MAX),
-                    )
+                        t.name.clone(),
+                    ),
+                    size: t.size.unwrap_or(u64::MAX),
                 })
-                .collect()
-        })
+                .collect(),
+            None => vec![],
+        }
     }
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Deserialize)]
 struct Batch {
     repositories: Vec<Repository>,
     next_page: Option<String>,
@@ -246,6 +284,12 @@ struct Batch {
 struct Tag {
     name: String,
     size: Option<u64>,
+}
+
+#[derive(Debug)]
+struct Sbom {
+    reference: Reference,
+    size: u64,
 }
 
 #[cfg(test)]
@@ -263,7 +307,7 @@ mod test {
             QuayImporter {
                 source: "quay.io".into(),
                 namespace: Some("redhat-user-workloads".into()),
-                size_limit: Some(ByteSize::kib(3).into()),
+                size_limit: Some(ByteSize::kib(5).into()),
                 ..Default::default()
             },
             ctx.ingestor.clone(),
@@ -274,6 +318,23 @@ mod test {
             OffsetDateTime::now_utc().unix_timestamp(),
         )));
         walker.run().await?;
+
+        Ok(())
+    }
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn invalid_source(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let walker = QuayWalker::new(
+            QuayImporter {
+                source: "invalid source".into(),
+                ..Default::default()
+            },
+            ctx.ingestor.clone(),
+            Arc::new(Mutex::new(ReportBuilder::new())),
+            (),
+        )?;
+        assert!(walker.run().await.is_err());
 
         Ok(())
     }
