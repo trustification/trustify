@@ -65,6 +65,60 @@ oidc:
         value: 5460cc91-4e20-4edd-881c-b15b169f8a79 # notsecret, replace
 ----
 
+=== Collecting traces and metrics
+
+To enable observability, you must configure application-level telemetry using
+command-line flags. Both metrics and traces are optional and can be enabled independently
+or together. However, an OpenTelemetry Collector endpoint is required when either signal is enabled.
+
+As Trustify do not ship with an OpenTelemetry Collector, we do provide an opinionated
+infrastructure Helm chart for this case at: https://github.com/trustification/trustify-helm-charts/tree/main/charts/trustify-infrastructure
+
+Telemetry is configured via Helm values, which are rendered as command-line flags
+passed to the application on startup. Example with Minikube:
+
+[source,bash]
+----
+helm upgrade --install -n $NAMESPACE \
+  --repo https://trustification.io/trustify-helm-charts/ trustify trustify \
+  --values values-minikube.yaml \
+  --set-string appDomain=$APP_DOMAIN \
+  --set tracing.enabled=true \
+  --set metrics.enabled=true \
+  --set-string collector.endpoint="http://infrastructure-otelcol:4317"
+----
+
+Optionally, the following OpenTelemetry settings can be customized using Helm CLI flags:
+
+[source,bash]
+----
+--set metrics.otelMetricExportInterval=1000
+--set tracing.otelBspMaxExportBatchSize=64
+--set tracing.otelTracesSampler="traceidratio"
+--set tracing.otelTracesSamplerArg=1
+----
+
+It will override the following environment variables:
+
+* The maximum number of spans per batch, controlled by `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`.
+* The trace sampling strategy, set via `OTEL_TRACES_SAMPLER`.
+* The trace sampling probability, configured using `OTEL_TRACES_SAMPLER_ARG`.
+* The metrics export interval, which defaults to 60 seconds and can be adjusted via `OTEL_METRIC_EXPORT_INTERVAL`.
+
+For Minikube, we are using the following default values:
+
+[source,yaml]
+----
+- name: OTEL_METRIC_EXPORT_INTERVAL
+  value: "60000"
+- name: OTEL_BSP_MAX_EXPORT_BATCH_SIZE
+  value: "32"
+- name: OTEL_TRACES_SAMPLER
+  value: parentbased_traceidratio
+- name: OTEL_TRACES_SAMPLER_ARG
+  value: "0.1"
+----
+
 == AWS services
 
 It also is possible to use AWS managed services. The following AWS services can be used:
@@ -443,7 +497,7 @@ Complete the following steps to configure Keycloak:
 
  * Navigate to the **Clients** section and select the `frontend` client that you imported in <<_client_import,Client Import>>.
  * In the **Valid Redirect URIs** field, add the application URL that will be used after the Helm installation which is `https://server{appDomain}`.
- 
+
 [NOTE]
  Failure to update this field will result in a redirect URI error during application login.
 
@@ -591,7 +645,7 @@ For the RHTPA installation, the following S3 values are retrieved from your Red 
 * **type**: `s3`
 * **region**: The external DNS from the noobaa status command. For more information, refer to <<_retrieve_noobaa_credentials_and_endpoint,Object Storage Configuration and Testing>> section.
 * **bucket**: S3 Bucket created
-* **accessKey**: AWS_ACCESS_KEY_ID 
+* **accessKey**: AWS_ACCESS_KEY_ID
 * **secretKey**: AWS_SECRET_ACCESS_KEY
 
 Additionally, you must refer to the `tls.crt` file for installing with the `Values.tls.additionalTrustAnchor` option.
@@ -606,7 +660,7 @@ The Red Hat Build of Opentelemetry provides a way to collect and export telemetr
 * Before installing - Add one or more tenants, and configure <<_tempo_tenant_configuration, read and write>> access. You can configure such an authorization setup by using a cluster role and cluster role binding for the Kubernetes Role-Based Access Control (RBAC). By default, no users are granted read or write permissions.
 
 [[_otel_collector_installation]]
-==== Installation  
+==== Installation
 
 NOTE: Official documentation for Red Hat Build of OpenTelemetry Operator link:https://docs.redhat.com/en/documentation/openshift_container_platform/4.19/html-single/red_hat_build_of_opentelemetry/index#install-otel[installation]
 
@@ -642,7 +696,7 @@ spec:
   serviceAccount: otel-collector
   config:
     connectors:
-      spanmetrics: 
+      spanmetrics:
         metrics_flush_interval: 15s
     receivers:
       otlp:
@@ -708,7 +762,7 @@ spec:
 +
 [source, bash]
 ----
-helm upgrade --install -n $NAMESPACE trustify openshift-helm-charts/redhat-trusted-profile-analyzer  --values PATH_TO_VALUES_FILE --set-string appDomain=$APP_DOMAIN --set tracing.enabled=true --set metrics.enabled=true --set-string collector.endpoint="grpc://dev-collector:4317" 
+helm upgrade --install -n $NAMESPACE trustify openshift-helm-charts/redhat-trusted-profile-analyzer  --values PATH_TO_VALUES_FILE --set-string appDomain=$APP_DOMAIN --set tracing.enabled=true --set metrics.enabled=true --set-string collector.endpoint="grpc://dev-collector:4317"
 ----
 
 [[_verify_otel_collector]]
@@ -891,14 +945,14 @@ type: Opaque
 [source, yaml]
 ----
 apiVersion: tempo.grafana.com/v1alpha1
-kind: TempoStack 
+kind: TempoStack
 metadata:
   name: simplest
   # (1) Namespace for the TempoStack
   namespace: <Namespace>
 spec:
-  storage: 
-    secret: 
+  storage:
+    secret:
     # (2) Secret containing the S3 credentials
       name: s3-secret
       type: s3
@@ -909,16 +963,16 @@ spec:
         memory: 2Gi
         cpu: 2000m
   tenants:
-    mode: openshift 
-    authentication: 
-      - tenantName: dev 
+    mode: openshift
+    authentication:
+      - tenantName: dev
       # (3) Unique UUID for the tenant
-        tenantId: "1610b0c3-c509-4592-a256-a1871353dbfa" 
+        tenantId: "1610b0c3-c509-4592-a256-a1871353dbfa"
       - tenantName: prod
         tenantId: "1610b0c3-c509-4592-a256-a1871353dbfb"
   template:
     gateway:
-      enabled: true 
+      enabled: true
     queryFrontend:
       jaegerQuery:
         enabled: true
@@ -927,7 +981,7 @@ spec:
 **References:**
 
 . _Namespace for the TempoStack:_ To keep the permissions and access control simple, TempoStack is deployed in the same namespace as the RHTPA installation. example `trustify`.
-. _Secret containing the S3 credentials:_ The secret containing the S3 credentials for the object storage. 
+. _Secret containing the S3 credentials:_ The secret containing the S3 credentials for the object storage.
 . _Unique UUID for the tenant:_ The unique UUID for the tenant is used to identify the tenant in the TempoStack. It is recommended to use a unique UUID for each tenant.
 
 ====== Distributed tracing UI Plugin:
@@ -948,7 +1002,7 @@ spec:
 ----
 * After the installation, Refresh the web console
 * `Traces` option will be available in the left navigation menu of the OpenShift web console under `Observe` section
-* <<_otel_collector_configuration, Configure OTEL collector>> with the tempo tracing endpoint for the otlp.endpoint under the exporters section. 
+* <<_otel_collector_configuration, Configure OTEL collector>> with the tempo tracing endpoint for the otlp.endpoint under the exporters section.
 
 [[_minio_installation]]
 ==== MinIO Installation
@@ -1062,8 +1116,8 @@ spec:
       app.kubernetes.io/name: dev-collector
   endpoints:
   - port: prometheus
-    interval: 30s           
-    path: /metrics 
+    interval: 30s
+    path: /metrics
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
