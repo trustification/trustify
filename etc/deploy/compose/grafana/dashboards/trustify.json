@@ -28,6 +28,19 @@
   "links": [],
   "panels": [
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 11,
+      "panels": [],
+      "title": "Trustify - Performance",
+      "type": "row"
+    },
+    {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -116,7 +129,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "id": 10,
       "options": {
@@ -212,7 +225,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 7
+        "y": 8
       },
       "id": 8,
       "options": {
@@ -245,6 +258,112 @@
       ],
       "title": "API request throughput (requests/sec)",
       "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 13,
+      "panels": [],
+      "title": "Trustify - SLOs",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "description": "Percentage of requests that failed (status code = 4xx | 5xx) (Lower is better).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.0.1",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "sum by (job) (\n  rate(http_server_duration_seconds_count{http_response_status_code=~\"4..|5..\", job=\"trustify\"}[10m])\n)\n/\nsum by (job) (\n  rate(http_server_duration_seconds_count{http_response_status_code!~\"4..|5..\", job=\"trustify\"}[10m])\n)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Percentage of requests that failed (status code = 4xx | 5xx)",
+      "type": "timeseries"
     }
   ],
   "preload": false,
@@ -254,8 +373,8 @@
     "list": [
       {
         "current": {
-          "text": "prometheus",
-          "value": "prometheus"
+          "text": "Prometheus",
+          "value": "PBFA97CFB590B2093"
         },
         "name": "datasource",
         "options": [],
@@ -272,7 +391,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Trustify Performance",
-  "uid": "2n3ADXSIk",
+  "title": "Trustify Performance Copy Copy",
+  "uid": "a3630bb7-59a9-4377-80dc-5c7e7e1f6816",
   "version": 1
 }
