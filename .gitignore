@@ -5,6 +5,7 @@
 .trustify
 /download/
 .envrc
+.env
 
 *.cdx.json
 *.folded
