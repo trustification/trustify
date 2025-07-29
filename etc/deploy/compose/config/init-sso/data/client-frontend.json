@@ -29,5 +29,18 @@
   "attributes": {
     "access.token.lifespan": "300",
     "post.logout.redirect.uris": "+"
-  }
+  },
+  "protocolMappers": [
+    {
+      "name": "sub",
+      "protocol": "openid-connect",
+      "protocolMapper": "oidc-sub-mapper",
+      "consentRequired": false,
+      "config": {
+        "access.token.claim": "true",
+        "claim.name": "sub",
+        "jsonType.label": "String"
+      }
+    }
+  ]
 }

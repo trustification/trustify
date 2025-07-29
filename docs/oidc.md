@@ -17,6 +17,18 @@ Use the `--devmode` flag to start the server with the default values.
 > [!WARNING]
 > This setup contains well-known credentials, which are not secure!
 
+### GitHub Identity Provider
+
+In order to configure GitHub as external Identity Provider, the init scripts allow setting the `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` environment variables.
+If present, the integration will be configured at startup.
+
+Make sure to create an [OAuth App](https://github.com/settings/developers) in GitHub beforehand.
+
+- Use the Client ID it as `GITHUB_CLIENT_ID`
+- Generate a Client Secret and use it as `GITHUB_CLIENT_SECRET`
+- Homepage URL: `http://localhost:8080/`
+- Authorization callback URL: `http://localhost:8090/realms/trustify/broker/github/endpoint`
+
 ## Embedded OIDC server
 
 You can enable an embedded OIDC server instead of using an external one.
