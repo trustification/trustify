@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753363700624,
+  "lastUpdate": 1753878138015,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12957,6 +12957,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/5a4c127aca7a0df4b3ed941fc0448939b2045904"
         },
         "date": 1753363699211,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "discolo@gmail.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "committer": {
+            "email": "discolo@gmail.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "distinct": false,
+          "id": "6537cdc5029011ed705b58a50ca988ce76d69f8e",
+          "message": "Update docs/oidc.md\n\nCo-authored-by: sourcery-ai[bot] <58596630+sourcery-ai[bot]@users.noreply.github.com>",
+          "timestamp": "2025-07-30T11:58:48Z",
+          "tree_id": "0827e2b963bab7dbaab54180085743adc9dc8c98",
+          "url": "https://github.com/trustification/trustify/commit/6537cdc5029011ed705b58a50ca988ce76d69f8e"
+        },
+        "date": 1753878137197,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
