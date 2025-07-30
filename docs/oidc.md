@@ -24,7 +24,7 @@ If present, the integration will be configured at startup.
 
 Make sure to create an [OAuth App](https://github.com/settings/developers) in GitHub beforehand.
 
-- Use the Client ID it as `GITHUB_CLIENT_ID`
+- Use the Client ID as `GITHUB_CLIENT_ID`
 - Generate a Client Secret and use it as `GITHUB_CLIENT_SECRET`
 - Homepage URL: `http://localhost:8080/`
 - Authorization callback URL: `http://localhost:8090/realms/trustify/broker/github/endpoint`
