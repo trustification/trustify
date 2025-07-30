@@ -19,7 +19,7 @@ Use the `--devmode` flag to start the server with the default values.
 
 ### GitHub Identity Provider
 
-In order to configure GitHub as external Identity Provider, the init scripts allow setting the `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` environment variables.
+In order to configure GitHub as an external Identity Provider, the init scripts allow setting the `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` environment variables.
 If present, the integration will be configured at startup.
 
 Make sure to create an [OAuth App](https://github.com/settings/developers) in GitHub beforehand.
