@@ -417,3 +417,30 @@ async fn test_tc2677(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 })));
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn test_tc2717(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_documents([
+        "cyclonedx/rh/latest_filters/middleware/maven/quarkus/3.15.4/quarkus-camel-bom-3.15.4.json",
+        "cyclonedx/rh/latest_filters/middleware/maven/quarkus/3.15.4/quarkus-cxf-bom-3.15.4.json",
+    ])
+    .await?;
+
+    let uri: String = "/api/v2/analysis/component".to_string();
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
+    let uri: String = format!(
+        "/api/v2/analysis/latest/component/{}",
+        urlencoding::encode("pkg:maven/io.vertx/vertx-core")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    assert_eq!(response["total"], 2);
+
+    Ok(())
+}
