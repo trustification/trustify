@@ -17,8 +17,7 @@ use opentelemetry::KeyValue;
 use petgraph::{Graph, prelude::NodeIndex};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
-    FromQueryResult, QueryFilter, QuerySelect, QueryTrait, Related, RelationTrait, Select,
-    Statement,
+    FromQueryResult, QueryFilter, QuerySelect, QueryTrait, RelationTrait, Select, Statement,
 };
 use sea_query::{Alias, Cond, Expr, JoinType, PostgresQueryBuilder, Query, SelectStatement};
 use serde_json::Value;
@@ -347,20 +346,23 @@ impl InnerService {
             sbom_id: Uuid,
         }
 
-        fn find<E>() -> Select<E>
-        where
-            E: EntityTrait + Related<sbom::Entity>,
-        {
+        fn find(sbom_package_relation: sbom_node::Relation) -> Select<sbom_node::Entity> {
             const RANK_SQL: &str =
                 "RANK() OVER (PARTITION BY sbom_node.name,cpe.id ORDER BY sbom.published DESC)";
 
-            E::find()
+            sbom_node::Entity::find()
                 .select_only()
                 .column(sbom::Column::SbomId)
                 .column(sbom::Column::Published)
                 .column(cpe::Column::Id)
                 .column_as(Expr::cust(RANK_SQL), "rank")
                 .left_join(sbom::Entity)
+                .join(JoinType::LeftJoin, sbom_package_relation.def())
+                .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+                .join(
+                    JoinType::LeftJoin,
+                    sbom_package_cpe_ref::Relation::Cpe.def(),
+                )
         }
 
         async fn query_all<C>(
@@ -394,37 +396,19 @@ impl InnerService {
 
         let latest_sbom_ids: Vec<_> = match query {
             GraphQuery::Component(ComponentReference::Id(node_id)) => {
-                let subquery = find::<sbom_node::Entity>()
-                    .join(JoinType::LeftJoin, sbom_node::Relation::Package.def())
-                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
-                    .join(
-                        JoinType::LeftJoin,
-                        sbom_package_cpe_ref::Relation::Cpe.def(),
-                    )
+                let subquery = find(sbom_node::Relation::Package)
                     .filter(sbom_node::Column::NodeId.eq(node_id));
 
                 query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Name(name)) => {
-                let subquery = find::<sbom_node::Entity>()
-                    .join(JoinType::LeftJoin, sbom_node::Relation::Package.def())
-                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
-                    .join(
-                        JoinType::LeftJoin,
-                        sbom_package_cpe_ref::Relation::Cpe.def(),
-                    )
-                    .filter(sbom_node::Column::Name.eq(name));
+                let subquery =
+                    find(sbom_node::Relation::Package).filter(sbom_node::Column::Name.eq(name));
 
                 query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Purl(purl)) => {
-                let subquery = find::<sbom_node::Entity>()
-                    .join(JoinType::LeftJoin, sbom_node::Relation::Package.def())
-                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
-                    .join(
-                        JoinType::LeftJoin,
-                        sbom_package_cpe_ref::Relation::Cpe.def(),
-                    )
+                let subquery = find(sbom_node::Relation::Package)
                     .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
                     .join(
                         JoinType::LeftJoin,
@@ -448,16 +432,7 @@ impl InnerService {
                 query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
-                let subquery = find::<sbom_node::Entity>()
-                    .join(
-                        JoinType::LeftJoin,
-                        sbom_node::Relation::PackageBySbomId.def(),
-                    )
-                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
-                    .join(
-                        JoinType::LeftJoin,
-                        sbom_package_cpe_ref::Relation::Cpe.def(),
-                    )
+                let subquery = find(sbom_node::Relation::PackageBySbomId)
                     // For CPE searches the .not_like("pkg:%") filter is required
                     .filter(sbom_node::Column::Name.not_like("pkg:%"))
                     .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()));
@@ -465,14 +440,8 @@ impl InnerService {
                 query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Query(query) => {
-                let subquery = find::<sbom_node::Entity>()
-                    .join(JoinType::LeftJoin, sbom_node::Relation::Package.def())
+                let subquery = find(sbom_node::Relation::Package)
                     .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
-                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
-                    .join(
-                        JoinType::LeftJoin,
-                        sbom_package_cpe_ref::Relation::Cpe.def(),
-                    )
                     .join(
                         JoinType::LeftJoin,
                         sbom_package_purl_ref::Relation::Purl.def(),
