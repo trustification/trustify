@@ -595,7 +595,9 @@ impl AnalysisService {
                 .is_some_and(|node| node.name.eq(component_name)),
             GraphQuery::Component(ComponentReference::Purl(purl)) => {
                 graph.node_weight(i).is_some_and(|node| match node {
-                    graph::Node::Package(package) => package.purl.contains(purl),
+                    graph::Node::Package(package) => package.purl.iter().any(|package_purl| {
+                        package_purl.to_string().starts_with(&purl.to_string())
+                    }),
                     _ => false,
                 })
             }
