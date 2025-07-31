@@ -9,6 +9,29 @@ on:
 
 jobs:
 
+  vendor:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create vendor archive
+        run: |
+          .github/scripts/vendor.sh
+
+      - name: Stage vendor archive
+        run: |
+          tar caf vendor.tar.xz vendor
+
+      - name: Upload vendor archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: vendor
+          path: |
+            vendor.tar.xz
+            vendor.toml
+          if-no-files-found: error
+
   build:
     name: Build
     runs-on: ${{ matrix.os }}
@@ -32,20 +55,9 @@ jobs:
             install: |
               sudo apt install -y libssl-dev
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-22.04
-            cross: "true"
-            # Cross' Ubuntu container is based on 20.04. Its OpenSSL version is too old for us.
-            args: --features vendored
-
-          #- target: x86_64-unknown-linux-musl
-          #  os: ubuntu-22.04
-          #  args: --features vendored
-          #  install: |
-          #    sudo apt install -y musl-tools
-          #- target: aarch64-unknown-linux-musl
-          #  os: ubuntu-22.04
-          #  cross: "true"
-          #  args: --features vendored
+            os: ubuntu-22.04-arm
+            install: |
+              sudo apt install -y libssl-dev
 
           - target: x86_64-apple-darwin
             os: macos-13
@@ -111,13 +123,6 @@ jobs:
         run: |
           Set-ExecutionPolicy Unrestricted -Scope Process; iex (iwr "https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.ps1").Content
 
-      - name: Setup Cross
-        if: matrix.cross == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          cargo binstall cross -y --force
-
       # Workaround for https://github.com/actions/runner-images/issues/12432
       # from https://github.com/rust-lang/rust/issues/141626#issuecomment-2919419236
       # Visual Studio bug tracker https://developercommunity.visualstudio.com/t/Regression-from-1943:-linkexe-crashes/10912960
@@ -129,6 +134,8 @@ jobs:
             core.exportVariable('RUSTFLAGS', '-Csymbol-mangling-version=v0');
 
       - run: mkdir -p upload
+
+      - run: npm --version
 
       - name: Build | Build
         shell: bash
@@ -144,10 +151,6 @@ jobs:
           fi
 
           CMD="cargo"
-
-          if [[ -n "${{ matrix.cross }}" ]]; then
-            CMD="cross"
-          fi
 
           # build options
 
