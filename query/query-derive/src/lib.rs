@@ -66,7 +66,7 @@ e.g. `purl:qualifiers:type:desc`"
     );
 
     let generated = quote! {
-        impl query::Query for #name {
+        impl trustify_query::Query for #name {
             fn generate_query_description() -> String {
                 #query_description.to_string()
             }

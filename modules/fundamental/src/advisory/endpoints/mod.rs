@@ -15,8 +15,6 @@ use crate::{
 use actix_web::{HttpResponse, Responder, delete, get, http::header, post, web};
 use config::Config;
 use futures_util::TryStreamExt;
-use query::TrustifyQuery;
-use query_derive::Query;
 use sea_orm::TransactionTrait;
 use std::str::FromStr;
 use time::OffsetDateTime;
@@ -30,6 +28,8 @@ use trustify_common::{
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Cache, Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
+use trustify_query::TrustifyQuery;
+use trustify_query_derive::Query;
 use utoipa::IntoParams;
 use uuid::Uuid;
 
