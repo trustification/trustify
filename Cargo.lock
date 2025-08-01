@@ -5705,21 +5705,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "query"
-version = "0.3.5"
-dependencies = [
- "utoipa",
-]
-
-[[package]]
-name = "query-derive"
-version = "0.3.5"
-dependencies = [
- "quote",
- "syn 2.0.104",
-]
-
-[[package]]
 name = "quick-xml"
 version = "0.38.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8536,8 +8521,6 @@ dependencies = [
  "opentelemetry_sdk",
  "osv",
  "packageurl",
- "query",
- "query-derive",
  "regex",
  "reqwest",
  "roxmltree",
@@ -8573,6 +8556,8 @@ dependencies = [
  "trustify-module-analysis",
  "trustify-module-ingestor",
  "trustify-module-storage",
+ "trustify-query",
+ "trustify-query-derive",
  "trustify-test-context",
  "urlencoding",
  "utoipa",
@@ -8789,6 +8774,21 @@ dependencies = [
  "trustify-test-context",
  "utoipa",
  "utoipa-actix-web",
+]
+
+[[package]]
+name = "trustify-query"
+version = "0.3.5"
+dependencies = [
+ "utoipa",
+]
+
+[[package]]
+name = "trustify-query-derive"
+version = "0.3.5"
+dependencies = [
+ "quote",
+ "syn 2.0.104",
 ]
 
 [[package]]
