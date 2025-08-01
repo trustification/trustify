@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1753878138015,
+  "lastUpdate": 1754035327360,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -12986,6 +12986,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/6537cdc5029011ed705b58a50ca988ce76d69f8e"
         },
         "date": 1753878137197,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "b051a77836c0eb3993fac477724dd4702d4601b6",
+          "message": "chore: refactor load_latest_graphs_query.find to be less error prone\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-08-01T07:40:46Z",
+          "tree_id": "320e14e729ae5d3a81a657424b37fff0657529ce",
+          "url": "https://github.com/trustification/trustify/commit/b051a77836c0eb3993fac477724dd4702d4601b6"
+        },
+        "date": 1754035325554,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
