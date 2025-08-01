@@ -10,7 +10,7 @@ use opentelemetry::{
 use opentelemetry_otlp::{MetricExporter, SpanExporter};
 use opentelemetry_sdk::{
     Resource,
-    metrics::{PeriodicReader, SdkMeterProvider},
+    metrics::{Aggregation, Instrument, PeriodicReader, SdkMeterProvider, Stream},
     propagation::TraceContextPropagator,
     trace::{Sampler, Sampler::ParentBased, SdkTracerProvider},
 };
@@ -152,9 +152,30 @@ fn init_otlp_metrics(name: &str) {
         .with_service_name(name.to_string())
         .build();
 
+    #[allow(clippy::expect_used)]
     let provider = SdkMeterProvider::builder()
         .with_reader(reader)
         .with_resource(resource)
+        .with_view(|i: &Instrument| {
+            if i.name() == "http.server.duration" {
+                Some(
+                    Stream::builder()
+                        .with_aggregation(Aggregation::ExplicitBucketHistogram {
+                            boundaries: vec![
+                                0.0, 0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0,
+                                2.5, 5.0, 7.5, 10.0,
+                            ],
+                            record_min_max: true,
+                        })
+                        .build()
+                        .expect(
+                            "Unable to build a custom histogram bucket boundaries aggregation.",
+                        ),
+                )
+            } else {
+                None
+            }
+        })
         .build();
 
     println!("Exporting metrics to OTEL Collector.");
