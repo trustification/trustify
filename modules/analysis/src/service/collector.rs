@@ -1,16 +1,16 @@
 use super::*;
-use parking_lot::Mutex;
+use futures::future::join_all;
 use std::{collections::HashMap, sync::Arc};
 
 /// Tracker for visited nodes, across graphs.
 #[derive(Default, Clone)]
 pub struct DiscoveredTracker {
-    cache: Arc<Mutex<HashMap<*const NodeGraph, FixedBitSet>>>,
+    cache: Arc<tokio::sync::Mutex<HashMap<*const NodeGraph, FixedBitSet>>>,
 }
 
 impl DiscoveredTracker {
-    pub fn visit(&self, graph: &NodeGraph, node: NodeIndex) -> bool {
-        let mut maps = self.cache.lock();
+    pub async fn visit(&self, graph: &NodeGraph, node: NodeIndex) -> bool {
+        let mut maps = self.cache.lock().await;
         let map = maps
             .entry(graph as *const Graph<_, _>)
             .or_insert_with(|| graph.visit_map());
@@ -116,7 +116,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
             return None;
         }
 
-        if !self.discovered.visit(self.graph, self.node) {
+        if !self.discovered.visit(self.graph, self.node).await {
             log::debug!("node got visited already");
             // we've already seen this
             return None;
@@ -240,44 +240,51 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
     }
 
     pub async fn collect_graph(&self) -> Vec<Node> {
-        let mut result = vec![];
-        log::debug!("Collecting graph for {:?}", self.node);
-        for edge in self.graph.edges_directed(self.node, self.direction) {
-            log::debug!("edge {edge:?}");
+        let edges: Vec<_> = self
+            .graph
+            .edges_directed(self.node, self.direction)
+            .collect();
 
-            // we only recurse in one direction
-            let (ancestor, descendent, package_node) = match self.direction {
-                Direction::Incoming => (
-                    Box::pin(self.continue_node(edge.source()).collect()).await,
-                    None,
-                    self.graph.node_weight(edge.source()),
-                ),
-                Direction::Outgoing => (
-                    None,
-                    Box::pin(self.continue_node(edge.target()).collect()).await,
-                    self.graph.node_weight(edge.target()),
-                ),
-            };
+        let futures = edges.iter().map(|edge| {
+            let collector = self.continue_node(match self.direction {
+                Direction::Incoming => edge.source(),
+                Direction::Outgoing => edge.target(),
+            });
 
+            async move { (collector.collect().await, edge) }
+        });
+
+        let results = join_all(futures).await;
+
+        let mut final_result = Vec::new();
+        for (result, edge) in results {
             let relationship = edge.weight();
-
             if !self.relationships.is_empty() && !self.relationships.contains(relationship) {
-                // if we have entries, and no match, continue with the next
                 continue;
             }
+
+            let package_node = self.graph.node_weight(match self.direction {
+                Direction::Incoming => edge.source(),
+                Direction::Outgoing => edge.target(),
+            });
 
             let Some(package_node) = package_node else {
                 continue;
             };
 
-            result.push(Node {
+            let (ancestors, descendants) = match self.direction {
+                Direction::Incoming => (result, None),
+                Direction::Outgoing => (None, result),
+            };
+
+            final_result.push(Node {
                 base: BaseSummary::from(package_node),
                 relationship: Some(*relationship),
-                ancestors: ancestor,
-                descendants: descendent,
+                ancestors,
+                descendants,
             });
         }
 
-        result
+        final_result
     }
 }

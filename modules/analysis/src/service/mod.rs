@@ -415,14 +415,15 @@ impl AnalysisService {
 
     /// Collect nodes from the graph
     #[instrument(skip(self, create, graphs))]
-    async fn collect_graph<'a, C>(
+    async fn collect_graph<'a, 'g, F, Fut>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
-        graphs: &[(String, Arc<PackageGraph>)],
-        create: C,
+        graphs: &'g [(String, Arc<PackageGraph>)],
+        create: F,
     ) -> Vec<Node>
     where
-        C: AsyncFn(&Graph<graph::Node, Relationship>, NodeIndex, &graph::Node) -> Node,
+        F: Fn(&'g Graph<graph::Node, Relationship>, NodeIndex, &'g graph::Node) -> Fut + Clone,
+        Fut: Future<Output = Node>,
     {
         let query = query.into();
 
