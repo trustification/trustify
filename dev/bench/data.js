@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1754035327360,
+  "lastUpdate": 1754061315979,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -13015,6 +13015,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b051a77836c0eb3993fac477724dd4702d4601b6"
         },
         "date": 1754035325554,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "85362693ed5c0d19aa5fb30d2a21f14db4174c8f",
+          "message": "chore: refactor query package names\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-08-01T14:32:45Z",
+          "tree_id": "2fd8a84955afa46e36691a90bdd9711ae4c03152",
+          "url": "https://github.com/trustification/trustify/commit/85362693ed5c0d19aa5fb30d2a21f14db4174c8f"
+        },
+        "date": 1754061314280,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
