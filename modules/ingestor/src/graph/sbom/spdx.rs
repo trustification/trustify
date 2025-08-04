@@ -198,6 +198,8 @@ impl SbomContext {
             license_extracted_refs.add(extracted_licensing_info);
         }
 
+        licenses.put_custom_license_list(license_extracted_refs.get_copy_license_refs());
+
         let mut packages =
             PackageCreator::with_capacity(self.sbom.sbom_id, sbom_data.package_information.len());
 

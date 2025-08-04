@@ -1,16 +1,20 @@
 use flate2::read::GzDecoder;
-use sea_orm::EntityTrait;
+use sea_orm::{ColumnTrait, QuerySelect};
+use sea_orm::{EntityTrait, QueryFilter};
+use sea_query::Cond;
+use serde_json::{Value, json};
 use std::io::Read;
 use tar::Archive;
 use test_context::test_context;
 use test_log::test;
 use trustify_entity::sbom_package_license::LicenseCategory;
-use trustify_entity::{sbom_package, sbom_package_license};
+use trustify_entity::{license, sbom_package, sbom_package_license};
 use trustify_module_fundamental::license::{
     model::sbom_license::SbomNameId,
     service::{LicenseService, license_export::LicenseExporter},
 };
 use trustify_test_context::TrustifyContext;
+use trustify_test_context::subset::ContainsSubset;
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
@@ -36,6 +40,59 @@ async fn test_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(96, license_result.sbom_package_license.len());
     assert_eq!(0, license_result.extracted_licensing_infos.len());
 
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn test_custom_license_refs_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let result = ctx
+        .ingest_document("spdx/SATELLITE-6.15-RHEL-8.json")
+        .await?;
+
+    assert_eq!(
+        Some("https://access.redhat.com/security/data/sbom/spdx/SATELLITE-6.15-RHEL-8"),
+        result.clone().document_id.as_deref()
+    );
+
+    let license_result = license::Entity::find()
+        .filter(
+            Cond::any()
+                .add(license::Column::Text.eq("LicenseRef-2 OR Ruby"))
+                .add(license::Column::Text.eq("LicenseRef-GPLv3 AND LicenseRef-21")),
+        )
+        .select_only()
+        .column(license::Column::Id)
+        .column(license::Column::Text)
+        .column(license::Column::SpdxLicenses)
+        .column(license::Column::SpdxLicenseExceptions)
+        .column(license::Column::CustomLicenseRefs)
+        .all(&ctx.db)
+        .await?;
+
+    assert!(
+        !license_result.is_empty(),
+        "No license found with the specified text."
+    );
+    let expected_result = json!([
+        {
+            "id": "107c5a51-d315-56fb-9d4c-dd337f242d2e",
+            "text": "LicenseRef-2 OR Ruby",
+            "spdx_licenses": ["Ruby"],
+            "spdx_license_exceptions": null,
+            "custom_license_refs": ["LicenseRef-2:GPLv2+"]
+        },
+        {
+            "id": "5bec012e-9891-5715-a550-09287ced2d54",
+            "text": "LicenseRef-GPLv3 AND LicenseRef-21",
+            "spdx_licenses": null,
+            "spdx_license_exceptions": null,
+            "custom_license_refs": ["LicenseRef-GPLv3:GPLv3", "LicenseRef-21:Public domain"]
+        }
+    ]);
+    let license_result_value: Value =
+        serde_json::to_value(&license_result).expect("Failed to serialize license_result to JSON");
+    assert!(expected_result.contains_subset(license_result_value));
     Ok(())
 }
 
