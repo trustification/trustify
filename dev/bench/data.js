@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1754061315979,
+  "lastUpdate": 1754293860071,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -13044,6 +13044,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/85362693ed5c0d19aa5fb30d2a21f14db4174c8f"
         },
         "date": 1754061314280,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "c8f7067c80b3f47efb03d6f469c0e8be59ed559f",
+          "message": "docs: what is required for enabling traces/metrics",
+          "timestamp": "2025-08-04T07:26:26Z",
+          "tree_id": "88ba135489b4300f2a3abcfb8316319e953e0121",
+          "url": "https://github.com/trustification/trustify/commit/c8f7067c80b3f47efb03d6f469c0e8be59ed559f"
+        },
+        "date": 1754293858451,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
