@@ -424,8 +424,7 @@ impl SbomContext {
             license: license.to_string(),
         };
 
-        let (spdx_licenses, spdx_exceptions, custom_license_refs, custom_document_license_refs) =
-            license_info.spdx_info();
+        let active_model = LicenseBuilder::new(license_info.clone()).to_active_model();
 
         let license = license::Entity::find_by_id(license_info.uuid())
             .one(connection)
@@ -434,33 +433,7 @@ impl SbomContext {
         let license = if let Some(license) = license {
             license
         } else {
-            license::ActiveModel {
-                id: Set(license_info.uuid()),
-                text: Set(license_info.license.clone()),
-                spdx_licenses: if spdx_licenses.is_empty() {
-                    Set(None)
-                } else {
-                    Set(Some(spdx_licenses))
-                },
-                spdx_license_exceptions: if spdx_exceptions.is_empty() {
-                    Set(None)
-                } else {
-                    Set(Some(spdx_exceptions))
-                },
-                custom_license_refs: if custom_license_refs.is_empty() {
-                    Set(None)
-                } else {
-                    Set(Some(custom_license_refs))
-                },
-
-                custom_document_license_refs: if custom_document_license_refs.is_empty() {
-                    Set(None)
-                } else {
-                    Set(Some(custom_document_license_refs))
-                },
-            }
-            .insert(connection)
-            .await?
+            active_model.insert(connection).await?
         };
 
         sbom_package_license::ActiveModel {

@@ -63,8 +63,8 @@ impl LicensingInfoCreator {
         });
     }
 
-    pub fn get_copy_license_refs(&self) -> Vec<licensing_infos::ActiveModel> {
-        self.license_refs.clone()
+    pub fn get_copy_license_refs(&self) -> &[licensing_infos::ActiveModel] {
+        &self.license_refs
     }
 
     #[instrument(skip_all, fields(num = self.license_refs.len()), err)]

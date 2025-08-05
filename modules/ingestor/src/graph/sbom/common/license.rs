@@ -11,6 +11,15 @@ const NAMESPACE: Uuid = Uuid::from_bytes([
     0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0x41, 0x18, 0xa1, 0x38, 0xb8, 0x9f, 0x19, 0x35, 0xe0, 0xa7,
 ]);
 
+/// SPDX license information extracted from an SPDX expression
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SPDXInfo {
+    pub spdx_licenses: Vec<String>,
+    pub spdx_license_exceptions: Vec<String>,
+    pub custom_license_refs: Vec<String>,
+    pub custom_document_license_refs: Vec<String>,
+}
+
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct LicenseInfo {
     pub license: String,
@@ -22,7 +31,7 @@ impl LicenseInfo {
         Uuid::new_v5(&NAMESPACE, self.license.to_lowercase().as_bytes())
     }
 
-    pub fn spdx_info(&self) -> (Vec<String>, Vec<String>, Vec<String>, Vec<String>) {
+    pub fn spdx_info(&self) -> SPDXInfo {
         SpdxExpression::parse(&self.license)
             .map(|parsed| {
                 let spdx_licenses = parsed
@@ -53,23 +62,65 @@ impl LicenseInfo {
                     .licenses()
                     .iter()
                     .filter(|e| e.license_ref && e.document_ref.is_some())
-                    .map(|e| {
-                        if let Some(doc_ref) = &e.document_ref {
+                    .filter_map(|e| {
+                        e.document_ref.as_ref().map(|doc_ref| {
                             format!("DocumentRef-{}:LicenseRef-{}", doc_ref, e.identifier)
-                        } else {
-                            String::default()
-                        }
+                        })
                     })
                     .collect::<Vec<_>>();
 
-                (
+                SPDXInfo {
                     spdx_licenses,
                     spdx_license_exceptions,
                     custom_license_refs,
                     custom_document_license_refs,
-                )
+                }
             })
-            .unwrap_or((vec![], vec![], vec![], vec![]))
+            .unwrap_or(SPDXInfo {
+                spdx_licenses: vec![],
+                spdx_license_exceptions: vec![],
+                custom_license_refs: vec![],
+                custom_document_license_refs: vec![],
+            })
+    }
+}
+
+pub struct LicenseBuilder {
+    pub license_info: LicenseInfo,
+}
+
+impl LicenseBuilder {
+    pub fn new(license_info: LicenseInfo) -> Self {
+        Self { license_info }
+    }
+
+    pub fn to_active_model(&self) -> license::ActiveModel {
+        let spdx_info = self.license_info.spdx_info();
+
+        license::ActiveModel {
+            id: Set(self.license_info.uuid()),
+            text: Set(self.license_info.license.clone()),
+            spdx_licenses: if spdx_info.spdx_licenses.is_empty() {
+                Set(None)
+            } else {
+                Set(Some(spdx_info.spdx_licenses))
+            },
+            spdx_license_exceptions: if spdx_info.spdx_license_exceptions.is_empty() {
+                Set(None)
+            } else {
+                Set(Some(spdx_info.spdx_license_exceptions))
+            },
+            custom_license_refs: if spdx_info.custom_license_refs.is_empty() {
+                Set(None)
+            } else {
+                Set(Some(spdx_info.custom_license_refs))
+            },
+            custom_document_license_refs: if spdx_info.custom_document_license_refs.is_empty() {
+                Set(None)
+            } else {
+                Set(Some(spdx_info.custom_document_license_refs))
+            },
+        }
     }
 }
 
@@ -81,37 +132,42 @@ pub struct LicenseCreator {
     /// database.
     pub licenses: BTreeMap<Uuid, license::ActiveModel>,
 
-    pub custom_license_list: Vec<licensing_infos::ActiveModel>,
+    /// Custom license lookup map: license_id -> name
+    custom_license_map: std::collections::HashMap<String, String>,
 }
 
 impl LicenseCreator {
     pub fn new() -> Self {
         Self {
             licenses: Default::default(),
-            custom_license_list: vec![],
+            custom_license_map: std::collections::HashMap::new(),
         }
     }
 
     pub fn put_custom_license_list(
         &mut self,
-        custom_license_list: Vec<licensing_infos::ActiveModel>,
+        custom_license_list: &[licensing_infos::ActiveModel],
     ) {
-        self.custom_license_list = custom_license_list;
+        self.custom_license_map = custom_license_list
+            .iter()
+            .filter_map(|c| {
+                if let (Set(license_id), Set(name)) = (&c.license_id, &c.name) {
+                    Some((license_id.clone(), name.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect();
     }
 
     pub fn add(&mut self, info: &LicenseInfo) {
         let uuid = info.uuid();
 
-        let (spdx_licenses, spdx_exceptions, custom_license_refs, custom_document_license_refs) =
-            info.spdx_info();
-        let missing_custom_refs: Vec<_> = custom_license_refs
+        let spdx_info = info.spdx_info();
+        let missing_custom_refs: Vec<_> = spdx_info
+            .custom_license_refs
             .iter()
-            .filter(|ref_id| {
-                !self
-                    .custom_license_list
-                    .iter()
-                    .any(|c| c.license_id == Set((*ref_id).to_string()))
-            })
+            .filter(|ref_id| !self.custom_license_map.contains_key(*ref_id))
             .cloned()
             .collect();
         if !missing_custom_refs.is_empty() {
@@ -120,51 +176,30 @@ impl LicenseCreator {
                 missing_custom_refs
             );
         }
-        let custom_license_refs_value = if custom_license_refs.is_empty() {
+        let custom_license_refs_value = if spdx_info.custom_license_refs.is_empty() {
             None
         } else {
-            Some(self.construct_custom_license(custom_license_refs.clone()))
+            Some(self.construct_custom_license(spdx_info.custom_license_refs.clone()))
         };
 
-        self.licenses.entry(uuid).or_insert(license::ActiveModel {
-            id: Set(uuid),
-            text: Set(info.license.clone()),
-            spdx_licenses: if spdx_licenses.is_empty() {
-                Set(None)
-            } else {
-                Set(Some(spdx_licenses))
-            },
-            spdx_license_exceptions: if spdx_exceptions.is_empty() {
-                Set(None)
-            } else {
-                Set(Some(spdx_exceptions))
-            },
-            custom_license_refs: Set(custom_license_refs_value),
-            custom_document_license_refs: if custom_document_license_refs.is_empty() {
-                Set(None)
-            } else {
-                Set(Some(custom_document_license_refs))
-            },
-        });
+        let mut active_model = LicenseBuilder::new(info.clone()).to_active_model();
+
+        // Update custom_license_refs with constructed value
+        if let Some(refs) = custom_license_refs_value {
+            active_model.custom_license_refs = Set(Some(refs));
+        }
+
+        self.licenses.entry(uuid).or_insert(active_model);
     }
 
     fn construct_custom_license(&self, custom_license_ids: Vec<String>) -> Vec<String> {
-        use std::collections::HashMap;
-        // Build a HashMap from license_id to name for fast lookup
-        let license_map: HashMap<&String, &String> = self
-            .custom_license_list
-            .iter()
-            .filter_map(|c| {
-                if let (Set(license_id), Set(name)) = (&c.license_id, &c.name) {
-                    Some((license_id, name))
-                } else {
-                    None
-                }
-            })
-            .collect();
         custom_license_ids
             .into_iter()
-            .filter_map(|id| license_map.get(&id).map(|name| format!("{}:{}", id, name)))
+            .filter_map(|id| {
+                self.custom_license_map
+                    .get(&id)
+                    .map(|name| format!("{}:{}", id, name))
+            })
             .collect()
     }
 

@@ -1,5 +1,5 @@
 use flate2::read::GzDecoder;
-use sea_orm::{ColumnTrait, QuerySelect, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect};
 
 use sea_query::Cond;
 use serde_json::{Value, json};
@@ -7,7 +7,9 @@ use std::io::Read;
 use tar::Archive;
 use test_context::test_context;
 use test_log::test;
-use trustify_entity::{sbom_package_license::LicenseCategory, license, sbom_package, sbom_package_license};
+use trustify_entity::{
+    license, sbom_package, sbom_package_license, sbom_package_license::LicenseCategory,
+};
 use trustify_module_fundamental::license::{
     model::sbom_license::SbomNameId,
     service::{LicenseService, license_export::LicenseExporter},
