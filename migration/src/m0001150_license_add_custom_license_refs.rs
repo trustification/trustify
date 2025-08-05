@@ -11,6 +11,9 @@ impl MigrationTrait for Migration {
                 Table::alter()
                     .table(License::Table)
                     .add_column(ColumnDef::new(License::CustomLicenseRefs).array(ColumnType::Text))
+                    .add_column(
+                        ColumnDef::new(License::CustomDocumentLicenseRefs).array(ColumnType::Text),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -24,6 +27,7 @@ impl MigrationTrait for Migration {
                 Table::alter()
                     .table(License::Table)
                     .drop_column(License::CustomLicenseRefs)
+                    .drop_column(License::CustomDocumentLicenseRefs)
                     .to_owned(),
             )
             .await?;
@@ -35,4 +39,5 @@ impl MigrationTrait for Migration {
 enum License {
     Table,
     CustomLicenseRefs,
+    CustomDocumentLicenseRefs,
 }

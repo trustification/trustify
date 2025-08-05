@@ -424,7 +424,8 @@ impl SbomContext {
             license: license.to_string(),
         };
 
-        let (spdx_licenses, spdx_exceptions, custom_license_refs) = license_info.spdx_info();
+        let (spdx_licenses, spdx_exceptions, custom_license_refs, custom_document_license_refs) =
+            license_info.spdx_info();
 
         let license = license::Entity::find_by_id(license_info.uuid())
             .one(connection)
@@ -450,6 +451,12 @@ impl SbomContext {
                     Set(None)
                 } else {
                     Set(Some(custom_license_refs))
+                },
+
+                custom_document_license_refs: if custom_document_license_refs.is_empty() {
+                    Set(None)
+                } else {
+                    Set(Some(custom_document_license_refs))
                 },
             }
             .insert(connection)

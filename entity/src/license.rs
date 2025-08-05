@@ -9,6 +9,7 @@ pub struct Model {
     pub spdx_licenses: Option<Vec<String>>,
     pub spdx_license_exceptions: Option<Vec<String>>,
     pub custom_license_refs: Option<Vec<String>>,
+    pub custom_document_license_refs: Option<Vec<String>>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -1,20 +1,18 @@
 use flate2::read::GzDecoder;
-use sea_orm::{ColumnTrait, QuerySelect};
-use sea_orm::{EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, QuerySelect, EntityTrait, QueryFilter};
+
 use sea_query::Cond;
 use serde_json::{Value, json};
 use std::io::Read;
 use tar::Archive;
 use test_context::test_context;
 use test_log::test;
-use trustify_entity::sbom_package_license::LicenseCategory;
-use trustify_entity::{license, sbom_package, sbom_package_license};
+use trustify_entity::{sbom_package_license::LicenseCategory, license, sbom_package, sbom_package_license};
 use trustify_module_fundamental::license::{
     model::sbom_license::SbomNameId,
     service::{LicenseService, license_export::LicenseExporter},
 };
-use trustify_test_context::TrustifyContext;
-use trustify_test_context::subset::ContainsSubset;
+use trustify_test_context::{TrustifyContext, subset::ContainsSubset};
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
@@ -46,20 +44,13 @@ async fn test_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn test_custom_license_refs_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let result = ctx
-        .ingest_document("spdx/SATELLITE-6.15-RHEL-8.json")
-        .await?;
-
-    assert_eq!(
-        Some("https://access.redhat.com/security/data/sbom/spdx/SATELLITE-6.15-RHEL-8"),
-        result.clone().document_id.as_deref()
-    );
+    let _result = ctx.ingest_document("spdx/license-sbom.json").await?;
 
     let license_result = license::Entity::find()
         .filter(
             Cond::any()
-                .add(license::Column::Text.eq("LicenseRef-2 OR Ruby"))
-                .add(license::Column::Text.eq("LicenseRef-GPLv3 AND LicenseRef-21")),
+                .add(license::Column::Text.eq("(LicenseRef-1 AND MIT) OR DocumentRef-OCP-TOOLS-4.11-RHEL-8:LicenseRef-Netscape"))
+                .add(license::Column::Text.eq("(LicenseRef-JasPer AND LicenseRef-1) OR DocumentRef-OCP-TOOLS-4.11-RHEL-8:LicenseRef-MPL")),
         )
         .select_only()
         .column(license::Column::Id)
@@ -67,6 +58,7 @@ async fn test_custom_license_refs_spdx(ctx: &TrustifyContext) -> Result<(), anyh
         .column(license::Column::SpdxLicenses)
         .column(license::Column::SpdxLicenseExceptions)
         .column(license::Column::CustomLicenseRefs)
+        .column(license::Column::CustomDocumentLicenseRefs)
         .all(&ctx.db)
         .await?;
 
@@ -76,20 +68,23 @@ async fn test_custom_license_refs_spdx(ctx: &TrustifyContext) -> Result<(), anyh
     );
     let expected_result = json!([
         {
-            "id": "107c5a51-d315-56fb-9d4c-dd337f242d2e",
-            "text": "LicenseRef-2 OR Ruby",
-            "spdx_licenses": ["Ruby"],
+            "id": "37551706-5849-5761-ab10-9fd29d317656",
+            "text": "(LicenseRef-1 AND MIT) OR DocumentRef-OCP-TOOLS-4.11-RHEL-8:LicenseRef-Netscape",
+            "spdx_licenses": ["MIT"],
             "spdx_license_exceptions": null,
-            "custom_license_refs": ["LicenseRef-2:GPLv2+"]
+            "custom_license_refs": ["LicenseRef-1:MIT/X License, GPL/CDDL, ASL2"],
+            "custom_document_license_refs": ["DocumentRef-OCP-TOOLS-4.11-RHEL-8:LicenseRef-Netscape"]
         },
         {
-            "id": "5bec012e-9891-5715-a550-09287ced2d54",
-            "text": "LicenseRef-GPLv3 AND LicenseRef-21",
+            "id": "119b7505-184b-5557-a729-dce9720718af",
+            "text": "(LicenseRef-JasPer AND LicenseRef-1) OR DocumentRef-OCP-TOOLS-4.11-RHEL-8:LicenseRef-MPL",
             "spdx_licenses": null,
             "spdx_license_exceptions": null,
-            "custom_license_refs": ["LicenseRef-GPLv3:GPLv3", "LicenseRef-21:Public domain"]
+            "custom_license_refs": ["LicenseRef-JasPer:JasPer", "LicenseRef-1:MIT/X License, GPL/CDDL, ASL2"],
+            "custom_document_license_refs": ["DocumentRef-OCP-TOOLS-4.11-RHEL-8:LicenseRef-MPL"]
         }
     ]);
+
     let license_result_value: Value =
         serde_json::to_value(&license_result).expect("Failed to serialize license_result to JSON");
     assert!(expected_result.contains_subset(license_result_value));

@@ -1,0 +1,393 @@
+{
+    "SPDXID": "SPDXRef-DOCUMENT",
+    "comment": "Licensing information is automatically generated from the upstream package meta data and may not be accurate.",
+
+    "creationInfo": {
+        "created": "2024-09-04T11:34:57Z",
+        "creators": [
+            "Organization: Red Hat Product Security (secalert@redhat.com)"
+        ],
+        "licenseListVersion": "3.22"
+    },
+    "dataLicense": "CC0-1.0",
+    "hasExtractedLicensingInfos": [
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: GPLv2+. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-0",
+            "name": "GPLv2+"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: MIT/X License, GPL/CDDL, ASL2. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-1",
+            "name": "MIT/X License, GPL/CDDL, ASL2"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: ASL 2.0. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-2",
+            "name": "ASL 2.0"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: [{'license': {'id': None}}]. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-3",
+            "name": "[{'license': {'id': None}}]"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: GPL+. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-4",
+            "name": "GPL+"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: Artistic. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-Artistic",
+            "name": "Artistic"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: Artistic 2.0. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-5",
+            "name": "Artistic 2.0"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: UCD. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-UCD",
+            "name": "UCD"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: GPLv3+. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-6",
+            "name": "GPLv3+"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: BSD. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-BSD",
+            "name": "BSD"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: Copyright only. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-7",
+            "name": "Copyright only"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: LGPLv2+. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-8",
+            "name": "LGPLv2+"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: [{'license': {'id': 'Apache-2.0'}}]. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-9",
+            "name": "[{'license': {'id': 'Apache-2.0'}}]"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: LGPLv2. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-LGPLv2",
+            "name": "LGPLv2"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: MPLv1.1. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-MPLv1.1",
+            "name": "MPLv1.1"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: CC-BY. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-CC-BY",
+            "name": "CC-BY"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: GPLv3. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-GPLv3",
+            "name": "GPLv3"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: LGPLv3+. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-10",
+            "name": "LGPLv3+"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: GFDL. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-GFDL",
+            "name": "GFDL"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: HSRL. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-HSRL",
+            "name": "HSRL"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: GPLv3+ and GPLv3+ with exceptions and GPLv2+ and GPLv2+ with exceptions and GPL+ and LGPLv2+ and LGPLv3+ and BSD and Public Domain and GFDL. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-11",
+            "name": "GPLv3+ and GPLv3+ with exceptions and GPLv2+ and GPLv2+ with exceptions and GPL+ and LGPLv2+ and LGPLv3+ and BSD and Public Domain and GFDL"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: Public Domain. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-12",
+            "name": "Public Domain"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: GPL-2.0-with-classpath-exception. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-GPL-2.0-with-classpath-exception",
+            "name": "GPL-2.0-with-classpath-exception"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: MPL. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-MPL",
+            "name": "MPL"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: Netscape. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-Netscape",
+            "name": "Netscape"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: AFL. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-AFL",
+            "name": "AFL"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: GPLv2. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-GPLv2",
+            "name": "GPLv2"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: (FTL or GPLv2+) and BSD and MIT and Public Domain and zlib with acknowledgement. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-13",
+            "name": "(FTL or GPLv2+) and BSD and MIT and Public Domain and zlib with acknowledgement"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: JasPer. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-JasPer",
+            "name": "JasPer"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: EPL-2.0 OR GNU General Public License, version 2 with the GNU Classpath Exception. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-14",
+            "name": "EPL-2.0 OR GNU General Public License, version 2 with the GNU Classpath Exception"
+        },
+        {
+            "comment": "External License Info is obtained from a build system which predates the SPDX specification and is not strict in accepting valid SPDX licenses.",
+
+            "extractedText": "The license info found in the package meta data is: Boost. See the specific package info in this SPDX document or the package itself for more details.",
+
+            "licenseId": "LicenseRef-Boost",
+            "name": "Boost"
+        }
+    ],
+    "name": "license-sbom",
+    "spdxVersion": "SPDX-2.3",
+    "documentNamespace": "https://access.redhat.com/security/data/sbom/spdx/license-sbom",
+    "packages": [
+        {
+            "SPDXID": "SPDXRef-0861bbe4-5abe-43eb-85aa-cfaba755db35",
+            "copyrightText": "NOASSERTION",
+            "downloadLocation": "registry.redhat.io/openshift/ose-jenkins:v4.11.0-1706518192",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:oci/ose-jenkins@sha256:e45374e70943b41b54561d72f08af81ca10222d1427b83a7885f6143af8261ef?repository_url=registry.redhat.io/openshift/ose-jenkins&tag=v4.11.0-1706518192",
+                    "referenceType": "purl"
+                },
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceLocator": "cpe:/a:redhat:ocp_tools:4.11::el8",
+                    "referenceType": "cpe22Type"
+                }
+            ],
+            "filesAnalyzed": false,
+            "homepage": "registry.redhat.io/openshift/ose-jenkins",
+            "licenseConcluded": "NOASSERTION",
+            "licenseDeclared": "LicenseRef-0",
+            "name": "openshift-jenkins-2-container",
+            "originator": "NOASSERTION",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "v4.11.0-1706518192"
+        },
+        {
+            "SPDXID": "SPDXRef-19c96199-1df1-4fba-a2e7-fed5421816dd",
+            "copyrightText": "NOASSERTION",
+            "downloadLocation": "https://access.redhat.com/downloads/content/package-browser",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:rpm/redhat/jenkins@2.426.3.1706516929-3.el8?arch=src",
+                    "referenceType": "purl"
+                },
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceLocator": "cpe:/a:redhat:ocp_tools:4.11::el8",
+                    "referenceType": "cpe22Type"
+                }
+            ],
+            "filesAnalyzed": false,
+            "licenseConcluded": "NOASSERTION",
+            "licenseDeclared": "(LicenseRef-1 AND MIT) OR DocumentRef-OCP-TOOLS-4.11-RHEL-8:LicenseRef-Netscape",
+            "name": "jenkins",
+            "originator": "NOASSERTION",
+            "packageFileName": "jenkins-2.426.3.1706516929-3.el8.src.rpm",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "2.426.3.1706516929-3.el8"
+        },
+        {
+            "SPDXID": "SPDXRef-5f910422-fa4c-4e97-b84c-59aebbc0d99e",
+            "copyrightText": "NOASSERTION",
+            "downloadLocation": "https://access.redhat.com/downloads/content/package-browser",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:rpm/redhat/helm@3.9.0-3.el8?arch=src",
+                    "referenceType": "purl"
+                },
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceLocator": "cpe:/a:redhat:ocp_tools:4.11::el8",
+                    "referenceType": "cpe22Type"
+                }
+            ],
+            "filesAnalyzed": false,
+            "licenseConcluded": "NOASSERTION",
+            "licenseDeclared": "LicenseRef-2",
+            "name": "helm",
+            "originator": "NOASSERTION",
+            "packageFileName": "helm-3.9.0-3.el8.src.rpm",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "3.9.0-3.el8"
+        },
+        {
+            "SPDXID": "SPDXRef-7ecb6789-1a95-4625-a48a-4fb1b0b5a45b",
+            "copyrightText": "NOASSERTION",
+            "downloadLocation": "https://access.redhat.com/downloads/content/package-browser",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:rpm/redhat/jenkins-2-plugins@4.11.1706516946-1.el8?arch=src",
+                    "referenceType": "purl"
+                },
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceLocator": "cpe:/a:redhat:ocp_tools:4.11::el8",
+                    "referenceType": "cpe22Type"
+                }
+            ],
+            "filesAnalyzed": false,
+            "licenseConcluded": "NOASSERTION",
+            "licenseDeclared": "LicenseRef-2",
+            "name": "jenkins-2-plugins",
+            "originator": "NOASSERTION",
+            "packageFileName": "jenkins-2-plugins-4.11.1706516946-1.el8.src.rpm",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "4.11.1706516946-1.el8"
+        },
+        {
+            "SPDXID": "SPDXRef-95107616-b673-4e1f-8144-f7e19e27ab31",
+            "copyrightText": "NOASSERTION",
+            "downloadLocation": "registry.redhat.io/openshift/jenkins-agent-base:v4.11.0-1706516858",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE_MANAGER",
+                    "referenceLocator": "pkg:oci/jenkins-agent-base@sha256:6b2401ee43270c3549378232a42411bd58874660216c9cd35ff0ed0ed0a94670?repository_url=registry.redhat.io/openshift/jenkins-agent-base&tag=v4.11.0-1706516858",
+                    "referenceType": "purl"
+                },
+                {
+                    "referenceCategory": "SECURITY",
+                    "referenceLocator": "cpe:/a:redhat:ocp_tools:4.11::el8",
+                    "referenceType": "cpe22Type"
+                }
+            ],
+            "filesAnalyzed": false,
+            "homepage": "registry.redhat.io/openshift/jenkins-agent-base",
+            "licenseConcluded": "(LicenseRef-JasPer AND LicenseRef-1) OR DocumentRef-OCP-TOOLS-4.11-RHEL-8:LicenseRef-MPL",
+            "licenseDeclared": "LicenseRef-0",
+            "name": "jenkins-agent-base-rhel8-container",
+            "originator": "NOASSERTION",
+            "supplier": "Organization: Red Hat",
+            "versionInfo": "v4.11.0-1706516858"
+        }
+    ]
+}

@@ -22,7 +22,7 @@ impl LicenseInfo {
         Uuid::new_v5(&NAMESPACE, self.license.to_lowercase().as_bytes())
     }
 
-    pub fn spdx_info(&self) -> (Vec<String>, Vec<String>, Vec<String>) {
+    pub fn spdx_info(&self) -> (Vec<String>, Vec<String>, Vec<String>, Vec<String>) {
         SpdxExpression::parse(&self.license)
             .map(|parsed| {
                 let spdx_licenses = parsed
@@ -49,9 +49,27 @@ impl LicenseInfo {
                     .map(|e| format!("LicenseRef-{}", e.identifier))
                     .collect::<Vec<_>>();
 
-                (spdx_licenses, spdx_license_exceptions, custom_license_refs)
+                let custom_document_license_refs = parsed
+                    .licenses()
+                    .iter()
+                    .filter(|e| e.license_ref && e.document_ref.is_some())
+                    .map(|e| {
+                        if let Some(doc_ref) = &e.document_ref {
+                            format!("DocumentRef-{}:LicenseRef-{}", doc_ref, e.identifier)
+                        } else {
+                            String::default()
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                (
+                    spdx_licenses,
+                    spdx_license_exceptions,
+                    custom_license_refs,
+                    custom_document_license_refs,
+                )
             })
-            .unwrap_or((vec![], vec![], vec![]))
+            .unwrap_or((vec![], vec![], vec![], vec![]))
     }
 }
 
@@ -84,7 +102,8 @@ impl LicenseCreator {
     pub fn add(&mut self, info: &LicenseInfo) {
         let uuid = info.uuid();
 
-        let (spdx_licenses, spdx_exceptions, custom_license_refs) = info.spdx_info();
+        let (spdx_licenses, spdx_exceptions, custom_license_refs, custom_document_license_refs) =
+            info.spdx_info();
         let missing_custom_refs: Vec<_> = custom_license_refs
             .iter()
             .filter(|ref_id| {
@@ -121,6 +140,11 @@ impl LicenseCreator {
                 Set(Some(spdx_exceptions))
             },
             custom_license_refs: Set(custom_license_refs_value),
+            custom_document_license_refs: if custom_document_license_refs.is_empty() {
+                Set(None)
+            } else {
+                Set(Some(custom_document_license_refs))
+            },
         });
     }
 
