@@ -1,10 +1,15 @@
 use crate::graph::purl::creator::PurlCreator;
 use crate::graph::sbom::{LicenseCreator, LicenseInfo, SbomContext, SbomInformation};
-use sea_orm::ConnectionTrait;
+use sea_orm::{ConnectionTrait, EntityTrait, Set};
+use sea_query::OnConflict;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::instrument;
 use trustify_common::purl::Purl;
+use trustify_entity::sbom_package_license;
+use uuid::Uuid;
+
+const CLEARLY_DEFINED_CURATION: &str = "ClearlyDefinedCuration";
 
 impl SbomContext {
     #[instrument(skip(db, curation), err)]
@@ -12,24 +17,24 @@ impl SbomContext {
         &self,
         curation: Curation,
         db: &C,
+        sbom_id: Uuid,
     ) -> Result<(), anyhow::Error> {
         let mut purls = PurlCreator::new();
         let mut licenses = LicenseCreator::new();
 
-        // TODO: Since the node id cannot be obtained here, it’s not possible to replace purl_license_assertion with sbom_package_license.
-        // let mut assertions = Vec::new();
+        let mut sbom_package_license_list = Vec::new();
 
         for (purl, license) in curation.iter() {
             let license_info = LicenseInfo {
                 license: license.clone(),
             };
 
-            // assertions.push(purl_license_assertion::ActiveModel {
-            //     id: Default::default(),
-            //     license_id: Set(license_info.uuid()),
-            //     versioned_purl_id: Set(purl.version_uuid()),
-            //     sbom_id: Set(self.sbom.sbom_id),
-            // });
+            sbom_package_license_list.push(sbom_package_license::ActiveModel {
+                sbom_id: Set(self.sbom.sbom_id),
+                node_id: Set(CLEARLY_DEFINED_CURATION.to_string()),
+                license_id: Set(license_info.uuid()),
+                license_type: Set(sbom_package_license::LicenseCategory::Declared),
+            });
 
             purls.add(purl);
             licenses.add(&license_info);
@@ -37,19 +42,20 @@ impl SbomContext {
         purls.create(db).await?;
         licenses.create(db).await?;
 
-        // purl_license_assertion::Entity::insert_many(assertions)
-        //     .on_conflict(
-        //         OnConflict::columns([
-        //             purl_license_assertion::Column::SbomId,
-        //             purl_license_assertion::Column::LicenseId,
-        //             purl_license_assertion::Column::VersionedPurlId,
-        //         ])
-        //         .do_nothing()
-        //         .to_owned(),
-        //     )
-        //     .do_nothing()
-        //     .exec(db)
-        //     .await?;
+        sbom_package_license::Entity::insert_many(sbom_package_license_list)
+            .on_conflict(
+                OnConflict::columns([
+                    sbom_package_license::Column::SbomId,
+                    sbom_package_license::Column::NodeId,
+                    sbom_package_license::Column::LicenseId,
+                    sbom_package_license::Column::LicenseType,
+                ])
+                .do_nothing()
+                .to_owned(),
+            )
+            .do_nothing()
+            .exec(db)
+            .await?;
 
         Ok(())
     }
