@@ -361,153 +361,10 @@ Install the following Red Hat services:
 
 === Red Hat Build of Keycloak Operator
 
- * Install Red Hat Build of Keycloak Operator with deployment https://docs.redhat.com/en/documentation/red_hat_build_of_keycloak/26.2/html/operator_guide/installation-[guide].
-
-==== Prerequisites
-The Prerequisites for the Keycloak operator configuration are,
-
-* Database
-* Hostname
-* TLS certificate and keys
-
-[[_keycloak_postgres]]
-===== Create PostgreSQL instance
-* Login to `registry.redhat.io` using podman or docker cli
-* Create Image pull secret for `registry.redhat.io` using the below command
-+
-[source,bash]
-----
-oc create secret generic docker-cred --from-file=.dockerconfigjson=$XDG_RUNTIME_DIR/containers/auth.json --type=kubernetes.io/dockerconfigjson
-----
-
-* Create PostgreSQL database instance for Keycloak persistent storage with the below `StatefulSet` and `Service`
-+
-[source,yaml]
-----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: postgres-tpa
-  namespace: <Installation Namespace>
-spec:
-  serviceName: postgres-tpa-service
-  selector:
-    matchLabels:
-      app: postgres-tpa
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: postgres-tpa
-    spec:
-      imagePullSecrets:
-      - name: docker-cred # Image pull secret
-      containers:
-        - name: postgres-tpa
-          image: registry.redhat.io/rhel9/postgresql-16 # Postgres image provided by Red Hat
-          volumeMounts:
-            - mountPath: /data
-              name: cache-volume
-          env:
-            - name: POSTGRESQL_USER
-              value: trustify
-            - name: POSTGRESQL_PASSWORD
-              value: trustify1234
-            - name: POSTGRESQL_DATABASE
-              value: trustify
-      volumes:
-        - name: cache-volume
-          emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres-tpa
-spec:
-  selector:
-    app: postgres-tpa
-  type: ClusterIP
-  ports:
-  - port: 5432
-    targetPort: 5432
-----
-
-[[_keycloak_hostname_]]
-===== Hostname
-* Keycloak can be exposed using OpenShift's DNS and wildcard routes. Retrieve the wild card with the below command,
-+
-[source, bash]
-----
-oc login
-export NAMESPACE=<Installation Namespace>
-export APP_DOMAIN=-$NAMESPACE.$(kubectl -n openshift-ingress-operator get ingresscontrollers.operator.openshift.io default -o jsonpath='{.status.domain}')
-----
-
-The value in `APP_DOMAIN` can be used for keycloak `hostname`
-
-===== TLS certs and keys
-* Retrieve the default router's TLS key and certificate, which will be used as a trust anchor for Keycloak. Then, create a Kubernetes `Secret` from these files.
-+
-[source,bash]
-----
-oc get secret -n openshift-ingress router-certs-default -o go-template='{{index .data "tls.key"}}' | base64 -d > tls.key
-oc get secret -n openshift-ingress router-certs-default -o go-template='{{index .data "tls.crt"}}' | base64 -d > tls.crt
-oc create secret tls my-tls-secret --cert=tls.crt --key=tls.key -n <Installation Namespace>
-----
-+
-[NOTE]
-For OCP V4.19, the secret name is `router-certs`
-
-==== Installation
-* Make sure the Red Hat Build of Keycloak Operator is installed. Refer - Deployment https://docs.redhat.com/en/documentation/red_hat_build_of_keycloak/26.2/html/operator_guide/installation-[guide]
-* Create a `Secret` to store the PostgreSQL database <<_keycloak_postgres,credentials>> that Keycloak will use to connect to the database.
-+
-[source,bash]
-----
-oc create secret generic keycloak-db-secret --from-literal=username=trustify --from-literal=password=trustify1234 -n <Installation Namespace>
-----
-
-* Define the `Keycloak` Custom Resource (CR) that the Keycloak Operator will use to deploy and configure your Keycloak instance.
-+
-[source,yaml]
-----
-apiVersion: k8s.keycloak.org/v2alpha1
-kind: Keycloak
-metadata:
-  name: example-kc
-spec:
-  instances: 1
-  db:
-    vendor: postgres
-    usernameSecret:
-      name: keycloak-db-secret
-      key: username
-    passwordSecret:
-      name: keycloak-db-secret
-      key: password
-    host: postgres-tpa
-    database: trustify
-    port: 5432
-  http:
-    httpEnabled: true
-    httpPort: 8180
-    httpsPort: 8543
-    tlsSecret: my-tls-secret
-  hostname:
-    hostname: https://sso<Replace with$APP_DOAMIN> # APP_DOMAIN value --> 1
-    strict: false
-    backchannelDynamic: true
-  transaction:
-    xaEnabled: false
-----
-+
-**References:**
-+
-. _APP_DOMAIN value:_ Replace the hostname with the APP_DOMAIN value retrieved from <<_keycloak_hostname_,Hostname>> step. The example would be something like this,
- `hostname: https://sso-tpa.apps.ocp.cluster.net`
+ * Install and Deploy Red Hat Build of Keycloak Operator with https://docs.redhat.com/en/documentation/red_hat_build_of_keycloak/26.2/html/operator_guide/index[guide].
 
 [[_keycloak_usage_]]
-===== Usage
+==== Retrieve Admin Credentials
 * Retrieve the Admin console username and password using the below commands,
 +
 [source, bash]
@@ -516,8 +373,7 @@ oc get secret example-kc-initial-admin -n $NAMESPACE -o jsonpath='{.data.usernam
 oc get secret example-kc-initial-admin -n $NAMESPACE -o jsonpath='{.data.password}' | base64 --decode
 ----
 * On Openshift console, Go to Networking -> Routes
-* Retrieve the Route of keycloak, Open the keycloak admin console
-* Login to Keycloak admin console using the secrets retrieved above
+* Retrieve the Route of keycloak
 
 ==== Configuring Keycloak
 Complete the following steps to configure Keycloak for RHTPA
@@ -609,7 +465,8 @@ Complete the following steps to configure Keycloak for RHTPA
 
 [[_keycloak_config_script]]
 ===== Create Realm, Roles, clients, client scopes and users
-* Update the below shell script with the keycloak details to create Realm, role, clients, client scopes and Users
+* Update the shell script below with the appropriate Keycloak configurations to create the Realm, roles, clients, client scopes, and users
+* Execute the script to apply the changes
 +
 ++++
 <details>
