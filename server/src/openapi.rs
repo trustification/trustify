@@ -10,7 +10,7 @@ use utoipa::{
 use utoipa_actix_web::AppExt;
 
 pub async fn create_openapi() -> anyhow::Result<utoipa::openapi::OpenApi> {
-    let (db, postgresql) = db::embedded::create().await?;
+    let (db, postgresql) = trustify_db::embedded::create().await?;
     let (storage, _temp) = FileSystemBackend::for_test().await?;
     let analysis = AnalysisService::new(AnalysisConfig::default(), db.clone());
 

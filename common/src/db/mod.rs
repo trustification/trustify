@@ -1,21 +1,19 @@
-mod func;
-
 pub mod chunk;
-pub mod embedded;
 pub mod limiter;
 pub mod multi_model;
 pub mod query;
 
+mod func;
 pub use func::*;
 
-use anyhow::{Context, ensure};
-use migration::{Migrator, MigratorTrait};
+use anyhow::Context;
 use reqwest::Url;
 use sea_orm::{
     AccessMode, ConnectOptions, ConnectionTrait, DatabaseConnection, DatabaseTransaction,
     DbBackend, DbErr, ExecResult, IsolationLevel, QueryResult, RuntimeErr, Statement, StreamTrait,
     TransactionError, TransactionTrait, prelude::async_trait,
 };
+use sea_orm_migration::{IntoSchemaManagerConnection, SchemaManagerConnection};
 use sqlx::error::ErrorKind;
 use std::{
     ops::{Deref, DerefMut},
@@ -23,6 +21,23 @@ use std::{
     time::Duration,
 };
 use tracing::instrument;
+
+/// A trait to help working with database errors
+pub trait DatabaseErrors {
+    /// return `true` if the error is a duplicate key error
+    fn is_duplicate(&self) -> bool;
+}
+
+impl DatabaseErrors for DbErr {
+    fn is_duplicate(&self) -> bool {
+        match self {
+            DbErr::Query(RuntimeErr::SqlxError(sqlx::error::Error::Database(err))) => {
+                err.kind() == ErrorKind::UniqueViolation
+            }
+            _ => false,
+        }
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct Database {
@@ -55,61 +70,6 @@ impl Database {
         let name = database.name.clone();
 
         Ok(Self { db, name })
-    }
-
-    #[instrument(skip(self), err)]
-    pub async fn migrate(&self) -> Result<(), anyhow::Error> {
-        log::debug!("applying migrations");
-        Migrator::up(&self.db, None).await?;
-        log::debug!("applied migrations");
-
-        Ok(())
-    }
-
-    #[instrument(skip(self), err)]
-    pub async fn refresh(&self) -> Result<(), anyhow::Error> {
-        log::warn!("refreshing database schema...");
-        Migrator::refresh(&self.db).await?;
-        log::warn!("refreshing database schema... done!");
-
-        Ok(())
-    }
-
-    #[instrument(err)]
-    pub async fn bootstrap(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
-        ensure!(
-            database.url.is_none(),
-            "Unable to bootstrap database with '--db-url'"
-        );
-
-        let url = crate::config::Database {
-            name: "postgres".into(),
-            ..database.clone()
-        }
-        .to_url();
-
-        log::debug!("bootstrap to {}", url);
-        let db = sea_orm::Database::connect(url).await?;
-
-        db.execute(Statement::from_string(
-            db.get_database_backend(),
-            format!("DROP DATABASE IF EXISTS \"{}\";", database.name),
-        ))
-        .await?;
-
-        db.execute(Statement::from_string(
-            db.get_database_backend(),
-            format!("CREATE DATABASE \"{}\";", database.name),
-        ))
-        .await?;
-        db.close().await?;
-
-        let db = Self::new(database).await?;
-        db.execute_unprepared("CREATE EXTENSION IF NOT EXISTS \"pg_stat_statements\";")
-            .await?;
-        db.migrate().await?;
-
-        Ok(db)
     }
 
     #[instrument(skip(self), err)]
@@ -286,20 +246,9 @@ impl<'b> StreamTrait for &'b Database {
     }
 }
 
-/// A trait to help working with database errors
-pub trait DatabaseErrors {
-    /// return `true` if the error is a duplicate key error
-    fn is_duplicate(&self) -> bool;
-}
-
-impl DatabaseErrors for DbErr {
-    fn is_duplicate(&self) -> bool {
-        match self {
-            DbErr::Query(RuntimeErr::SqlxError(sqlx::error::Error::Database(err))) => {
-                err.kind() == ErrorKind::UniqueViolation
-            }
-            _ => false,
-        }
+impl<'a> IntoSchemaManagerConnection<'a> for &'a Database {
+    fn into_schema_manager_connection(self) -> SchemaManagerConnection<'a> {
+        self.db.into_schema_manager_connection()
     }
 }
 

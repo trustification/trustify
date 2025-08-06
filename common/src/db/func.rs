@@ -1,4 +1,4 @@
-use migration::Iden;
+use sea_orm::Iden;
 use sea_orm::{ConnectionTrait, DbErr, ExecResult};
 use sea_query::{Func, SelectStatement};
 use std::fmt::Write;

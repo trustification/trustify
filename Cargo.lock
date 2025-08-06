@@ -8324,7 +8324,6 @@ dependencies = [
  "native-tls",
  "packageurl",
  "pem",
- "postgresql_embedded",
  "rand 0.9.1",
  "regex",
  "reqwest",
@@ -8333,6 +8332,7 @@ dependencies = [
  "sbom-walker",
  "schemars 1.0.4",
  "sea-orm",
+ "sea-orm-migration",
  "sea-query",
  "serde",
  "serde_json",
@@ -8340,13 +8340,11 @@ dependencies = [
  "spdx-rs",
  "sqlx",
  "strum 0.27.1",
- "test-context",
  "test-log",
  "thiserror 2.0.12",
  "time",
  "tokio",
  "tracing",
- "trustify-migration",
  "trustify-test-context",
  "urlencoding",
  "utoipa",
@@ -8362,6 +8360,20 @@ dependencies = [
  "test-log",
  "tokio",
  "utoipa",
+]
+
+[[package]]
+name = "trustify-db"
+version = "0.3.5"
+dependencies = [
+ "anyhow",
+ "log",
+ "postgresql_embedded",
+ "sea-orm",
+ "sea-orm-migration",
+ "tracing",
+ "trustify-common",
+ "trustify-migration",
 ]
 
 [[package]]
@@ -8437,6 +8449,7 @@ dependencies = [
  "tokio",
  "tokio-util",
  "trustify-common",
+ "trustify-db",
  "trustify-entity",
  "trustify-test-context",
  "uuid",
@@ -8812,6 +8825,7 @@ dependencies = [
  "tokio",
  "trustify-auth",
  "trustify-common",
+ "trustify-db",
  "trustify-infrastructure",
  "trustify-module-analysis",
  "trustify-module-fundamental",
@@ -8857,6 +8871,7 @@ dependencies = [
  "tracing-subscriber",
  "trustify-auth",
  "trustify-common",
+ "trustify-db",
  "trustify-entity",
  "trustify-migration",
  "trustify-module-ingestor",
@@ -8880,6 +8895,7 @@ dependencies = [
  "temp-env",
  "tokio",
  "trustify-common",
+ "trustify-db",
  "trustify-infrastructure",
  "trustify-server",
 ]
@@ -9958,6 +9974,7 @@ dependencies = [
  "tracing-subscriber",
  "trustify-auth",
  "trustify-common",
+ "trustify-db",
  "trustify-module-importer",
  "trustify-module-storage",
  "trustify-server",

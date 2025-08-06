@@ -210,7 +210,7 @@ impl AsyncTestContext for TrustifyContext {
                 env::var("EXTERNAL_TEST_DB_BOOTSTRAP").as_deref(),
                 Ok("1" | "true")
             ) {
-                db::Database::bootstrap(&config).await
+                trustify_db::Database::bootstrap(&config).await
             } else {
                 db::Database::new(&config).await
             }
@@ -219,7 +219,7 @@ impl AsyncTestContext for TrustifyContext {
             return TrustifyContext::new(db, None).await;
         }
 
-        let (db, postgresql) = db::embedded::create()
+        let (db, postgresql) = trustify_db::embedded::create()
             .await
             .expect("Create an embedded database");
 
