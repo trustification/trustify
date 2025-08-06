@@ -13,7 +13,7 @@ async fn test_migrations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     // At this point we already have migrations.
     assert!(!migrations.is_empty());
 
-    db.refresh().await?;
+    trustify_db::Database(&db).refresh().await?;
 
     let rolled_back_and_reapplied_migrations = Migrator::get_applied_migrations(&db).await?;
     assert!(!rolled_back_and_reapplied_migrations.is_empty());

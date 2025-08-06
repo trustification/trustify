@@ -16,6 +16,7 @@ uuid = { workspace = true, features = ["v5"] }
 
 [dev-dependencies]
 trustify-common = { workspace = true }
+trustify-db  = { workspace = true }
 trustify-entity = { workspace = true }
 trustify-test-context = { workspace = true }
 

@@ -2,7 +2,7 @@ use clap::Parser;
 use postgresql_commands::{CommandBuilder, CommandExecutor, pg_dump::PgDumpBuilder};
 use serde_json::Value;
 use std::{io::BufReader, path::PathBuf, time::Duration};
-use trustify_common::{db, model::BinaryByteSize};
+use trustify_common::model::BinaryByteSize;
 use trustify_module_importer::{
     model::{CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, SbomImporter},
     runner::{
@@ -83,8 +83,8 @@ impl GenerateDump {
 
     pub async fn run(self) -> anyhow::Result<()> {
         let (db, postgres) = match &self.working_dir {
-            Some(wd) => db::embedded::create_in(wd.join("db")).await?,
-            None => db::embedded::create().await?,
+            Some(wd) => trustify_db::embedded::create_in(wd.join("db")).await?,
+            None => trustify_db::embedded::create().await?,
         };
 
         let (storage, _tmp) = match &self.working_dir {

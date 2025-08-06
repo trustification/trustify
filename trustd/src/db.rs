@@ -35,7 +35,7 @@ impl Run {
     }
 
     async fn create(self) -> anyhow::Result<ExitCode> {
-        match db::Database::bootstrap(&self.database).await {
+        match trustify_db::Database::bootstrap(&self.database).await {
             Ok(_) => Ok(ExitCode::SUCCESS),
             Err(e) => Err(e),
         }
@@ -43,7 +43,7 @@ impl Run {
     async fn refresh(self) -> anyhow::Result<ExitCode> {
         match db::Database::new(&self.database).await {
             Ok(db) => {
-                db.refresh().await?;
+                trustify_db::Database(&db).refresh().await?;
                 Ok(ExitCode::SUCCESS)
             }
             Err(e) => Err(e),
@@ -52,7 +52,7 @@ impl Run {
     async fn migrate(self) -> anyhow::Result<ExitCode> {
         match db::Database::new(&self.database).await {
             Ok(db) => {
-                db.migrate().await?;
+                trustify_db::Database(&db).migrate().await?;
                 Ok(ExitCode::SUCCESS)
             }
             Err(e) => Err(e),

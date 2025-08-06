@@ -19,6 +19,7 @@ tracing-subscriber = { workspace = true, features = ["env-filter", "tracing-log"
 
 trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
+trustify-db = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-module-storage = { workspace = true }
 trustify-server = { workspace = true }

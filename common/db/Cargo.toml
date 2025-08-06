@@ -1,0 +1,17 @@
+[package]
+name = "trustify-db"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+trustify-migration = { workspace = true }
+trustify-common = { workspace = true }
+
+anyhow = { workspace = true }
+log = { workspace = true }
+postgresql_embedded = { workspace = true, features = ["blocking", "tokio"] }
+sea-orm = { workspace = true }
+sea-orm-migration = { workspace = true }
+tracing = { workspace = true }

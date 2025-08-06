@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "common",
     "common/auth",
+    "common/db",
     "common/infrastructure",
     "cvss",
     "entity",
@@ -154,6 +155,7 @@ zip = "4"
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }
 trustify-common = { path = "common" }
 trustify-cvss = { path = "cvss" }
+trustify-db = { path = "common/db" }
 trustify-entity = { path = "entity" }
 trustify-infrastructure = { path = "common/infrastructure" }
 trustify-migration = { path = "migration" }

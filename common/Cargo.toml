@@ -6,8 +6,6 @@ publish.workspace = true
 license.workspace = true
 
 [dependencies]
-trustify-migration = { workspace = true }
-
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 bytes = { workspace = true }
@@ -25,13 +23,13 @@ log = { workspace = true }
 native-tls = { workspace = true }
 packageurl = { workspace = true }
 pem = { workspace = true }
-postgresql_embedded = { workspace = true, features = ["blocking", "tokio"] }
 regex = { workspace = true }
 reqwest = { workspace = true, features = ["native-tls"] }
 ring = { workspace = true }
 sbom-walker = { workspace = true }
 schemars = { workspace = true }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+sea-orm-migration = { workspace = true }
 sea-query = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -46,7 +44,7 @@ tracing = { workspace = true }
 urlencoding = { workspace = true }
 utoipa = { workspace = true, features = ["url"] }
 uuid = { workspace = true, features = ["v5", "serde"] }
-walker-common = { workspace = true, features = ["bzip2", "liblzma", "flate2"]}
+walker-common = { workspace = true, features = ["bzip2", "liblzma", "flate2"] }
 humantime = { workspace = true }
 
 [dev-dependencies]
@@ -54,7 +52,6 @@ chrono = { workspace = true }
 rand = { workspace = true }
 rstest = { workspace = true }
 serde_json = { workspace = true }
-test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 time = { workspace = true, features = ["macros"] }
 tokio = { workspace = true, features = ["full"] }
