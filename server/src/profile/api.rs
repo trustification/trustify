@@ -245,7 +245,7 @@ impl InitData {
         let db = db::Database::new(&run.database).await?;
 
         if run.devmode {
-            db.migrate().await?;
+            trustify_db::Database(&db).migrate().await?;
         }
 
         if run.devmode || run.sample_data {
