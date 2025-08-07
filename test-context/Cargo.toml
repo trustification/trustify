@@ -8,6 +8,7 @@ license.workspace = true
 [dependencies]
 trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
+trustify-db = { workspace = true }
 trustify-entity = { workspace = true }
 trustify-migration = { workspace = true }
 trustify-module-ingestor = { workspace = true }
