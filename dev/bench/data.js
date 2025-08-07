@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1754293860071,
+  "lastUpdate": 1754550698688,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -13073,6 +13073,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/c8f7067c80b3f47efb03d6f469c0e8be59ed559f"
         },
         "date": 1754293858451,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "e2d8bd2f0884c0c6d940bf69d10ddef335e84d61",
+          "message": "chore: dev env only - dashboard simplification\n\n* With this configuration we already have traces information so we don't\nneed to maintain an extra dashboard `.json` file.\n* Joining the dashboards and panels in a single page and added it to the\nhome page as default.\n* Disabled some unwanted grafana features\n* Making it editable without login as it is for development activities\n  only.",
+          "timestamp": "2025-08-07T06:29:32Z",
+          "tree_id": "1c8c8c1877d8d5008f6a7a63bf8379132ca4706f",
+          "url": "https://github.com/trustification/trustify/commit/e2d8bd2f0884c0c6d940bf69d10ddef335e84d61"
+        },
+        "date": 1754550697394,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
