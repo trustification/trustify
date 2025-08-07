@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1754550698688,
+  "lastUpdate": 1754570773982,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -13102,6 +13102,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/e2d8bd2f0884c0c6d940bf69d10ddef335e84d61"
         },
         "date": 1754550697394,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "92cb5b6986d1c0e18d8b2f1012bba7a1759be07d",
+          "message": "perf(analysis): Parallelize graph query execution\n\n  This commit significantly improves the performance of graph analysis by applying parallelization techniques to the run_graph_query and collect_graph functions.\n\n  Previously, the collection of ancestors and descendants for a given node was performed sequentially. By refactoring run_graph_query to use futures::join!, we now process both directions concurrently, reducing the overall\n  execution time.\n\n  Building on this, the collect_graph function was optimized to process all discovered nodes in parallel using join_all. This ensures that we leverage available resources more efficiently when analyzing multiple entry points in\n  the graph.\n\nAssisted-by: Gemini",
+          "timestamp": "2025-08-07T12:23:36Z",
+          "tree_id": "a2f1970e435589cc0df8c6b4dd91d96b22d0a79d",
+          "url": "https://github.com/trustification/trustify/commit/92cb5b6986d1c0e18d8b2f1012bba7a1759be07d"
+        },
+        "date": 1754570772612,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
