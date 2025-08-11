@@ -19,7 +19,7 @@ use sea_orm::error::DbErr;
 use std::{fmt::Debug, sync::Arc, time::Instant};
 use tokio::task::JoinError;
 use tracing::instrument;
-use trustify_common::{error::ErrorInformation, id::Id, id::IdError};
+use trustify_common::{db::DatabaseErrors, error::ErrorInformation, id::Id, id::IdError};
 use trustify_entity::labels::Labels;
 use trustify_module_analysis::service::AnalysisService;
 use trustify_module_storage::service::{StorageBackend, dispatch::DispatchBackend};
@@ -43,7 +43,7 @@ pub enum Error {
     #[error(transparent)]
     Graph(#[from] crate::graph::error::Error),
     #[error(transparent)]
-    Db(#[from] DbErr),
+    Db(DbErr),
     #[error("storage error: {0}")]
     Storage(#[source] anyhow::Error),
     #[error(transparent)]
@@ -58,6 +58,18 @@ pub enum Error {
     Zip(#[from] zip::result::ZipError),
     #[error("payload too large")]
     PayloadTooLarge,
+    #[error("unavailable")]
+    Unavailable,
+}
+
+impl From<DbErr> for Error {
+    fn from(value: DbErr) -> Self {
+        if value.is_read_only() {
+            Error::Unavailable
+        } else {
+            Error::Db(value)
+        }
+    }
 }
 
 impl ResponseError for Error {
@@ -140,6 +152,11 @@ impl ResponseError for Error {
             }),
             Self::PayloadTooLarge => HttpResponse::PayloadTooLarge().json(ErrorInformation {
                 error: "PayloadTooLarge".into(),
+                message: self.to_string(),
+                details: None,
+            }),
+            Self::Unavailable => HttpResponse::ServiceUnavailable().json(ErrorInformation {
+                error: "Unavailable".into(),
                 message: self.to_string(),
                 details: None,
             }),

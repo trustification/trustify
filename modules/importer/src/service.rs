@@ -22,20 +22,34 @@ use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("importer '{0}' already exists")]
-    AlreadyExists(String),
+    #[error("importer already exists")]
+    AlreadyExists,
     #[error("importer '{0}' not found")]
     NotFound(String),
     #[error("mid air collision")]
     MidAirCollision,
+    #[error("unavailable")]
+    Unavailable,
     #[error("database error: {0}")]
-    Database(#[from] sea_orm::DbErr),
+    Database(#[source] sea_orm::DbErr),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error(transparent)]
     Query(#[from] trustify_common::db::query::Error),
     #[error(transparent)]
     Label(#[from] labels::Error),
+}
+
+impl From<sea_orm::DbErr> for Error {
+    fn from(value: sea_orm::DbErr) -> Self {
+        if value.is_duplicate() {
+            Error::AlreadyExists
+        } else if value.is_read_only() {
+            Error::Unavailable
+        } else {
+            Error::Database(value)
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -61,18 +75,23 @@ where
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         match self {
-            Error::AlreadyExists(_) => HttpResponse::Conflict().json(ErrorInformation {
+            Self::AlreadyExists => HttpResponse::Conflict().json(ErrorInformation {
                 error: "AlreadyExists".into(),
                 message: self.to_string(),
                 details: None,
             }),
-            Error::NotFound(_) => HttpResponse::NotFound().json(ErrorInformation {
+            Self::NotFound(_) => HttpResponse::NotFound().json(ErrorInformation {
                 error: "NotFound".into(),
                 message: self.to_string(),
                 details: None,
             }),
-            Error::MidAirCollision => HttpResponse::PreconditionFailed().json(ErrorInformation {
+            Self::MidAirCollision => HttpResponse::PreconditionFailed().json(ErrorInformation {
                 error: "MidAirCollision".into(),
+                message: self.to_string(),
+                details: None,
+            }),
+            Self::Unavailable => HttpResponse::ServiceUnavailable().json(ErrorInformation {
+                error: "Unavailable".into(),
                 message: self.to_string(),
                 details: None,
             }),
@@ -151,10 +170,7 @@ impl ImporterService {
             heartbeat: Set(None),
         };
 
-        match entity.insert(&self.db).await {
-            Err(err) if err.is_duplicate() => Err(Error::AlreadyExists(name)),
-            r => r.map_err(Error::from),
-        }?;
+        entity.insert(&self.db).await?;
 
         Ok(())
     }

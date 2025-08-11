@@ -37,6 +37,7 @@ impl actix_web::error::ResponseError for Error {
                 message: err.to_string(),
                 details: None,
             }),
+            Self::Ingestor(err) => err.error_response(),
             err => HttpResponse::InternalServerError().json(ErrorInformation {
                 error: "InternalServerError".into(),
                 message: err.to_string(),

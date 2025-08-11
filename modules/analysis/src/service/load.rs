@@ -11,7 +11,7 @@ use ::cpe::{
     cpe::{Cpe, CpeType, Language},
     uri::OwnedUri,
 };
-use anyhow::anyhow;
+use actix_http::StatusCode;
 use futures::FutureExt;
 use opentelemetry::KeyValue;
 use petgraph::{Graph, prelude::NodeIndex};
@@ -492,9 +492,11 @@ impl InnerService {
             return Ok(g);
         }
 
-        let distinct_sbom_id = Uuid::parse_str(distinct_sbom_id).map_err(|err| {
-            Error::Database(anyhow!("Unable to parse SBOM ID {distinct_sbom_id}: {err}"))
-        })?;
+        let distinct_sbom_id =
+            Uuid::parse_str(distinct_sbom_id).map_err(|err| Error::BadRequest {
+                msg: format!("Unable to parse SBOM ID {distinct_sbom_id}: {err}"),
+                status: StatusCode::BAD_REQUEST,
+            })?;
 
         // check if there is a loading operation pending
 

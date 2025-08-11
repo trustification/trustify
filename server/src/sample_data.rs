@@ -24,7 +24,7 @@ async fn add(
         .create(name.into(), config)
         .await
         .or_else(|err| match err {
-            Error::AlreadyExists(_) => Ok(()),
+            Error::AlreadyExists => Ok(()),
             err => Err(err),
         })?)
 }

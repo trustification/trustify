@@ -14,7 +14,7 @@ use serde_json::json;
 use std::time::Duration;
 use test_context::test_context;
 use test_log::test;
-use trustify_test_context::{TrustifyContext, app::TestApp};
+use trustify_test_context::{ReadOnly, TrustifyContext, app::TestApp};
 use utoipa_actix_web::AppExt;
 
 fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
@@ -377,4 +377,32 @@ async fn patch(ctx: TrustifyContext) {
 
     let resp = actix::call_service(&app, req).await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+}
+
+#[test_context(ReadOnly<TrustifyContext>)]
+#[test(actix_web::test)]
+async fn read_only(ctx: &mut ReadOnly<TrustifyContext>) {
+    let app = app(ctx).await;
+
+    // list all
+
+    let req = actix::TestRequest::get()
+        .uri("/api/v2/importer")
+        .to_request();
+
+    let resp = actix::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let result: Vec<Importer> = actix::read_body_json(resp).await;
+    assert_eq!(result, vec![]);
+
+    // try to create one, must fail
+
+    let req = actix::TestRequest::post()
+        .uri("/api/v2/importer/foo")
+        .set_json(mock_configuration("bar"))
+        .to_request();
+
+    let resp = actix::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::SERVICE_UNAVAILABLE);
 }

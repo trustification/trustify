@@ -14,7 +14,6 @@ use sea_orm::{
     TransactionError, TransactionTrait, prelude::async_trait,
 };
 use sea_orm_migration::{IntoSchemaManagerConnection, SchemaManagerConnection};
-use sqlx::error::ErrorKind;
 use std::{
     ops::{Deref, DerefMut},
     pin::Pin,
@@ -26,13 +25,24 @@ use tracing::instrument;
 pub trait DatabaseErrors {
     /// return `true` if the error is a duplicate key error
     fn is_duplicate(&self) -> bool;
+    /// return `true` if the error means the connection is read-only
+    fn is_read_only(&self) -> bool;
 }
 
 impl DatabaseErrors for DbErr {
     fn is_duplicate(&self) -> bool {
         match self {
             DbErr::Query(RuntimeErr::SqlxError(sqlx::error::Error::Database(err))) => {
-                err.kind() == ErrorKind::UniqueViolation
+                err.is_unique_violation()
+            }
+            _ => false,
+        }
+    }
+
+    fn is_read_only(&self) -> bool {
+        match self {
+            DbErr::Query(RuntimeErr::SqlxError(sqlx::error::Error::Database(err))) => {
+                err.code().as_deref() == Some("25006")
             }
             _ => false,
         }
