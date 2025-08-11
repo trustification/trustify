@@ -8,6 +8,10 @@ pub mod spdx;
 pub mod subset;
 
 use futures::Stream;
+use migration::{
+    ConnectionTrait, DbErr,
+    sea_orm::{RuntimeErr, Statement, sqlx},
+};
 use peak_alloc::PeakAlloc;
 use postgresql_embedded::PostgreSQL;
 use serde::Serialize;
@@ -15,12 +19,15 @@ use std::{
     env,
     fmt::Debug,
     io::{Cursor, Read, Seek, Write},
+    ops::{Deref, DerefMut},
     path::{Path, PathBuf},
 };
 use test_context::AsyncTestContext;
 use tokio_util::{bytes::Bytes, io::ReaderStream};
 use tracing::instrument;
-use trustify_common::{self as common, db, decompress::decompress_async, hashing::Digests};
+use trustify_common::{
+    self as common, db, db::Database, decompress::decompress_async, hashing::Digests,
+};
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{
     graph::Graph,
@@ -79,6 +86,48 @@ impl TrustifyContext {
             mem_limit_mb,
             postgresql: postgresql.into(),
         }
+    }
+
+    /// Turn the context's database into a read-only by default database.
+    pub async fn read_only(self) -> Result<Self, DbErr> {
+        let db = self.db;
+
+        db.execute_unprepared(
+            r#"
+DO $$
+DECLARE
+    dbname text;
+BEGIN
+    -- find the current database name
+    SELECT current_database() INTO dbname;
+
+    -- set it to read-only
+    EXECUTE format(
+        'ALTER DATABASE %I SET default_transaction_read_only = on',
+        dbname
+    );
+END
+$$;
+"#,
+        )
+        .await?;
+
+        terminate_connections(&db).await?;
+
+        let result = db
+            .query_one(Statement::from_string(
+                db.get_database_backend(),
+                "SHOW default_transaction_read_only",
+            ))
+            .await?;
+
+        if let Some(row) = result {
+            for c in row.column_names() {
+                log::info!("{c}: {:?}", row.try_get_by::<String, _>(c.as_str()));
+            }
+        }
+
+        Ok(Self { db, ..self })
     }
 
     /// The paths are relative to `<workspace>/etc/test-data`.
@@ -237,6 +286,37 @@ impl AsyncTestContext for TrustifyContext {
     }
 }
 
+pub struct ReadOnly<T>(pub T);
+
+impl AsyncTestContext for ReadOnly<TrustifyContext> {
+    async fn setup() -> Self {
+        Self(
+            <TrustifyContext as AsyncTestContext>::setup()
+                .await
+                .read_only()
+                .await
+                .expect("must be able to make read-only"),
+        )
+    }
+
+    async fn teardown(self) {
+        AsyncTestContext::teardown(self.0).await;
+    }
+}
+
+impl<T> Deref for ReadOnly<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for ReadOnly<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 /// return an absolute part, relative to `<workspace>/etc/test-data`.
 fn absolute(path: impl AsRef<Path>) -> Result<PathBuf, anyhow::Error> {
     let workspace_root: PathBuf = env!("CARGO_WORKSPACE_ROOT").into();
@@ -282,6 +362,42 @@ where
     let f = move || Ok::<_, anyhow::Error>(serde_json::from_slice::<T>(&data)?);
 
     Ok((tokio::task::spawn_blocking(f).await??, digests))
+}
+
+/// terminate connections, either all or only everything except our own
+async fn terminate_connections_int(db: &Database, our: bool) -> Result<(), DbErr> {
+    let and = match our {
+        true => "AND pid = pg_backend_pid()",
+        false => "AND pid <> pg_backend_pid()",
+    };
+
+    db.execute_unprepared(
+        &format!(r#"SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() {and}"#),
+    )
+        .await
+        .map(|_| ())
+        .or_else(|err| match err {
+            DbErr::Exec(RuntimeErr::SqlxError(sqlx::error::Error::Database(err)))
+            if err.code().as_deref() == Some("57P01") =>
+                {
+                    log::info!("Ignoring broken connection");
+                    // should catch the "terminating connection due to administrator command", which
+                    // is caused by killing the connection at the end of the above statement.
+                    Ok(())
+                }
+            _ => Err(err),
+        })?;
+
+    Ok(())
+}
+
+/// terminate all connections
+async fn terminate_connections(db: &Database) -> Result<(), DbErr> {
+    // we do this twice. Once without our own, in order to kill all and then our own
+    // if we do this in one step, we will kill our own session and stop killing the remaining ones
+    terminate_connections_int(db, false).await?;
+    terminate_connections_int(db, true).await?;
+    Ok(())
 }
 
 #[cfg(test)]

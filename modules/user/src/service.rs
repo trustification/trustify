@@ -4,7 +4,9 @@ use sea_orm::{
     prelude::Uuid,
 };
 use sea_query::{Alias, Expr, OnConflict};
-use trustify_common::{db::Database, error::ErrorInformation, model::Revisioned};
+use trustify_common::{
+    db::Database, db::DatabaseErrors, error::ErrorInformation, model::Revisioned,
+};
 use trustify_entity::user_preferences;
 
 #[derive(Debug, thiserror::Error)]
@@ -12,9 +14,21 @@ pub enum Error {
     #[error("mid air collision")]
     MidAirCollision,
     #[error("database error: {0}")]
-    Database(#[from] sea_orm::DbErr),
+    Database(#[source] sea_orm::DbErr),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
+    #[error("unavailable")]
+    Unavailable,
+}
+
+impl From<sea_orm::DbErr> for Error {
+    fn from(value: sea_orm::DbErr) -> Self {
+        if value.is_read_only() {
+            Error::Unavailable
+        } else {
+            Error::Database(value)
+        }
+    }
 }
 
 impl ResponseError for Error {
@@ -22,6 +36,11 @@ impl ResponseError for Error {
         match self {
             Error::MidAirCollision => HttpResponse::PreconditionFailed().json(ErrorInformation {
                 error: "MidAirCollision".into(),
+                message: self.to_string(),
+                details: None,
+            }),
+            Self::Unavailable => HttpResponse::ServiceUnavailable().json(ErrorInformation {
+                error: "Unavailable".into(),
                 message: self.to_string(),
                 details: None,
             }),

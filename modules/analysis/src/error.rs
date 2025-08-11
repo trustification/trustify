@@ -4,6 +4,7 @@ use actix_web::{HttpResponse, ResponseError};
 use cpe::uri::OwnedUri;
 use sea_orm::DbErr;
 use std::str::FromStr;
+use trustify_common::db::DatabaseErrors;
 use trustify_common::error::ErrorInformation;
 use trustify_common::id::IdError;
 use trustify_common::purl::PurlErr;
@@ -13,7 +14,7 @@ pub enum Error {
     #[error(transparent)]
     IdKey(#[from] IdError),
     #[error(transparent)]
-    Database(anyhow::Error),
+    Database(DbErr),
     #[error(transparent)]
     Query(#[from] trustify_common::db::query::Error),
     #[error(transparent)]
@@ -32,6 +33,8 @@ pub enum Error {
     Data(String),
     #[error("Internal Server Error: {0}")]
     Internal(String),
+    #[error("unavailable")]
+    Unavailable,
 }
 
 unsafe impl Send for Error {}
@@ -40,7 +43,11 @@ unsafe impl Sync for Error {}
 
 impl From<DbErr> for Error {
     fn from(value: DbErr) -> Self {
-        Self::Database(value.into())
+        if value.is_read_only() {
+            Self::Unavailable
+        } else {
+            Self::Database(value)
+        }
     }
 }
 
@@ -54,19 +61,21 @@ impl ResponseError for Error {
                 HttpResponse::BadRequest().json(ErrorInformation::new("InvalidPurlSyntax", err))
             }
             Self::BadRequest { msg, status } => {
-                HttpResponse::build(*status).json(ErrorInformation::new("Bad request", msg))
+                HttpResponse::build(*status).json(ErrorInformation::new("BadRequest", msg))
             }
-            Error::Query(err) => {
-                HttpResponse::BadRequest().json(ErrorInformation::new("Query error", err))
+            Self::Query(err) => {
+                HttpResponse::BadRequest().json(ErrorInformation::new("QueryError", err))
+            }
+            Self::Unavailable => {
+                HttpResponse::ServiceUnavailable().json(ErrorInformation::new("Unavailable", self))
             }
 
             // All other cases are internal system errors that are not expected to occur.
             // They are logged and a generic error response is returned to avoid leaking
             // internal state to end users.
             err => {
-                log::error!("{err}");
-                HttpResponse::InternalServerError()
-                    .json(ErrorInformation::new("Internal Server Error", ""))
+                log::warn!("{err}");
+                HttpResponse::InternalServerError().json(ErrorInformation::new("Internal", ""))
             }
         }
     }

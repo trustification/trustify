@@ -1,6 +1,8 @@
 use actix_web::{HttpResponse, ResponseError, body::BoxBody};
 use sea_orm::DbErr;
-use trustify_common::{decompress, error::ErrorInformation, id::IdError, purl::PurlErr};
+use trustify_common::{
+    db::DatabaseErrors, decompress, error::ErrorInformation, id::IdError, purl::PurlErr,
+};
 use trustify_entity::labels;
 use trustify_module_storage::service::StorageKeyError;
 
@@ -11,7 +13,7 @@ pub enum Error {
     #[error(transparent)]
     StorageKey(#[from] StorageKeyError),
     #[error(transparent)]
-    Database(anyhow::Error),
+    Database(DbErr),
     #[error(transparent)]
     Query(#[from] trustify_common::db::query::Error),
     #[error(transparent)]
@@ -44,11 +46,17 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error(transparent)]
     Label(#[from] labels::Error),
+    #[error("unavailable")]
+    Unavailable,
 }
 
 impl From<DbErr> for Error {
     fn from(value: DbErr) -> Self {
-        Self::Database(value.into())
+        if value.is_read_only() {
+            Self::Unavailable
+        } else {
+            Self::Database(value)
+        }
     }
 }
 
@@ -59,18 +67,18 @@ impl ResponseError for Error {
                 HttpResponse::BadRequest().json(ErrorInformation::new("InvalidPurlSyntax", err))
             }
             Self::BadRequest(msg) => {
-                HttpResponse::BadRequest().json(ErrorInformation::new("Bad request", msg))
+                HttpResponse::BadRequest().json(ErrorInformation::new("BadRequest", msg))
             }
             Self::NotFound(msg) => {
-                HttpResponse::NotFound().json(ErrorInformation::new("Not Found", msg))
+                HttpResponse::NotFound().json(ErrorInformation::new("NotFound", msg))
             }
             Self::Ingestor(inner) => inner.error_response(),
             Self::Query(err) => {
-                HttpResponse::BadRequest().json(ErrorInformation::new("Query error", err))
+                HttpResponse::BadRequest().json(ErrorInformation::new("QueryError", err))
             }
             Self::IdKey(err) => HttpResponse::BadRequest().json(ErrorInformation::new("Key", err)),
             Self::StorageKey(err) => {
-                HttpResponse::BadRequest().json(ErrorInformation::new("Storage Key", err))
+                HttpResponse::BadRequest().json(ErrorInformation::new("StorageKey", err))
             }
             Self::Compression(decompress::Error::UnknownType) => {
                 HttpResponse::UnsupportedMediaType()
@@ -85,14 +93,16 @@ impl ResponseError for Error {
             Self::Label(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Label", err))
             }
+            Self::Unavailable => {
+                HttpResponse::ServiceUnavailable().json(ErrorInformation::new("Unavailable", self))
+            }
 
             // All other cases are internal system errors that are not expected to occur.
             // They are logged and a generic error response is returned to avoid leaking
             // internal state to end users.
             err => {
-                log::error!("{err}");
-                HttpResponse::InternalServerError()
-                    .json(ErrorInformation::new("Internal Server Error", ""))
+                log::warn!("{err}");
+                HttpResponse::InternalServerError().json(ErrorInformation::new("Internal", ""))
             }
         }
     }
