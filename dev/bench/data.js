@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1754570773982,
+  "lastUpdate": 1754945300147,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -13131,6 +13131,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/92cb5b6986d1c0e18d8b2f1012bba7a1759be07d"
         },
         "date": 1754570772612,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "207f7a7383e9b08bd216eee45fa7e9d48da1b7d9",
+          "message": "Make test more tolerant of order\n\nFixes: #1920",
+          "timestamp": "2025-08-11T20:24:15Z",
+          "tree_id": "dbd4e109eb862ea51a60877e0a51ef853f880170",
+          "url": "https://github.com/trustification/trustify/commit/207f7a7383e9b08bd216eee45fa7e9d48da1b7d9"
+        },
+        "date": 1754945298437,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
