@@ -1,8 +1,8 @@
-use crate::db::Database;
 use anyhow::Context;
 use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
 use std::path::Path;
 use tracing::{Instrument, info_span};
+use trustify_common::db::Database;
 
 /// Create common default settings for the embedded database
 fn default_settings() -> anyhow::Result<Settings> {
@@ -62,7 +62,7 @@ async fn create_for(settings: Settings) -> anyhow::Result<(Database, PostgreSQL)
         port: postgresql.settings().port,
         ..crate::config::Database::from_env()?
     };
-    let db = Database::bootstrap(&config)
+    let db = super::Database::bootstrap(&config)
         .await
         .context("Bootstrapping the test database")?;
 

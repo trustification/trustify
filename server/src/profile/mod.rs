@@ -37,7 +37,7 @@ mod test {
 
     #[test(tokio::test)]
     async fn timeout() {
-        let (db, postgresql) = db::embedded::create().await.expect("must create");
+        let (db, postgresql) = trustify_db::embedded::create().await.expect("must create");
 
         let check = spawn_db_check(db).expect("must create");
 
