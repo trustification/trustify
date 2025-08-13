@@ -347,8 +347,7 @@ impl InnerService {
         }
 
         fn find(sbom_package_relation: sbom_node::Relation) -> Select<sbom_node::Entity> {
-            const RANK_SQL: &str =
-                "RANK() OVER (PARTITION BY sbom_node.name,cpe.id ORDER BY sbom.published DESC)";
+            const RANK_SQL: &str = "RANK() OVER (PARTITION BY sbom_node.name, COALESCE(cpe.id, sbom.sbom_id) ORDER BY sbom.published DESC)";
 
             sbom_node::Entity::find()
                 .select_only()
