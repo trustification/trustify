@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1754945300147,
+  "lastUpdate": 1755084174368,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -13160,6 +13160,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/207f7a7383e9b08bd216eee45fa7e9d48da1b7d9"
         },
         "date": 1754945298437,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "bfaf653af8a06f964c6e444a7d474b92d6ebc250",
+          "message": "refactor: handle read-only errors as \"unavailable\"\n\nThis change handles database errors of the kind \"read-only\" when\nmutating as an \"unavailable\" error, rather than an internal server\nerror.\n\nBy default this doesn't change anything, as all transactions are\nread-write by default. However, it now is possible to set the database\ninto a \"read-only\" by default mode, and have trustify handle this more\ngracefully.",
+          "timestamp": "2025-08-13T10:38:21Z",
+          "tree_id": "3c0ec5e774de611b77b1670230eeb423c90b2922",
+          "url": "https://github.com/trustification/trustify/commit/bfaf653af8a06f964c6e444a7d474b92d6ebc250"
+        },
+        "date": 1755084172936,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
