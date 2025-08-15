@@ -99,11 +99,19 @@ mod test {
     use crate::graph::Graph;
     use crate::service::{Cache, Error, Format, IngestorService};
     use anyhow::anyhow;
+    use sea_orm::{EntityTrait, FromQueryResult, QuerySelect, RelationTrait};
+    use sea_query::JoinType;
     use test_context::test_context;
     use test_log::test;
     use trustify_common::purl::Purl;
-    use trustify_test_context::TrustifyContext;
-    use trustify_test_context::document_bytes;
+    use trustify_entity::{license, sbom_package_license};
+    use trustify_test_context::{TrustifyContext, document_bytes};
+
+    #[derive(Debug, FromQueryResult)]
+    struct PackageLicenseInfo {
+        pub node_id: String,
+        pub license_expression: String,
+    }
 
     fn coordinates_to_purl(coords: &str) -> Result<Purl, Error> {
         let parts = coords.split('/').collect::<Vec<_>>();
@@ -178,6 +186,25 @@ mod test {
             )
             .await
             .expect("must ingest");
+
+        let result: Vec<PackageLicenseInfo> = sbom_package_license::Entity::find()
+            .join(
+                JoinType::Join,
+                sbom_package_license::Relation::License.def(),
+            )
+            .select_only()
+            .column_as(sbom_package_license::Column::NodeId, "node_id")
+            .column_as(license::Column::Text, "license_expression")
+            .into_model::<PackageLicenseInfo>()
+            .all(&ctx.db)
+            .await?;
+
+        assert_eq!(1, result.len());
+        assert_eq!("OTHER", result[0].license_expression);
+        assert_eq!(
+            "nuget/nuget/-/microsoft.aspnet.mvc/4.0.40804",
+            result[0].node_id
+        );
 
         Ok(())
     }
