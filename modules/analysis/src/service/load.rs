@@ -19,7 +19,10 @@ use sea_orm::{
     ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
     FromQueryResult, QueryFilter, QuerySelect, QueryTrait, RelationTrait, Select, Statement,
 };
-use sea_query::{Alias, Cond, Expr, JoinType, PostgresQueryBuilder, Query, SelectStatement};
+use sea_query::{
+    CommonTableExpression, Cond, Expr, IntoCondition, JoinType, PostgresQueryBuilder,
+    SelectStatement, WithClause, WithQuery,
+};
 use serde_json::Value;
 use std::{
     collections::{HashMap, HashSet, hash_map::Entry},
@@ -341,59 +344,6 @@ impl InnerService {
         connection: &C,
         query: GraphQuery<'_>,
     ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
-        #[derive(Debug, FromQueryResult)]
-        struct Row {
-            sbom_id: Uuid,
-        }
-
-        fn find(sbom_package_relation: sbom_node::Relation) -> Select<sbom_node::Entity> {
-            const RANK_SQL: &str =
-                "RANK() OVER (PARTITION BY sbom_node.name,cpe.id ORDER BY sbom.published DESC)";
-
-            sbom_node::Entity::find()
-                .select_only()
-                .column(sbom::Column::SbomId)
-                .column(sbom::Column::Published)
-                .column(cpe::Column::Id)
-                .column_as(Expr::cust(RANK_SQL), "rank")
-                .left_join(sbom::Entity)
-                .join(JoinType::LeftJoin, sbom_package_relation.def())
-                .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
-                .join(
-                    JoinType::LeftJoin,
-                    sbom_package_cpe_ref::Relation::Cpe.def(),
-                )
-        }
-
-        async fn query_all<C>(
-            subquery: SelectStatement,
-            connection: &C,
-        ) -> Result<Vec<String>, Error>
-        where
-            C: ConnectionTrait,
-        {
-            let select_query = Query::select()
-                .expr(Expr::col(Alias::new("sbom_id")))
-                .from_subquery(subquery, Alias::new("subquery"))
-                .cond_where(Expr::col(Alias::new("rank")).eq(1))
-                .distinct()
-                .to_owned();
-            let (sql, values) = select_query.build(PostgresQueryBuilder);
-
-            let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
-                DatabaseBackend::Postgres,
-                sql,
-                values,
-            ))
-            .all(connection)
-            .await?;
-
-            Ok(rows
-                .into_iter()
-                .map(|row| row.sbom_id.to_string())
-                .collect())
-        }
-
         let latest_sbom_ids: Vec<_> = match query {
             GraphQuery::Component(ComponentReference::Id(node_id)) => {
                 let subquery = find(sbom_node::Relation::Package)
@@ -432,7 +382,7 @@ impl InnerService {
                 query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
-                let subquery = find(sbom_node::Relation::PackageBySbomId)
+                let subquery = find(sbom_node::Relation::Package)
                     // For CPE searches the .not_like("pkg:%") filter is required
                     .filter(sbom_node::Column::Name.not_like("pkg:%"))
                     .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()));
@@ -803,4 +753,178 @@ fn q_columns() -> Columns {
                 _ => None,
             }
         })
+}
+
+#[derive(Debug, FromQueryResult)]
+struct Row {
+    sbom_id: Uuid,
+}
+
+fn find(sbom_package_relation: sbom_node::Relation) -> Select<sbom_node::Entity> {
+    sbom_node::Entity::find()
+        .distinct()
+        .select_only()
+        .column(sbom::Column::SbomId)
+        .left_join(sbom::Entity)
+        .join(JoinType::LeftJoin, sbom_package_relation.def())
+        .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+}
+
+fn rank_query(mut subquery: SelectStatement) -> WithQuery {
+    const CTE_TABLE_NAME: &str = "describing_ranked";
+    subquery.join(
+        JoinType::Join,
+        CTE_TABLE_NAME,
+        Expr::col((CTE_TABLE_NAME, "sbom_id")).eq(sbom::Column::SbomId.into_expr()),
+    );
+
+    WithClause::new()
+        .query(subquery)
+        .cte(
+            CommonTableExpression::new()
+                .table_name(CTE_TABLE_NAME)
+                .query(
+                    SelectStatement::new()
+                        .from(sbom_node::Entity)
+                        .column((sbom_node::Entity, sbom_node::Column::SbomId))
+                        .column((sbom_node::Entity, sbom_node::Column::Name))
+                        .column((sbom_package_cpe_ref::Entity, sbom_package_cpe_ref::Column::CpeId))
+                        .expr_as(Expr::cust(
+                            r#"RANK () OVER ( PARTITION BY "sbom_node"."name", "cpe_id" ORDER BY "sbom"."published" DESC )"#,
+                        ), "rank")
+                        .join(
+                            JoinType::Join,
+                            sbom::Entity,
+                            sbom_node::Relation::Sbom.def(),
+                        )
+                        .join(
+                            JoinType::Join,
+                            sbom_package::Entity,
+                            sbom_node::Relation::Package.def(),
+                        )
+                        .join(
+                            JoinType::Join,
+                            package_relates_to_package::Entity,
+                            package_relates_to_package::Relation::RightPackage
+                                .def()
+                                .rev()
+                                .on_condition(|_left, right| {
+                                    Expr::col((
+                                        right,
+                                        package_relates_to_package::Column::Relationship,
+                                    ))
+                                        .eq(Relationship::Describes)
+                                        .into_condition()
+                                }),
+                        )
+                        .left_join(
+                            sbom_package_cpe_ref::Entity,
+                            sbom_package::Relation::Cpe.def(),
+                        )
+                        .to_owned(),
+                )
+                .to_owned(),
+        )
+        .to_owned()
+}
+
+/// Take a select statement and load all sboms from it. The select statement will be used
+/// as a sub-select and needs to provide:
+/// * `sbom_id`
+/// * `rank`
+async fn query_all<C>(subquery: SelectStatement, connection: &C) -> Result<Vec<String>, Error>
+where
+    C: ConnectionTrait,
+{
+    let select_query = rank_query(subquery);
+
+    let (sql, values) = select_query.build(PostgresQueryBuilder);
+
+    let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
+        DatabaseBackend::Postgres,
+        sql,
+        values,
+    ))
+    .all(connection)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|row| row.sbom_id.to_string())
+        .collect())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use sea_query::Values;
+
+    #[test]
+    fn rank_sql() {
+        let subquery = find(sbom_node::Relation::Package)
+            .filter(sbom_node::Column::Name.not_like("pkg:%"))
+            .filter(sbom_package_cpe_ref::Column::CpeId.eq("00000000-0000-0000-0000-000000000000"));
+
+        let select_query = rank_query(subquery.into_query());
+        let (sql, values) = select_query.build(PostgresQueryBuilder);
+
+        assert_eq!(
+            sql,
+            r#"
+WITH "describing_ranked" AS (SELECT
+        "sbom_node"."sbom_id",
+        "sbom_node"."name",
+        "sbom_package_cpe_ref"."cpe_id",
+        RANK () OVER (
+            PARTITION BY "sbom_node"."name", "cpe_id"
+            ORDER BY "sbom"."published" DESC
+        ) AS "rank"
+    FROM
+        "sbom_node"
+        JOIN "sbom"
+            ON "sbom_node"."sbom_id" = "sbom"."sbom_id"
+        JOIN "sbom_package"
+            ON "sbom_node"."sbom_id" = "sbom_package"."sbom_id"
+                AND "sbom_node"."node_id" = "sbom_package"."node_id"
+         JOIN "package_relates_to_package"
+              ON "sbom_package"."sbom_id" = "package_relates_to_package"."sbom_id"
+                  AND "sbom_package"."node_id" = "package_relates_to_package"."right_node_id"
+                  AND "package_relates_to_package"."relationship" = $1
+         LEFT JOIN "sbom_package_cpe_ref"
+               ON "sbom_package"."sbom_id" = "sbom_package_cpe_ref"."sbom_id"
+                   AND "sbom_package"."node_id" = "sbom_package_cpe_ref"."node_id")
+SELECT
+    DISTINCT "sbom"."sbom_id"
+FROM
+    "sbom_node"
+    LEFT JOIN "sbom"
+        ON "sbom_node"."sbom_id" = "sbom"."sbom_id"
+    LEFT JOIN "sbom_package"
+        ON "sbom_node"."sbom_id" = "sbom_package"."sbom_id"
+            AND "sbom_node"."node_id" = "sbom_package"."node_id"
+    LEFT JOIN "sbom_package_cpe_ref"
+        ON "sbom_package"."sbom_id" = "sbom_package_cpe_ref"."sbom_id"
+            AND "sbom_package"."node_id" = "sbom_package_cpe_ref"."node_id"
+    JOIN "describing_ranked"
+        ON "describing_ranked"."sbom_id" = "sbom"."sbom_id"
+WHERE
+    "sbom_node"."name" NOT LIKE $2
+    AND
+    "sbom_package_cpe_ref"."cpe_id" = $3
+"#
+            .replace('\n', " ")
+            .split_whitespace()
+            .collect::<Vec<_>>()
+            .join(" ")
+        );
+
+        assert_eq!(
+            values,
+            Values(vec![
+                13.into(),
+                "pkg:%".into(),
+                "00000000-0000-0000-0000-000000000000".into()
+            ])
+        );
+    }
 }
