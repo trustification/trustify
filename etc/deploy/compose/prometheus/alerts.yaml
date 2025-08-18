@@ -1,0 +1,59 @@
+groups:
+- name: http_api_alerts
+  # API success rate (only 2xx and 3xx are considered successful)
+  rules:
+  - alert: APILowSuccessRate
+    expr: |
+      (
+        sum(rate(http_server_duration_seconds_count{job="trustify", http_response_status_code=~"2..|3.."}[10m]))
+        /
+        sum(rate(http_server_duration_seconds_count{job="trustify"}[10m]))
+      ) < 0.99
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      message: "API success rate dropped below 99% in the last 10 minutes"
+  # High 5xx error rate
+  - alert: ApiHigh5xxErrorRate
+    expr: |
+      (
+        sum(rate(http_server_duration_seconds_count{job="trustify", http_response_status_code=~"5.."}[5m]))
+        /
+        sum(rate(http_server_duration_seconds_count{job="trustify"}[5m]))
+      ) > 0.05
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      message: "More than 5% of requests returned 5xx server errors in the last 5 minutes."
+  # High 4xx error rate
+  - alert: ApiHigh4xxErrorRate
+    expr: |
+      (
+        sum(rate(http_server_duration_seconds_count{job="trustify", http_response_status_code=~"4.."}[5m]))
+        /
+        sum(rate(http_server_duration_seconds_count{job="trustify"}[5m]))
+      ) > 0.10
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      message: "More than 10% of requests returned 4xx client errors in the last 5 minutes."
+  # High p95 latency
+  - alert: ApiHighLatencyP95
+    expr: histogram_quantile(0.95, sum(rate(http_server_duration_seconds_bucket{job="trustify"}[5m])) by (le)) > 0.5
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      message: "API p95 latency is higher than 500ms over the last 5 minutes."
+  # High p99 latency
+  - alert: ApiHighLatencyP99
+    expr: histogram_quantile(0.99, sum(rate(http_server_duration_seconds_bucket{job="trustify"}[5m])) by (le)) > 1
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      message: "API p99 latency is higher than 1s over the last 5 minutes."
+
