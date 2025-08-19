@@ -776,11 +776,13 @@ fn find(sbom_package_relation: sbom_node::Relation) -> Select<sbom_node::Entity>
 
 fn rank_query(mut subquery: SelectStatement) -> WithQuery {
     const CTE_TABLE_NAME: &str = "describing_ranked";
-    subquery.join(
-        JoinType::Join,
-        CTE_TABLE_NAME,
-        Expr::col((CTE_TABLE_NAME, "sbom_id")).eq(sbom::Column::SbomId.into_expr()),
-    );
+    subquery
+        .join(
+            JoinType::Join,
+            CTE_TABLE_NAME,
+            Expr::col((CTE_TABLE_NAME, "sbom_id")).eq(sbom::Column::SbomId.into_expr()),
+        )
+        .and_where(Expr::col((CTE_TABLE_NAME, "rank")).eq(1));
 
     WithClause::new()
         .query(subquery)
@@ -915,6 +917,8 @@ WHERE
     "sbom_node"."name" NOT LIKE $2
     AND
     "sbom_package_cpe_ref"."cpe_id" = $3
+    AND
+    "describing_ranked"."rank" = $4
 "#
             .replace('\n', " ")
             .split_whitespace()
@@ -927,7 +931,8 @@ WHERE
             Values(vec![
                 13.into(),
                 "pkg:%".into(),
-                "00000000-0000-0000-0000-000000000000".into()
+                "00000000-0000-0000-0000-000000000000".into(),
+                1.into(),
             ])
         );
     }
