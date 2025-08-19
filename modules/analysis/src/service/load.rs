@@ -768,6 +768,10 @@ fn find(sbom_package_relation: sbom_node::Relation) -> Select<sbom_node::Entity>
         .left_join(sbom::Entity)
         .join(JoinType::LeftJoin, sbom_package_relation.def())
         .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+        .join(
+            JoinType::LeftJoin,
+            sbom_package_cpe_ref::Relation::Cpe.def(),
+        )
 }
 
 fn rank_query(mut subquery: SelectStatement) -> WithQuery {
