@@ -384,6 +384,10 @@ impl InnerService {
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
                 let subquery = find(sbom_node::Relation::Package)
                     // For CPE searches the .not_like("pkg:%") filter is required
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
+                    )
                     .filter(sbom_node::Column::Name.not_like("pkg:%"))
                     .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()));
 
@@ -395,6 +399,10 @@ impl InnerService {
                     .join(
                         JoinType::LeftJoin,
                         sbom_package_purl_ref::Relation::Purl.def(),
+                    )
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
                     )
                     .filtering_with(query.clone(), q_columns())?;
 
@@ -768,10 +776,6 @@ fn find(sbom_package_relation: sbom_node::Relation) -> Select<sbom_node::Entity>
         .left_join(sbom::Entity)
         .join(JoinType::LeftJoin, sbom_package_relation.def())
         .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
-        .join(
-            JoinType::LeftJoin,
-            sbom_package_cpe_ref::Relation::Cpe.def(),
-        )
 }
 
 fn rank_query(mut subquery: SelectStatement) -> WithQuery {
