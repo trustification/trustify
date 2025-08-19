@@ -260,7 +260,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(response["total"], 2);
+    assert_eq!(response["total"], 3);
 
     Ok(())
 }
