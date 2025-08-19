@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1755084174368,
+  "lastUpdate": 1755606633444,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -13194,6 +13194,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "a9c3b8becef759b6335b2347f3977caade55a8df",
+          "message": "chore: some alerts for http related metrics",
+          "timestamp": "2025-08-19T11:45:20Z",
+          "tree_id": "a6cc999cc9f9cdc3221389dfe09c0e1e6ed45cea",
+          "url": "https://github.com/trustification/trustify/commit/a9c3b8becef759b6335b2347f3977caade55a8df"
+        },
+        "date": 1755606631999,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
