@@ -13,6 +13,7 @@ use csaf::vulnerability::Vulnerability;
 use packageurl::PackageUrl;
 use std::io::Error;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use std::str::FromStr;
 
@@ -97,6 +98,10 @@ pub async fn document_generated_from(path: &str, rev: u64) -> Result<Bytes, Erro
             rev_vulnerability(vulnerability, rev);
         }
     }
+
+    //NOTE: Generating a random title to make the bench pass avoiding `document vanished` error.
+    let uuid = Uuid::new_v4();
+    doc.document.title = format!("random_title-{rev}-{uuid}");
 
     let data = serde_json::to_vec_pretty(&doc).expect("serialize ok");
     Ok(Bytes::from(data))
