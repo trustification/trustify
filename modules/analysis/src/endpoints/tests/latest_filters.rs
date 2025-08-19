@@ -38,9 +38,12 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert!(response.contains_subset(json!({
-      "total":2
-    })));
+    assert!(
+        response.contains_subset(json!({
+          "total":2
+        })),
+        "response was: {response:#?}"
+    );
 
     // cpe latest search
     let uri: String = format!(
@@ -49,9 +52,12 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert!(response.contains_subset(json!({
-      "total":1
-    })));
+    assert!(
+        response.contains_subset(json!({
+          "total":1
+        })),
+        "response was: {response:#?}"
+    );
 
     // purl partial search
     let uri: String = format!(
@@ -70,9 +76,12 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::warn!("{:?}", response.get("total"));
-    assert!(response.contains_subset(json!({
-      "total":16
-    })));
+    assert!(
+        response.contains_subset(json!({
+          "total":16
+        })),
+        "response was: {response:#?}"
+    );
 
     // purl partial search latest
     let uri: String = format!(
@@ -82,9 +91,12 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::warn!("{:?}", response.get("total"));
-    assert!(response.contains_subset(json!({
-      "total":7
-    })));
+    assert!(
+        response.contains_subset(json!({
+          "total":7
+        })),
+        "response was: {response:#?}"
+    );
     Ok(())
 }
 
