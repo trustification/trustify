@@ -7,12 +7,17 @@ use opentelemetry::{
     propagation::Injector,
     trace::TracerProvider as _,
 };
-use opentelemetry_otlp::{MetricExporter, SpanExporter};
+use opentelemetry_appender_tracing::layer;
+use opentelemetry_otlp::{LogExporter, MetricExporter, SpanExporter};
 use opentelemetry_sdk::{
     Resource,
+    logs::SdkLoggerProvider,
     metrics::{PeriodicReader, SdkMeterProvider},
     propagation::TraceContextPropagator,
-    trace::{Sampler, Sampler::ParentBased, SdkTracerProvider},
+    trace::{
+        Sampler::{self, ParentBased},
+        SdkTracerProvider,
+    },
 };
 use reqwest::RequestBuilder;
 use std::sync::Once;
@@ -39,6 +44,15 @@ pub enum Tracing {
     Enabled,
 }
 
+#[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq, Default)]
+pub enum Logging {
+    #[clap(name = "disabled")]
+    #[default]
+    Disabled,
+    #[clap(name = "enabled")]
+    Enabled,
+}
+
 impl fmt::Display for Metrics {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -53,6 +67,15 @@ impl fmt::Display for Tracing {
         match self {
             Tracing::Disabled => write!(f, "disabled"),
             Tracing::Enabled => write!(f, "enabled"),
+        }
+    }
+}
+
+impl fmt::Display for Logging {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Logging::Disabled => write!(f, "disabled"),
+            Logging::Enabled => write!(f, "enabled"),
         }
     }
 }
@@ -122,13 +145,13 @@ fn sampler() -> Sampler {
 }
 
 static INIT: Once = Once::new();
-pub fn init_tracing(name: &str, tracing: Tracing) {
+pub fn init_tracing(name: &str, tracing: Tracing, logging: Logging) {
     match tracing {
         Tracing::Disabled => {
             INIT.call_once(init_no_tracing);
         }
         Tracing::Enabled => {
-            init_otlp_tracing(name);
+            init_otlp_tracing(name, logging);
         }
     }
 }
@@ -163,7 +186,7 @@ fn init_otlp_metrics(name: &str) {
     set_meter_provider(provider);
 }
 
-fn init_otlp_tracing(name: &str) {
+fn init_otlp_tracing(name: &str, logging: Logging) {
     set_text_map_propagator(TraceContextPropagator::new());
 
     #[allow(clippy::expect_used)]
@@ -188,7 +211,37 @@ fn init_otlp_tracing(name: &str) {
     let formatting_layer = tracing_subscriber::fmt::Layer::default();
     let tracer = provider.tracer(name.to_string());
 
-    if let Err(e) = tracing_subscriber::registry()
+    if logging == Logging::Enabled {
+        #[allow(clippy::expect_used)]
+        let log_exporter = LogExporter::builder()
+            .with_tonic()
+            .build()
+            .expect("Unable to build log exporter");
+
+        let log_provider = SdkLoggerProvider::builder()
+            .with_resource(
+                Resource::builder()
+                    .with_service_name(name.to_string())
+                    .build(),
+            )
+            .with_simple_exporter(log_exporter)
+            .build();
+
+        println!("Exporting logs to OTEL Collector.");
+        println!("{log_provider:#?}");
+
+        let otel_log_layer = layer::OpenTelemetryTracingBridge::new(&log_provider);
+
+        if let Err(e) = tracing_subscriber::registry()
+            .with(EnvFilter::from_default_env())
+            .with(OpenTelemetryLayer::new(tracer))
+            .with(formatting_layer)
+            .with(otel_log_layer)
+            .try_init()
+        {
+            eprintln!("Error initializing tracing with logging: {e:?}");
+        }
+    } else if let Err(e) = tracing_subscriber::registry()
         .with(EnvFilter::from_default_env())
         .with(OpenTelemetryLayer::new(tracer))
         .with(formatting_layer)

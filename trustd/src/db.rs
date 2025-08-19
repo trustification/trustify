@@ -6,7 +6,7 @@ use std::process::ExitCode;
 use std::time::Duration;
 use trustify_common::config::Database;
 use trustify_common::db;
-use trustify_infrastructure::otel::{Tracing, init_tracing};
+use trustify_infrastructure::otel::{Logging, Tracing, init_tracing};
 
 #[derive(clap::Args, Debug)]
 pub struct Run {
@@ -25,7 +25,7 @@ pub enum Command {
 
 impl Run {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        init_tracing("db-run", Tracing::Disabled);
+        init_tracing("db-run", Tracing::Disabled, Logging::Disabled);
         use Command::*;
         match self.command {
             Create => self.create().await,
@@ -60,7 +60,7 @@ impl Run {
     }
 
     pub async fn start(&mut self) -> anyhow::Result<PostgreSQL> {
-        init_tracing("db-start", Tracing::Disabled);
+        init_tracing("db-start", Tracing::Disabled, Logging::Disabled);
         log::warn!("Setting up managed DB; not suitable for production use!");
 
         let current_dir = env::current_dir()?;

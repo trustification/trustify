@@ -1,6 +1,6 @@
 use crate::{
     health::{Checks, HealthChecks},
-    otel::{Metrics as OtelMetrics, Tracing, init_metrics, init_tracing},
+    otel::{Logging, Metrics as OtelMetrics, Tracing, init_metrics, init_tracing},
 };
 use actix_web::{
     App, HttpRequest, HttpResponse, HttpServer, Responder, http::uri::Builder, middleware::Logger,
@@ -35,6 +35,9 @@ pub struct InfrastructureConfig {
     /// Number of workers
     #[arg(long, env, default_value = "1")]
     pub infrastructure_workers: usize,
+    /// Enable OTEL logging
+    #[arg(long, env, default_value_t = Logging::Disabled)]
+    pub logging: Logging,
     /// Enable tracing
     #[arg(long, env, default_value_t = Tracing::Disabled)]
     pub tracing: Tracing,
@@ -49,6 +52,7 @@ impl Default for InfrastructureConfig {
             infrastructure_enabled: false,
             infrastructure_bind: DEFAULT_BIND_ADDR.into(),
             infrastructure_workers: 1,
+            logging: Logging::Disabled,
             tracing: Tracing::Disabled,
             metrics: OtelMetrics::Disabled,
         }
@@ -201,7 +205,7 @@ impl Infrastructure {
             std::env::var_os("OTEL_EXPORTER_OTLP_ENDPOINT")
         );
 
-        init_tracing(id, self.config.tracing);
+        init_tracing(id, self.config.tracing, self.config.logging);
         init_metrics(id, self.config.metrics);
 
         let init_data = init(InitContext {

@@ -14,7 +14,7 @@ exporters:
     tls:
       insecure: true
   debug:
-    verbosity: basic
+    verbosity: detailed
 
 processors:
   batch: {}
@@ -32,7 +32,11 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [debug, otlp]
+      exporters: [otlp]
     metrics:
       receivers: [otlp]
       exporters: [otlphttp/prometheus, debug]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]

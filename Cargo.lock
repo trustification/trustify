@@ -4876,6 +4876,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "opentelemetry-appender-tracing"
+version = "0.30.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e68f63eca5fad47e570e00e893094fc17be959c80c79a7d6ec1abdd5ae6ffc16"
+dependencies = [
+ "opentelemetry",
+ "tracing",
+ "tracing-core",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "opentelemetry-http"
 version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8420,6 +8432,7 @@ dependencies = [
  "mime",
  "openssl",
  "opentelemetry",
+ "opentelemetry-appender-tracing",
  "opentelemetry-instrumentation-actix-web",
  "opentelemetry-otlp",
  "opentelemetry_sdk",
