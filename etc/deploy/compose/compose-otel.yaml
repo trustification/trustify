@@ -1,8 +1,10 @@
 services:
   prometheus:
     image: prom/prometheus:v3.1.0
+    volumes:
+      - ./prometheus/:/etc/prometheus/:z
     command:
-      - --config.file=/etc/prometheus/prometheus.yml
+      - --config.file=/etc/prometheus/prometheus.yaml
       - --web.enable-otlp-receiver
     ports:
       - "9090:9090"
