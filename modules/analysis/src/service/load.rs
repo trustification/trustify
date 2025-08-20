@@ -21,7 +21,7 @@ use sea_orm::{
 };
 use sea_query::{
     CommonTableExpression, Cond, Expr, IntoCondition, JoinType, PostgresQueryBuilder,
-    SelectStatement, WithClause, WithQuery,
+    SelectStatement, WithClause, WithQuery, all,
 };
 use serde_json::Value;
 use std::{
@@ -809,13 +809,8 @@ fn rank_query(mut subquery: SelectStatement) -> WithQuery {
                         )
                         .join(
                             JoinType::Join,
-                            sbom_package::Entity,
-                            sbom_node::Relation::Package.def(),
-                        )
-                        .join(
-                            JoinType::Join,
                             package_relates_to_package::Entity,
-                            package_relates_to_package::Relation::RightPackage
+                            package_relates_to_package::Relation::Right
                                 .def()
                                 .rev()
                                 .on_condition(|_left, right| {
@@ -829,7 +824,12 @@ fn rank_query(mut subquery: SelectStatement) -> WithQuery {
                         )
                         .left_join(
                             sbom_package_cpe_ref::Entity,
-                            sbom_package::Relation::Cpe.def(),
+                            all![
+                                    Expr::col((sbom_node::Entity, sbom_node::Column::SbomId))
+                                        .equals((sbom_package_cpe_ref::Entity, sbom_package_cpe_ref::Column::SbomId)),
+                                    Expr::col((sbom_node::Entity, sbom_node::Column::NodeId))
+                                        .equals((sbom_package_cpe_ref::Entity, sbom_package_cpe_ref::Column::NodeId)),
+                                ],
                         )
                         .to_owned(),
                 )
@@ -893,16 +893,13 @@ WITH "describing_ranked" AS (SELECT
         "sbom_node"
         JOIN "sbom"
             ON "sbom_node"."sbom_id" = "sbom"."sbom_id"
-        JOIN "sbom_package"
-            ON "sbom_node"."sbom_id" = "sbom_package"."sbom_id"
-                AND "sbom_node"."node_id" = "sbom_package"."node_id"
          JOIN "package_relates_to_package"
-              ON "sbom_package"."sbom_id" = "package_relates_to_package"."sbom_id"
-                  AND "sbom_package"."node_id" = "package_relates_to_package"."right_node_id"
+              ON "sbom_node"."sbom_id" = "package_relates_to_package"."sbom_id"
+                  AND "sbom_node"."node_id" = "package_relates_to_package"."right_node_id"
                   AND "package_relates_to_package"."relationship" = $1
          LEFT JOIN "sbom_package_cpe_ref"
-               ON "sbom_package"."sbom_id" = "sbom_package_cpe_ref"."sbom_id"
-                   AND "sbom_package"."node_id" = "sbom_package_cpe_ref"."node_id")
+               ON "sbom_node"."sbom_id" = "sbom_package_cpe_ref"."sbom_id"
+                   AND "sbom_node"."node_id" = "sbom_package_cpe_ref"."node_id")
 SELECT
     DISTINCT "sbom"."sbom_id"
 FROM
