@@ -17,6 +17,10 @@ Use the `--devmode` flag to start the server with the default values.
 > [!WARNING]
 > This setup contains well-known credentials, which are not secure!
 
+> [!NOTE]
+> If you encounter the error `/init-sso/init.sh: Permission denied`, make sure to set the `SELINUX_VOLUME_OPTIONS` variable to `:Z`
+
+
 ### GitHub Identity Provider
 
 In order to configure GitHub as an external Identity Provider, the init scripts allow setting the `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` environment variables.
@@ -63,7 +67,7 @@ If you want to authenticate with an existing Keycloak instance, configure the fo
 ### Using a dedicated configuration file
 
 When using `--auth-configuration`, you must specify a JSON configuration file.
-Unlike the CLI-based configuration, the `scopeMappings` field must be explicitly defined in the file. 
+Unlike the CLI-based configuration, the `scopeMappings` field must be explicitly defined in the file.
 The CLI alternative provides predefined scope mappings that cannot be customized.
 
 ```json
