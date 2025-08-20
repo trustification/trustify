@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1755687656704,
+  "lastUpdate": 1755693177744,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -13247,6 +13247,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/871efc2d15e954067277a5bf28cf34319aefef7f"
         },
         "date": 1755687655373,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "3338ed6d0a882100d03978fc58ce086ccc4a1932",
+          "message": "docs: note added to avoid /init-sso/init.sh: Permission denied",
+          "timestamp": "2025-08-20T12:03:46Z",
+          "tree_id": "3c942379a09f0326916dcf6da2448cb94169b434",
+          "url": "https://github.com/trustification/trustify/commit/3338ed6d0a882100d03978fc58ce086ccc4a1932"
+        },
+        "date": 1755693176304,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
