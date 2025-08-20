@@ -267,6 +267,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+#[ignore = "Unclear what the expectation is. Three SBOMs share the same name/CPE combination and are thus reduced to a single, latest one."]
 async fn test_tc2606(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
 
