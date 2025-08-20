@@ -45,6 +45,6 @@ services:
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
     volumes:
-      - ./config/init-sso:/init-sso${SELINUX_VOLUME_OPTIONS}
+      - ./config/init-sso:/init-sso${SELINUX_VOLUME_OPTIONS}:z
     entrypoint: /usr/bin/bash
     command: /init-sso/init.sh
