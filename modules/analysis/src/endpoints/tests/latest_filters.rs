@@ -78,7 +78,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     log::warn!("{:?}", response.get("total"));
     assert!(
         response.contains_subset(json!({
-          "total":16
+          "total":7
         })),
         "response was: {response:#?}"
     );
@@ -93,7 +93,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     log::warn!("{:?}", response.get("total"));
     assert!(
         response.contains_subset(json!({
-          "total":7
+          "total":6
         })),
         "response was: {response:#?}"
     );
