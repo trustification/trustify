@@ -6,11 +6,12 @@ use actix_http::StatusCode;
 use actix_web::test::TestRequest;
 use flate2::bufread::GzDecoder;
 use serde_json::{Value, json};
-use std::io::Read;
+use std::{io::Read, str::FromStr};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{id::Id, model::PaginatedResults};
 use trustify_module_ingestor::{model::IngestResult, service::Format};
+use trustify_module_storage::service::{StorageBackend, StorageKey};
 use trustify_test_context::{
     TrustifyContext, call::CallService, document_bytes, subset::ContainsSubset,
 };
@@ -1017,9 +1018,15 @@ async fn update_labels_not_found(ctx: &TrustifyContext) -> Result<(), anyhow::Er
 #[test(actix_web::test)]
 async fn delete_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
+    let storage = &ctx.storage;
     let result = ctx
         .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
         .await?;
+
+    let key = StorageKey::try_from(Id::from_str(
+        "sha256:488c5d97daed3613746f0c246f4a3d1b26ea52ce43d6bdd33f4219f881a00c07",
+    )?)?;
+    assert!(storage.retrieve(key.clone()).await?.is_some());
 
     let response = app
         .call_service(
@@ -1031,6 +1038,7 @@ async fn delete_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     log::debug!("Code: {}", response.status());
     assert_eq!(response.status(), StatusCode::OK);
+    assert!(storage.retrieve(key).await?.is_none());
 
     // We get the old sbom back when a delete succeeds
     let doc: Value = actix_web::test::read_body_json(response).await;

@@ -20,6 +20,7 @@ use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{
     graph::advisory::AdvisoryInformation, model::IngestResult, service::Format,
 };
+use trustify_module_storage::service::{StorageBackend, StorageKey};
 use trustify_test_context::{TrustifyContext, call::CallService, document_bytes};
 use urlencoding::encode;
 
@@ -552,12 +553,19 @@ async fn update_labels_not_found(ctx: &TrustifyContext) -> Result<(), anyhow::Er
 #[test(actix_web::test)]
 async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
+    let storage = &ctx.storage;
     let doc = ctx.ingest_document(DOC).await?;
 
     let advisory_list: PaginatedResults<AdvisorySummary> = app
         .call_and_read_body_json(TestRequest::get().uri("/api/v2/advisory").to_request())
         .await;
     assert_eq!(advisory_list.total, 1);
+    let key: StorageKey = advisory_list.items[0]
+        .source_document
+        .as_ref()
+        .expect("valid document")
+        .try_into()?;
+    assert!(storage.retrieve(key.clone()).await?.is_some());
 
     // first delete should succeed
     let response = app
@@ -570,6 +578,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     log::debug!("Code: {}", response.status());
     assert_eq!(response.status(), StatusCode::OK);
+    assert!(storage.retrieve(key).await?.is_none());
 
     // check that the document is gone
     let advisory_list: PaginatedResults<AdvisorySummary> = app
