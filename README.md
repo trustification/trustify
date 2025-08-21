@@ -9,7 +9,7 @@ Trustify tackles some of the problems developers and companies face when keeping
 - Deploy applications with fewer vulnerabilities
 - Meet compliance regulations for SBOM management and archiving
 - Know that trusted components are in use as early as possible
-- Reduce alert fatigue with fewer false positive by getting vendor vulnerability information from the actual vendor (VEX) 
+- Reduce alert fatigue with fewer false positive by getting vendor vulnerability information from the actual vendor (VEX)
 - Analyze applications without downloading and installing
 
 ## Architecture
@@ -18,14 +18,14 @@ We changed the architecture to [modulith](https://dzone.com/articles/architectur
 
 The general architecture is as follows:
 
-### The System 
+### The System
 - REST APIs to support operations for ingesting and retrieving supply-chain data.
 - Comes with a set of default importers to public available vulnerability data
 
 ### A single SQL database
 - PostgreSQL.
 - Extensible data-model to support all aspects of supply-chain data.
-- OIDC provider 
+- OIDC provider
 
 ![image](https://github.com/user-attachments/assets/f251c0ef-9693-485c-9ebd-8deefe2c244c)
 
@@ -105,10 +105,10 @@ Installation:
 cargo install oidc-cli
 ```
 
-Then, set up an initial client (needs to be done every time the client/keycloak instance if re-created):
+Then, set up an initial client (needs to be done every time the client/keycloak instance is re-created):
 
 ```bash
-oidc create confidential --name trusty --issuer http://localhost:8090/realms/chicken --client-id walker --client-secret ZVzq9AMOVUdMY1lSohpx1jI3aW56QDPS
+oidc create confidential trusty --issuer http://localhost:8090/realms/chicken --client-id walker --client-secret ZVzq9AMOVUdMY1lSohpx1jI3aW56QDPS
 ```
 
 Then one can perform `http` request using HTTPie like this:
