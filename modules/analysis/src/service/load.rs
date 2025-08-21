@@ -383,12 +383,10 @@ impl InnerService {
             }
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
                 let subquery = find(sbom_node::Relation::Package)
-                    // For CPE searches the .not_like("pkg:%") filter is required
                     .join(
                         JoinType::LeftJoin,
                         sbom_package_cpe_ref::Relation::Cpe.def(),
                     )
-                    .filter(sbom_node::Column::Name.not_like("pkg:%"))
                     .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()));
 
                 query_all(subquery.into_query(), connection).await?
@@ -772,8 +770,7 @@ fn find(sbom_package_relation: sbom_node::Relation) -> Select<sbom_node::Entity>
     sbom_node::Entity::find()
         .distinct()
         .select_only()
-        .column(sbom::Column::SbomId)
-        .left_join(sbom::Entity)
+        .column(sbom_node::Column::SbomId)
         .join(JoinType::LeftJoin, sbom_package_relation.def())
         .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
 }
@@ -784,7 +781,7 @@ fn rank_query(mut subquery: SelectStatement) -> WithQuery {
         .join(
             JoinType::Join,
             CTE_TABLE_NAME,
-            Expr::col((CTE_TABLE_NAME, "sbom_id")).eq(sbom::Column::SbomId.into_expr()),
+            Expr::col((CTE_TABLE_NAME, "sbom_id")).eq(sbom_node::Column::SbomId.into_expr()),
         )
         .and_where(Expr::col((CTE_TABLE_NAME, "rank")).eq(1));
 
@@ -872,7 +869,6 @@ mod test {
     #[test]
     fn rank_sql() {
         let subquery = find(sbom_node::Relation::Package)
-            .filter(sbom_node::Column::Name.not_like("pkg:%"))
             .filter(sbom_package_cpe_ref::Column::CpeId.eq("00000000-0000-0000-0000-000000000000"));
 
         let select_query = rank_query(subquery.into_query());
@@ -901,11 +897,9 @@ WITH "describing_ranked" AS (SELECT
                ON "sbom_node"."sbom_id" = "sbom_package_cpe_ref"."sbom_id"
                    AND "sbom_node"."node_id" = "sbom_package_cpe_ref"."node_id")
 SELECT
-    DISTINCT "sbom"."sbom_id"
+    DISTINCT "sbom_node"."sbom_id"
 FROM
     "sbom_node"
-    LEFT JOIN "sbom"
-        ON "sbom_node"."sbom_id" = "sbom"."sbom_id"
     LEFT JOIN "sbom_package"
         ON "sbom_node"."sbom_id" = "sbom_package"."sbom_id"
             AND "sbom_node"."node_id" = "sbom_package"."node_id"
@@ -913,13 +907,11 @@ FROM
         ON "sbom_package"."sbom_id" = "sbom_package_cpe_ref"."sbom_id"
             AND "sbom_package"."node_id" = "sbom_package_cpe_ref"."node_id"
     JOIN "describing_ranked"
-        ON "describing_ranked"."sbom_id" = "sbom"."sbom_id"
+        ON "describing_ranked"."sbom_id" = "sbom_node"."sbom_id"
 WHERE
-    "sbom_node"."name" NOT LIKE $2
+    "sbom_package_cpe_ref"."cpe_id" = $2
     AND
-    "sbom_package_cpe_ref"."cpe_id" = $3
-    AND
-    "describing_ranked"."rank" = $4
+    "describing_ranked"."rank" = $3
 "#
             .replace('\n', " ")
             .split_whitespace()
@@ -931,7 +923,6 @@ WHERE
             values,
             Values(vec![
                 13.into(),
-                "pkg:%".into(),
                 "00000000-0000-0000-0000-000000000000".into(),
                 1.into(),
             ])
