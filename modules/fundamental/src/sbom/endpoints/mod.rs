@@ -318,6 +318,7 @@ all!(GetSbomAdvisories -> ReadSbom, ReadAdvisory);
 )]
 #[delete("/v2/sbom/{id}")]
 pub async fn delete(
+    ingestor: web::Data<IngestorService>,
     service: web::Data<SbomService>,
     db: web::Data<Database>,
     purl_service: web::Data<PurlService>,
@@ -335,6 +336,10 @@ pub async fn delete(
                 1 => {
                     let _ = purl_service.gc_purls(&tx).await; // ignore gc failure..
                     tx.commit().await?;
+                    if let Some(doc) = &v.source_document {
+                        let k = doc.try_into()?;
+                        ingestor.storage().delete(k).await.map_err(Error::Storage)?;
+                    }
                     Ok(HttpResponse::Ok().json(v))
                 }
                 _ => Err(Internal("Unexpected number of rows affected".into())),
@@ -516,7 +521,6 @@ pub async fn download(
 
         let stream = ingestor
             .storage()
-            .clone()
             .retrieve(storage_key)
             .await
             .map_err(Error::Storage)?
