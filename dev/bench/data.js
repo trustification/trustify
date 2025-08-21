@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1755693177744,
+  "lastUpdate": 1755780364481,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -13276,6 +13276,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/3338ed6d0a882100d03978fc58ce086ccc4a1932"
         },
         "date": 1755693176304,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "64eca91839fcca9a15f615dc1587f11f6a32d3d5",
+          "message": "fix(docs): remove `--name` CLI argument from oidc\n\nBefore:\n```\noidc create confidential --name trusty --issuer http://localhost:8090/realms/chicken --client-id walker --client-secret ZVzq9AMOVUdMY1lSohpx1jI3aW56QDPS\nerror: unexpected argument '--name' found\n\n  tip: to pass '--name' as a value, use '-- --name'\n\nUsage: oidc create confidential [OPTIONS] --issuer <ISSUER> --client-id <CLIENT_ID> --client-secret <CLIENT_SECRET> <NAME>\n\nFor more information, try '--help'.\n```\n\nAfter:\n```\noidc create confidential trusty --issuer http://localhost:8090/realms/trustify --client-id walker --client-secret ZVzq9AMOVUdMY1lSohpx1jI3aW56QDPS\n```",
+          "timestamp": "2025-08-21T11:57:43Z",
+          "tree_id": "4273dc3fccab70d066f145664c5f382463a40037",
+          "url": "https://github.com/trustification/trustify/commit/64eca91839fcca9a15f615dc1587f11f6a32d3d5"
+        },
+        "date": 1755780363300,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
