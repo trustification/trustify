@@ -145,6 +145,7 @@ pub async fn get(
 #[delete("/v2/advisory/{key}")]
 /// Delete an advisory
 pub async fn delete(
+    ingestor: web::Data<IngestorService>,
     state: web::Data<AdvisoryService>,
     db: web::Data<Database>,
     purl_service: web::Data<PurlService>,
@@ -163,6 +164,10 @@ pub async fn delete(
             1 => {
                 let _ = purl_service.gc_purls(&tx).await; // ignore gc failure..
                 tx.commit().await?;
+                if let Some(doc) = &fetched.source_document {
+                    let k = doc.try_into()?;
+                    ingestor.storage().delete(k).await.map_err(Error::Storage)?;
+                }
                 Ok(HttpResponse::Ok().json(fetched))
             }
             _ => Err(Error::Internal("Unexpected number of rows affected".into())),
@@ -260,9 +265,7 @@ pub async fn download(
 
     if let Some(doc) = &advisory.source_document {
         let stream = ingestor
-            .get_ref()
             .storage()
-            .clone()
             .retrieve(doc.try_into()?)
             .await
             .map_err(Error::Storage)?
