@@ -20,8 +20,8 @@ use sea_orm::{
     FromQueryResult, QueryFilter, QuerySelect, QueryTrait, RelationTrait, Select, Statement,
 };
 use sea_query::{
-    CommonTableExpression, Cond, Expr, IntoCondition, JoinType, PostgresQueryBuilder,
-    SelectStatement, WithClause, WithQuery, all,
+    CommonTableExpression, Cond, Expr, IntoColumnRef, IntoCondition, JoinType, Order,
+    PostgresQueryBuilder, SelectStatement, WithClause, WithQuery, all,
 };
 use serde_json::Value;
 use std::{
@@ -777,13 +777,11 @@ fn find(sbom_package_relation: sbom_node::Relation) -> Select<sbom_node::Entity>
 
 fn rank_query(mut subquery: SelectStatement) -> WithQuery {
     const CTE_TABLE_NAME: &str = "describing_ranked";
-    subquery
-        .join(
-            JoinType::Join,
-            CTE_TABLE_NAME,
-            Expr::col((CTE_TABLE_NAME, "sbom_id")).eq(sbom_node::Column::SbomId.into_expr()),
-        )
-        .and_where(Expr::col((CTE_TABLE_NAME, "rank")).eq(1));
+    subquery.join(
+        JoinType::Join,
+        CTE_TABLE_NAME,
+        Expr::col((CTE_TABLE_NAME, "sbom_id")).eq(sbom_node::Column::SbomId.into_expr()),
+    );
 
     WithClause::new()
         .query(subquery)
@@ -792,13 +790,21 @@ fn rank_query(mut subquery: SelectStatement) -> WithQuery {
                 .table_name(CTE_TABLE_NAME)
                 .query(
                     SelectStatement::new()
+                        .distinct_on([
+                            (sbom_node::Entity, sbom_node::Column::Name).into_column_ref(),
+                            (
+                                sbom_package_cpe_ref::Entity,
+                                sbom_package_cpe_ref::Column::CpeId,
+                            )
+                                .into_column_ref(),
+                        ])
                         .from(sbom_node::Entity)
                         .column((sbom_node::Entity, sbom_node::Column::SbomId))
                         .column((sbom_node::Entity, sbom_node::Column::Name))
-                        .column((sbom_package_cpe_ref::Entity, sbom_package_cpe_ref::Column::CpeId))
-                        .expr_as(Expr::cust(
-                            r#"RANK () OVER ( PARTITION BY "sbom_node"."name", "cpe_id" ORDER BY "sbom"."published" DESC )"#,
-                        ), "rank")
+                        .column((
+                            sbom_package_cpe_ref::Entity,
+                            sbom_package_cpe_ref::Column::CpeId,
+                        ))
                         .join(
                             JoinType::Join,
                             sbom::Entity,
@@ -815,19 +821,32 @@ fn rank_query(mut subquery: SelectStatement) -> WithQuery {
                                         right,
                                         package_relates_to_package::Column::Relationship,
                                     ))
-                                        .eq(Relationship::Describes)
-                                        .into_condition()
+                                    .eq(Relationship::Describes)
+                                    .into_condition()
                                 }),
                         )
                         .left_join(
                             sbom_package_cpe_ref::Entity,
                             all![
-                                    Expr::col((sbom_node::Entity, sbom_node::Column::SbomId))
-                                        .equals((sbom_package_cpe_ref::Entity, sbom_package_cpe_ref::Column::SbomId)),
-                                    Expr::col((sbom_node::Entity, sbom_node::Column::NodeId))
-                                        .equals((sbom_package_cpe_ref::Entity, sbom_package_cpe_ref::Column::NodeId)),
-                                ],
+                                Expr::col((sbom_node::Entity, sbom_node::Column::SbomId)).equals((
+                                    sbom_package_cpe_ref::Entity,
+                                    sbom_package_cpe_ref::Column::SbomId
+                                )),
+                                Expr::col((sbom_node::Entity, sbom_node::Column::NodeId)).equals((
+                                    sbom_package_cpe_ref::Entity,
+                                    sbom_package_cpe_ref::Column::NodeId
+                                )),
+                            ],
                         )
+                        .order_by((sbom_node::Entity, sbom_node::Column::Name), Order::Asc)
+                        .order_by(
+                            (
+                                sbom_package_cpe_ref::Entity,
+                                sbom_package_cpe_ref::Column::CpeId,
+                            ),
+                            Order::Asc,
+                        )
+                        .order_by((sbom::Entity, sbom::Column::Published), Order::Desc)
                         .to_owned(),
                 )
                 .to_owned(),
@@ -877,14 +896,10 @@ mod test {
         assert_eq!(
             sql,
             r#"
-WITH "describing_ranked" AS (SELECT
+WITH "describing_ranked" AS (SELECT DISTINCT ON ("sbom_node"."name", "sbom_package_cpe_ref"."cpe_id")
         "sbom_node"."sbom_id",
         "sbom_node"."name",
-        "sbom_package_cpe_ref"."cpe_id",
-        RANK () OVER (
-            PARTITION BY "sbom_node"."name", "cpe_id"
-            ORDER BY "sbom"."published" DESC
-        ) AS "rank"
+        "sbom_package_cpe_ref"."cpe_id"
     FROM
         "sbom_node"
         JOIN "sbom"
@@ -895,7 +910,8 @@ WITH "describing_ranked" AS (SELECT
                   AND "package_relates_to_package"."relationship" = $1
          LEFT JOIN "sbom_package_cpe_ref"
                ON "sbom_node"."sbom_id" = "sbom_package_cpe_ref"."sbom_id"
-                   AND "sbom_node"."node_id" = "sbom_package_cpe_ref"."node_id")
+                   AND "sbom_node"."node_id" = "sbom_package_cpe_ref"."node_id"
+         ORDER BY "sbom_node"."name" ASC, "sbom_package_cpe_ref"."cpe_id" ASC, "sbom"."published" DESC)
 SELECT
     DISTINCT "sbom_node"."sbom_id"
 FROM
@@ -910,8 +926,6 @@ FROM
         ON "describing_ranked"."sbom_id" = "sbom_node"."sbom_id"
 WHERE
     "sbom_package_cpe_ref"."cpe_id" = $2
-    AND
-    "describing_ranked"."rank" = $3
 "#
             .replace('\n', " ")
             .split_whitespace()
@@ -924,7 +938,6 @@ WHERE
             Values(vec![
                 13.into(),
                 "00000000-0000-0000-0000-000000000000".into(),
-                1.into(),
             ])
         );
     }
