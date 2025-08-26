@@ -9,6 +9,7 @@ use crate::{
         model::{AdvisoryDetails, AdvisorySummary},
         service::AdvisoryService,
     },
+    common::service::delete_doc,
     endpoints::Deprecation,
     purl::service::PurlService,
 };
@@ -164,10 +165,7 @@ pub async fn delete(
             1 => {
                 let _ = purl_service.gc_purls(&tx).await; // ignore gc failure..
                 tx.commit().await?;
-                if let Some(doc) = &fetched.source_document {
-                    let k = doc.try_into()?;
-                    ingestor.storage().delete(k).await.map_err(Error::Storage)?;
-                }
+                delete_doc(&fetched.source_document, ingestor.get_ref()).await?;
                 Ok(HttpResponse::Ok().json(fetched))
             }
             _ => Err(Error::Internal("Unexpected number of rows affected".into())),
