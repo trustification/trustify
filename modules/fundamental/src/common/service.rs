@@ -1,5 +1,7 @@
-use crate::Error;
+use crate::{Error, source_document::model::SourceDocument};
 use sea_orm::{ConnectionTrait, DbBackend, FromQueryResult, PaginatorTrait, Statement};
+use trustify_module_ingestor::service::IngestorService;
+use trustify_module_storage::service::StorageBackend;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum DocumentType {
@@ -58,4 +60,15 @@ ORDER BY
 
 fn escape(text: String) -> String {
     text.replace('%', "\\").replace('\\', "\\\\")
+}
+
+pub async fn delete_doc(
+    doc: &Option<SourceDocument>,
+    ingestor: &IngestorService,
+) -> Result<(), Error> {
+    if let Some(doc) = doc {
+        let k = doc.try_into()?;
+        ingestor.storage().delete(k).await.map_err(Error::Storage)?;
+    }
+    Ok(())
 }
