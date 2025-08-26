@@ -9,6 +9,7 @@ pub use query::*;
 use crate::sbom::model::LicenseRefMapping;
 use crate::{
     Error::{self, Internal},
+    common::service::delete_doc,
     license::{
         get_sanitize_filename,
         service::{LicenseService, license_export::LicenseExporter},
@@ -336,10 +337,7 @@ pub async fn delete(
                 1 => {
                     let _ = purl_service.gc_purls(&tx).await; // ignore gc failure..
                     tx.commit().await?;
-                    if let Some(doc) = &v.source_document {
-                        let k = doc.try_into()?;
-                        ingestor.storage().delete(k).await.map_err(Error::Storage)?;
-                    }
+                    delete_doc(&v.source_document, ingestor.get_ref()).await?;
                     Ok(HttpResponse::Ok().json(v))
                 }
                 _ => Err(Internal("Unexpected number of rows affected".into())),
