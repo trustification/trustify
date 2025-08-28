@@ -1,5 +1,6 @@
 use crate::{Error, source_document::model::SourceDocument};
 use sea_orm::{ConnectionTrait, DbBackend, FromQueryResult, PaginatorTrait, Statement};
+use trustify_common::id::IdError;
 use trustify_module_storage::service::{StorageBackend, StorageKey, dispatch::DispatchBackend};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -61,15 +62,18 @@ fn escape(text: String) -> String {
     text.replace('%', "\\").replace('\\', "\\\\")
 }
 
-pub async fn delete_doc(
-    doc: &Option<SourceDocument>,
-    storage: impl DocumentDelete,
-) -> Result<(), Error> {
+pub async fn delete_doc(doc: Option<&SourceDocument>, storage: impl DocumentDelete) {
     if let Some(doc) = doc {
-        let k = doc.try_into()?;
-        storage.delete(k).await?;
+        let result: Result<StorageKey, IdError> = doc.try_into();
+        match result {
+            Ok(key) => {
+                if let Err(e) = storage.delete(key).await {
+                    tracing::warn!("Ignored error deleting [{doc:?}] from storage: [{e}]");
+                }
+            }
+            Err(e) => tracing::warn!("Ignored error turning [{doc:?}] into a storage key: [{e}]"),
+        }
     }
-    Ok(())
 }
 pub trait DocumentDelete {
     fn delete(&self, key: StorageKey) -> impl Future<Output = Result<(), Error>>;
@@ -85,9 +89,11 @@ mod test {
     use super::*;
     use anyhow::anyhow;
     use test_log::test;
+    use tracing_test::traced_test;
     use trustify_module_storage::service::StorageKey;
 
     #[test(tokio::test)]
+    #[traced_test]
     async fn delete_failure() -> Result<(), anyhow::Error> {
         // Setup mock that simulates a delete error
         struct FailingDelete {}
@@ -98,11 +104,29 @@ mod test {
         }
 
         // Deleting no doc is fine, error or not
-        assert!(delete_doc(&None, FailingDelete {}).await.is_ok());
+        delete_doc(None, FailingDelete {}).await;
+        logs_assert(|lines| {
+            (lines.is_empty())
+                .then_some(())
+                .ok_or("expected no logs".to_string())
+        });
 
-        // Failing to delete doc from storage should return error
+        // Failing to delete an invalid doc from storage should log an error
         let doc = SourceDocument::default();
-        assert!(delete_doc(&Some(doc), FailingDelete {}).await.is_err());
+        delete_doc(Some(&doc), FailingDelete {}).await;
+        assert!(logs_contain("turning"));
+        assert!(logs_contain("[Missing prefix]"));
+
+        // Failing to delete a valid doc from storage should log a different error
+        let doc = SourceDocument {
+            sha256: String::from(
+                "sha256:488c5d97daed3613746f0c246f4a3d1b26ea52ce43d6bdd33f4219f881a00c07",
+            ),
+            ..Default::default()
+        };
+        delete_doc(Some(&doc), FailingDelete {}).await;
+        assert!(logs_contain("deleting"));
+        assert!(logs_contain("[delete from storage failed]"));
 
         Ok(())
     }

@@ -140,6 +140,7 @@ tracing-flame = "0.2.0"
 tracing-futures = "0.2.5"
 tracing-opentelemetry = "0.31"
 tracing-subscriber = { version = "0.3.19", default-features = false }
+tracing-test = "0.2"
 url = "2.5.0"
 urlencoding = "2"
 utoipa = "5.1.3"
