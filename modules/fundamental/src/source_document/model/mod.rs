@@ -17,6 +17,18 @@ pub struct SourceDocument {
     pub ingested: OffsetDateTime,
 }
 
+impl Default for SourceDocument {
+    fn default() -> Self {
+        Self {
+            sha256: <_>::default(),
+            sha384: <_>::default(),
+            sha512: <_>::default(),
+            size: <_>::default(),
+            ingested: OffsetDateTime::now_utc(),
+        }
+    }
+}
+
 impl SourceDocument {
     pub fn from_entity(source_document: &source_document::Model) -> Self {
         Self {

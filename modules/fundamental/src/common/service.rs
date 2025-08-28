@@ -1,6 +1,6 @@
 use crate::{Error, source_document::model::SourceDocument};
 use sea_orm::{ConnectionTrait, DbBackend, FromQueryResult, PaginatorTrait, Statement};
-use trustify_module_storage::service::StorageBackend;
+use trustify_module_storage::service::{StorageBackend, StorageKey, dispatch::DispatchBackend};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum DocumentType {
@@ -61,63 +61,48 @@ fn escape(text: String) -> String {
     text.replace('%', "\\").replace('\\', "\\\\")
 }
 
-pub async fn delete_doc<T: StorageBackend<Error = anyhow::Error>>(
+pub async fn delete_doc(
     doc: &Option<SourceDocument>,
-    storage: &T,
+    storage: impl DocumentDelete,
 ) -> Result<(), Error> {
     if let Some(doc) = doc {
         let k = doc.try_into()?;
-        storage.delete(k).await.map_err(Error::Storage)?;
+        storage.delete(k).await?;
     }
     Ok(())
+}
+pub trait DocumentDelete {
+    fn delete(&self, key: StorageKey) -> impl Future<Output = Result<(), Error>>;
+}
+impl DocumentDelete for &DispatchBackend {
+    async fn delete(&self, key: StorageKey) -> Result<(), Error> {
+        (*self).delete(key).await.map_err(Error::Storage)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use anyhow::anyhow;
-    use bytes::Bytes;
-    use futures_util::Stream;
-    use test_context::futures;
     use test_log::test;
-    use time::OffsetDateTime;
-    use trustify_module_storage::service::{StorageBackend, StorageKey, StorageResult, StoreError};
+    use trustify_module_storage::service::StorageKey;
 
     #[test(tokio::test)]
     async fn delete_failure() -> Result<(), anyhow::Error> {
         // Setup mock that simulates a delete error
-        struct FailingStorage {}
-        impl StorageBackend for FailingStorage {
-            type Error = anyhow::Error;
-            async fn store<S>(&self, _: S) -> Result<StorageResult, StoreError<Self::Error>> {
-                unimplemented!();
-            }
-            async fn retrieve<'a>(
-                &self,
-                _: StorageKey,
-            ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error>
-            {
-                Ok(Some(futures::stream::empty()))
-            }
-            async fn delete(&self, _key: StorageKey) -> Result<(), Self::Error> {
-                Err(anyhow!("delete from storage failed"))
+        struct FailingDelete {}
+        impl DocumentDelete for FailingDelete {
+            async fn delete(&self, _key: StorageKey) -> Result<(), Error> {
+                Err(Error::Storage(anyhow!("delete from storage failed")))
             }
         }
 
-        let storage = FailingStorage {};
+        // Deleting no doc is fine, error or not
+        assert!(delete_doc(&None, FailingDelete {}).await.is_ok());
 
-        let doc = SourceDocument {
-            sha256: String::from(
-                "sha256:488c5d97daed3613746f0c246f4a3d1b26ea52ce43d6bdd33f4219f881a00c07",
-            ),
-            sha384: String::new(),
-            sha512: String::new(),
-            size: 0,
-            ingested: OffsetDateTime::now_local()?,
-        };
-
-        assert!(delete_doc(&None, &storage).await.is_ok());
-        assert!(delete_doc(&Some(doc), &storage).await.is_err());
+        // Failing to delete doc from storage should return error
+        let doc = SourceDocument::default();
+        assert!(delete_doc(&Some(doc), FailingDelete {}).await.is_err());
 
         Ok(())
     }
