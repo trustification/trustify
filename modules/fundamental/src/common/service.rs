@@ -1,6 +1,5 @@
 use crate::{Error, source_document::model::SourceDocument};
 use sea_orm::{ConnectionTrait, DbBackend, FromQueryResult, PaginatorTrait, Statement};
-use trustify_module_ingestor::service::IngestorService;
 use trustify_module_storage::service::StorageBackend;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -62,13 +61,64 @@ fn escape(text: String) -> String {
     text.replace('%', "\\").replace('\\', "\\\\")
 }
 
-pub async fn delete_doc(
+pub async fn delete_doc<T: StorageBackend<Error = anyhow::Error>>(
     doc: &Option<SourceDocument>,
-    ingestor: &IngestorService,
+    storage: &T,
 ) -> Result<(), Error> {
     if let Some(doc) = doc {
         let k = doc.try_into()?;
-        ingestor.storage().delete(k).await.map_err(Error::Storage)?;
+        storage.delete(k).await.map_err(Error::Storage)?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use anyhow::anyhow;
+    use bytes::Bytes;
+    use futures_util::Stream;
+    use test_context::futures;
+    use test_log::test;
+    use time::OffsetDateTime;
+    use trustify_module_storage::service::{StorageBackend, StorageKey, StorageResult, StoreError};
+
+    #[test(tokio::test)]
+    async fn delete_failure() -> Result<(), anyhow::Error> {
+        // Setup mock that simulates a delete error
+        struct FailingStorage {}
+        impl StorageBackend for FailingStorage {
+            type Error = anyhow::Error;
+            async fn store<S>(&self, _: S) -> Result<StorageResult, StoreError<Self::Error>> {
+                unimplemented!();
+            }
+            async fn retrieve<'a>(
+                &self,
+                _: StorageKey,
+            ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error>
+            {
+                Ok(Some(futures::stream::empty()))
+            }
+            async fn delete(&self, _key: StorageKey) -> Result<(), Self::Error> {
+                Err(anyhow!("delete from storage failed"))
+            }
+        }
+
+        let storage = FailingStorage {};
+
+        let doc = SourceDocument {
+            sha256: String::from(
+                "sha256:488c5d97daed3613746f0c246f4a3d1b26ea52ce43d6bdd33f4219f881a00c07",
+            ),
+            sha384: String::new(),
+            sha512: String::new(),
+            size: 0,
+            ingested: OffsetDateTime::now_local()?,
+        };
+
+        assert!(delete_doc(&None, &storage).await.is_ok());
+        assert!(delete_doc(&Some(doc), &storage).await.is_err());
+
+        Ok(())
+    }
 }

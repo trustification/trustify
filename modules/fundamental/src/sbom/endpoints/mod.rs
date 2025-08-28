@@ -337,7 +337,7 @@ pub async fn delete(
                 1 => {
                     let _ = purl_service.gc_purls(&tx).await; // ignore gc failure..
                     tx.commit().await?;
-                    delete_doc(&v.source_document, ingestor.get_ref()).await?;
+                    delete_doc(&v.source_document, ingestor.storage()).await?;
                     Ok(HttpResponse::Ok().json(v))
                 }
                 _ => Err(Internal("Unexpected number of rows affected".into())),
