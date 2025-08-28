@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1755780364481,
+  "lastUpdate": 1756373569234,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -13305,6 +13305,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/64eca91839fcca9a15f615dc1587f11f6a32d3d5"
         },
         "date": 1755780363300,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "gdubreui@redhat.com",
+            "name": "Gilles Dubreuil",
+            "username": "gildub"
+          },
+          "distinct": true,
+          "id": "4bca799f782412826c3efd8885b1a7e1251bd0ba",
+          "message": "Use a mock to simulate a delete error",
+          "timestamp": "2025-08-28T09:11:16Z",
+          "tree_id": "a5c20a5282676c745756cb155fbc03274e153535",
+          "url": "https://github.com/trustification/trustify/commit/4bca799f782412826c3efd8885b1a7e1251bd0ba"
+        },
+        "date": 1756373567521,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
