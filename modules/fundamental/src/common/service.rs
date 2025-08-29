@@ -62,17 +62,24 @@ fn escape(text: String) -> String {
     text.replace('%', "\\").replace('\\', "\\\\")
 }
 
-pub async fn delete_doc(doc: Option<&SourceDocument>, storage: impl DocumentDelete) {
-    if let Some(doc) = doc {
-        let result: Result<StorageKey, IdError> = doc.try_into();
-        match result {
-            Ok(key) => {
-                if let Err(e) = storage.delete(key).await {
-                    tracing::warn!("Ignored error deleting [{doc:?}] from storage: [{e}]");
-                }
+pub async fn delete_doc(
+    doc: Option<&SourceDocument>,
+    storage: impl DocumentDelete,
+) -> Result<(), String> {
+    match doc {
+        Some(doc) => {
+            let result: Result<StorageKey, IdError> = doc.try_into();
+            match result {
+                Ok(key) => storage
+                    .delete(key)
+                    .await
+                    .map_err(|e| format!("Ignored error deleting [{doc:?}] from storage: [{e}]")),
+                Err(e) => Err(format!(
+                    "Ignored error turning [{doc:?}] into a storage key: [{e}]"
+                )),
             }
-            Err(e) => tracing::warn!("Ignored error turning [{doc:?}] into a storage key: [{e}]"),
         }
+        None => Ok(()),
     }
 }
 pub trait DocumentDelete {
@@ -89,11 +96,9 @@ mod test {
     use super::*;
     use anyhow::anyhow;
     use test_log::test;
-    use tracing_test::traced_test;
     use trustify_module_storage::service::StorageKey;
 
     #[test(tokio::test)]
-    #[traced_test]
     async fn delete_failure() -> Result<(), anyhow::Error> {
         // Setup mock that simulates a delete error
         struct FailingDelete {}
@@ -104,18 +109,15 @@ mod test {
         }
 
         // Deleting no doc is fine, error or not
-        delete_doc(None, FailingDelete {}).await;
-        logs_assert(|lines| {
-            (lines.is_empty())
-                .then_some(())
-                .ok_or("expected no logs".to_string())
-        });
+        let msg = delete_doc(None, FailingDelete {}).await;
+        assert!(msg.is_ok());
 
         // Failing to delete an invalid doc from storage should log an error
         let doc = SourceDocument::default();
-        delete_doc(Some(&doc), FailingDelete {}).await;
-        assert!(logs_contain("turning"));
-        assert!(logs_contain("[Missing prefix]"));
+        match delete_doc(Some(&doc), FailingDelete {}).await {
+            Ok(_) => panic!("expected error"),
+            Err(e) => assert!(e.as_str().contains("[Missing prefix]")),
+        };
 
         // Failing to delete a valid doc from storage should log a different error
         let doc = SourceDocument {
@@ -124,9 +126,10 @@ mod test {
             ),
             ..Default::default()
         };
-        delete_doc(Some(&doc), FailingDelete {}).await;
-        assert!(logs_contain("deleting"));
-        assert!(logs_contain("[delete from storage failed]"));
+        match delete_doc(Some(&doc), FailingDelete {}).await {
+            Ok(_) => panic!("expected error"),
+            Err(e) => assert!(e.as_str().contains("[delete from storage failed]")),
+        };
 
         Ok(())
     }
