@@ -242,11 +242,8 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let fetched = fetched.expect("Advisory not found");
 
-    let affected = fetch.delete_advisory(fetched.head.uuid, &ctx.db).await?;
-    assert_eq!(affected, 1);
-
-    let affected = fetch.delete_advisory(fetched.head.uuid, &ctx.db).await?;
-    assert_eq!(affected, 0);
+    assert!(fetch.delete_advisory(fetched.head.uuid, &ctx.db).await?);
+    assert!(!fetch.delete_advisory(fetched.head.uuid, &ctx.db).await?);
 
     Ok(())
 }

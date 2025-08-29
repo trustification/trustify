@@ -159,10 +159,9 @@ pub async fn delete(
     let fetched = state.fetch_advisory(hash_key, &tx).await?;
 
     if let Some(fetched) = fetched {
-        let rows_affected = state.delete_advisory(fetched.head.uuid, &tx).await?;
-        match rows_affected {
-            0 => Ok(HttpResponse::NotFound().finish()),
-            1 => {
+        match state.delete_advisory(fetched.head.uuid, &tx).await? {
+            false => Ok(HttpResponse::NotFound().finish()),
+            true => {
                 let _ = purl_service.gc_purls(&tx).await; // ignore gc failure..
                 tx.commit().await?;
                 if let Err(msg) = delete_doc(fetched.source_document.as_ref(), i.storage()).await {
@@ -170,7 +169,6 @@ pub async fn delete(
                 }
                 Ok(HttpResponse::Ok().json(fetched))
             }
-            _ => Err(Error::Internal("Unexpected number of rows affected".into())),
         }
     } else {
         Ok(HttpResponse::NotFound().finish())

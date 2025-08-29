@@ -62,6 +62,9 @@ fn escape(text: String) -> String {
     text.replace('%', "\\").replace('\\', "\\\\")
 }
 
+/// Delete the original raw json doc from storage. An appropriate
+/// message is returned in the event of an error, but it's up to the
+/// caller to either log the message or return failure to its caller.
 pub async fn delete_doc(
     doc: Option<&SourceDocument>,
     storage: impl DocumentDelete,
@@ -104,7 +107,7 @@ mod test {
         struct FailingDelete {}
         impl DocumentDelete for FailingDelete {
             async fn delete(&self, _key: StorageKey) -> Result<(), Error> {
-                Err(Error::Storage(anyhow!("delete from storage failed")))
+                Err(Error::Storage(anyhow!("Delete failed")))
             }
         }
 
@@ -128,7 +131,7 @@ mod test {
         };
         match delete_doc(Some(&doc), FailingDelete {}).await {
             Ok(_) => panic!("expected error"),
-            Err(e) => assert!(e.as_str().contains("[delete from storage failed]")),
+            Err(e) => assert!(e.as_str().contains("[Delete failed]")),
         };
 
         Ok(())
