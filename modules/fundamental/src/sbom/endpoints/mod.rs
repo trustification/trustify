@@ -7,7 +7,7 @@ mod test;
 pub use query::*;
 
 use crate::{
-    Error::{self, Internal},
+    Error,
     common::service::delete_doc,
     license::{
         get_sanitize_filename,
@@ -317,7 +317,7 @@ all!(GetSbomAdvisories -> ReadSbom, ReadAdvisory);
 )]
 #[delete("/v2/sbom/{id}")]
 pub async fn delete(
-    ingestor: web::Data<IngestorService>,
+    i: web::Data<IngestorService>,
     service: web::Data<SbomService>,
     db: web::Data<Database>,
     purl_service: web::Data<PurlService>,
@@ -329,16 +329,16 @@ pub async fn delete(
     let id = Id::from_str(&id)?;
     match service.fetch_sbom_summary(id.clone(), &tx).await? {
         Some(v) => {
-            let rows_affected = service.delete_sbom(v.head.id, &tx).await?;
-            match rows_affected {
-                0 => Ok(HttpResponse::NotFound().finish()),
-                1 => {
+            match service.delete_sbom(v.head.id, &tx).await? {
+                false => Ok(HttpResponse::NotFound().finish()),
+                true => {
                     let _ = purl_service.gc_purls(&tx).await; // ignore gc failure..
                     tx.commit().await?;
-                    delete_doc(&v.source_document, ingestor.storage()).await?;
+                    if let Err(msg) = delete_doc(v.source_document.as_ref(), i.storage()).await {
+                        log::warn!("{msg}");
+                    }
                     Ok(HttpResponse::Ok().json(v))
                 }
-                _ => Err(Internal("Unexpected number of rows affected".into())),
             }
         }
         None => Ok(HttpResponse::NotFound().finish()),

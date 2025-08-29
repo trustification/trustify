@@ -1,6 +1,7 @@
 use crate::{Error, source_document::model::SourceDocument};
 use sea_orm::{ConnectionTrait, DbBackend, FromQueryResult, PaginatorTrait, Statement};
-use trustify_module_storage::service::StorageBackend;
+use trustify_common::id::IdError;
+use trustify_module_storage::service::{StorageBackend, StorageKey, dispatch::DispatchBackend};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum DocumentType {
@@ -61,63 +62,77 @@ fn escape(text: String) -> String {
     text.replace('%', "\\").replace('\\', "\\\\")
 }
 
-pub async fn delete_doc<T: StorageBackend<Error = anyhow::Error>>(
-    doc: &Option<SourceDocument>,
-    storage: &T,
-) -> Result<(), Error> {
-    if let Some(doc) = doc {
-        let k = doc.try_into()?;
-        storage.delete(k).await.map_err(Error::Storage)?;
+/// Delete the original raw json doc from storage. An appropriate
+/// message is returned in the event of an error, but it's up to the
+/// caller to either log the message or return failure to its caller.
+pub async fn delete_doc(
+    doc: Option<&SourceDocument>,
+    storage: impl DocumentDelete,
+) -> Result<(), String> {
+    match doc {
+        Some(doc) => {
+            let result: Result<StorageKey, IdError> = doc.try_into();
+            match result {
+                Ok(key) => storage
+                    .delete(key)
+                    .await
+                    .map_err(|e| format!("Ignored error deleting [{doc:?}] from storage: [{e}]")),
+                Err(e) => Err(format!(
+                    "Ignored error turning [{doc:?}] into a storage key: [{e}]"
+                )),
+            }
+        }
+        None => Ok(()),
     }
-    Ok(())
+}
+pub trait DocumentDelete {
+    fn delete(&self, key: StorageKey) -> impl Future<Output = Result<(), Error>>;
+}
+impl DocumentDelete for &DispatchBackend {
+    async fn delete(&self, key: StorageKey) -> Result<(), Error> {
+        (*self).delete(key).await.map_err(Error::Storage)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use anyhow::anyhow;
-    use bytes::Bytes;
-    use futures_util::Stream;
-    use test_context::futures;
     use test_log::test;
-    use time::OffsetDateTime;
-    use trustify_module_storage::service::{StorageBackend, StorageKey, StorageResult, StoreError};
+    use trustify_module_storage::service::StorageKey;
 
     #[test(tokio::test)]
     async fn delete_failure() -> Result<(), anyhow::Error> {
         // Setup mock that simulates a delete error
-        struct FailingStorage {}
-        impl StorageBackend for FailingStorage {
-            type Error = anyhow::Error;
-            async fn store<S>(&self, _: S) -> Result<StorageResult, StoreError<Self::Error>> {
-                unimplemented!();
-            }
-            async fn retrieve<'a>(
-                &self,
-                _: StorageKey,
-            ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error>
-            {
-                Ok(Some(futures::stream::empty()))
-            }
-            async fn delete(&self, _key: StorageKey) -> Result<(), Self::Error> {
-                Err(anyhow!("delete from storage failed"))
+        struct FailingDelete {}
+        impl DocumentDelete for FailingDelete {
+            async fn delete(&self, _key: StorageKey) -> Result<(), Error> {
+                Err(Error::Storage(anyhow!("Delete failed")))
             }
         }
 
-        let storage = FailingStorage {};
+        // Deleting no doc is fine, error or not
+        let msg = delete_doc(None, FailingDelete {}).await;
+        assert!(msg.is_ok());
 
+        // Failing to delete an invalid doc from storage should log an error
+        let doc = SourceDocument::default();
+        match delete_doc(Some(&doc), FailingDelete {}).await {
+            Ok(_) => panic!("expected error"),
+            Err(e) => assert!(e.as_str().contains("[Missing prefix]")),
+        };
+
+        // Failing to delete a valid doc from storage should log a different error
         let doc = SourceDocument {
             sha256: String::from(
                 "sha256:488c5d97daed3613746f0c246f4a3d1b26ea52ce43d6bdd33f4219f881a00c07",
             ),
-            sha384: String::new(),
-            sha512: String::new(),
-            size: 0,
-            ingested: OffsetDateTime::now_local()?,
+            ..Default::default()
         };
-
-        assert!(delete_doc(&None, &storage).await.is_ok());
-        assert!(delete_doc(&Some(doc), &storage).await.is_err());
+        match delete_doc(Some(&doc), FailingDelete {}).await {
+            Ok(_) => panic!("expected error"),
+            Err(e) => assert!(e.as_str().contains("[Delete failed]")),
+        };
 
         Ok(())
     }

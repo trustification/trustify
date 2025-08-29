@@ -746,27 +746,17 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ctx: &TrustifyContext,
         id: Id,
     ) -> Result<(), anyhow::Error> {
-        let sbom_service = SbomService::new(ctx.db.clone());
-        let sbom = sbom_service
+        let svc = SbomService::new(ctx.db.clone());
+        let sbom = svc
             .fetch_sbom_details(id, vec![], &ctx.db)
             .await?
             .expect("fetch_sbom");
-        assert_eq!(
-            1,
-            sbom_service
-                .delete_sbom(sbom.summary.head.id, &ctx.db)
-                .await?
-        );
+        assert!(svc.delete_sbom(sbom.summary.head.id, &ctx.db).await?);
 
         // delete the advisories in the sbom...
-        let advisory_service = AdvisoryService::new(ctx.db.clone());
+        let svc = AdvisoryService::new(ctx.db.clone());
         for a in sbom.advisories {
-            assert_eq!(
-                1,
-                advisory_service
-                    .delete_advisory(a.head.uuid, &ctx.db)
-                    .await?
-            );
+            assert!(svc.delete_advisory(a.head.uuid, &ctx.db).await?);
         }
         Ok(())
     }

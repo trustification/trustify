@@ -99,7 +99,7 @@ impl AdvisoryService {
         &self,
         id: Uuid,
         connection: &C,
-    ) -> Result<u64, Error> {
+    ) -> Result<bool, Error> {
         let stmt = Statement::from_sql_and_values(
             connection.get_database_backend(),
             r#"DELETE FROM advisory WHERE id=$1 RETURNING identifier, source_document_id"#,
@@ -107,9 +107,11 @@ impl AdvisoryService {
         );
 
         let result = connection.query_all(stmt).await?;
-        let rows_affected = result.len();
+        if result.len() > 1 {
+            return Err(Error::Data(format!("Too many rows deleted for {id}")));
+        }
 
-        for row in result {
+        for row in &result {
             let identifier = row.try_get_by_index::<String>(0)?;
             let source_document = row.try_get_by_index::<Option<Uuid>>(1)?;
             UpdateDeprecatedAdvisory::execute(connection, &identifier).await?;
@@ -120,7 +122,7 @@ impl AdvisoryService {
             }
         }
 
-        Ok(rows_affected as u64)
+        Ok(result.len() == 1)
     }
 
     /// Set the labels of an advisory

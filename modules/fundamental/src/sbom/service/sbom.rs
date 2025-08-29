@@ -96,7 +96,7 @@ impl SbomService {
         &self,
         id: Uuid,
         connection: &C,
-    ) -> Result<u64, Error> {
+    ) -> Result<bool, Error> {
         let stmt = Statement::from_sql_and_values(
             connection.get_database_backend(),
             r#"DELETE FROM sbom WHERE sbom_id=$1 RETURNING source_document_id"#,
@@ -104,9 +104,11 @@ impl SbomService {
         );
 
         let result = connection.query_all(stmt).await?;
-        let rows_affected = result.len();
+        if result.len() > 1 {
+            return Err(Error::Data(format!("Too many rows deleted for {id}")));
+        }
 
-        for row in result {
+        for row in &result {
             let source_document = row.try_get_by_index::<Option<Uuid>>(0)?;
             if let Some(doc) = source_document {
                 source_document::Entity::delete_by_id(doc)
@@ -115,7 +117,7 @@ impl SbomService {
             }
         }
 
-        Ok(rows_affected as u64)
+        Ok(result.len() == 1)
     }
 
     /// fetch all SBOMs
@@ -969,15 +971,8 @@ mod test {
 
         let service = SbomService::new(ctx.db.clone());
 
-        let affected = service.delete_sbom(sbom_v1.sbom.sbom_id, &ctx.db).await?;
-
-        log::debug!("{affected:#?}");
-        assert_eq!(1, affected);
-
-        let affected = service.delete_sbom(sbom_v1.sbom.sbom_id, &ctx.db).await?;
-
-        log::debug!("{affected:#?}");
-        assert_eq!(0, affected);
+        assert!(service.delete_sbom(sbom_v1.sbom.sbom_id, &ctx.db).await?);
+        assert!(!service.delete_sbom(sbom_v1.sbom.sbom_id, &ctx.db).await?);
 
         Ok(())
     }
