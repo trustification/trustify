@@ -72,9 +72,9 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" # for embedded postgresql
         run: cargo clippy --all-targets --all-features -- -D warnings -D clippy::unwrap_used -D clippy::expect_used
 
-      - name: Start minio
+      - name: Start S3 mock
         run: |
-          docker compose -f etc/deploy/compose/compose-minio.yaml up -d --wait
+          docker compose -f etc/deploy/compose/compose-s3mock.yaml up -d --wait
 
       - name: Test
         run: cargo test --all-features
