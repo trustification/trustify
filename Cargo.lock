@@ -9379,7 +9379,6 @@ dependencies = [
  "clap",
  "csaf-rs",
  "cve",
- "futures",
  "futures-util",
  "humantime",
  "indicatif",
