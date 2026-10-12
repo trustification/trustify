@@ -106,7 +106,7 @@ impl SbomContext {
     pub async fn ingest_spdx(
         &self,
         sbom_data: SPDX,
-        warnings: &dyn ReportSink,
+        warnings: &(dyn ReportSink + Sync),
         db: &impl ConnectionTrait,
     ) -> Result<(), Error> {
         // pre-flight checks
@@ -116,7 +116,7 @@ impl SbomContext {
         // processors
 
         // TODO: find a way to dynamically set up processors
-        let mut processors: Vec<Box<dyn Processor>> =
+        let mut processors: Vec<Box<dyn Processor + Send>> =
             vec![Box::new(RedHatProductComponentRelationships::new())];
 
         // init processors
@@ -152,7 +152,7 @@ impl SbomContext {
         );
 
         for described in &sbom_data.document_creation_information.document_describes {
-            log::debug!("Adding 'document_describes': {described}");
+            tracing::debug!("Adding 'document_describes': {described}");
             relationships.relate(
                 sbom_data
                     .document_creation_information
@@ -172,7 +172,7 @@ impl SbomContext {
         );
 
         for rel in &sbom_data.relationships {
-            log::debug!("Relationship: {rel:?}");
+            tracing::debug!("Relationship: {rel:?}");
 
             let Ok(SpdxRelationship(left, rel, right)) = rel.try_into() else {
                 continue;
@@ -235,7 +235,7 @@ impl SbomContext {
                             purls.add(purl);
                         }
                         Err(err) => {
-                            log::info!("Failed to parse PURL ({}): {err}", r.reference_locator);
+                            tracing::info!("Failed to parse PURL ({}): {err}", r.reference_locator);
                         }
                     },
                     "cpe22Type" | "cpe23Type" => match Cpe::from_str(&r.reference_locator) {
@@ -249,7 +249,7 @@ impl SbomContext {
                             product_cpe = product_cpe.or(Some(cpe));
                         }
                         Err(err) => {
-                            log::info!("Failed to parse CPE ({}): {err}", r.reference_locator);
+                            tracing::info!("Failed to parse CPE ({}): {err}", r.reference_locator);
                         }
                     },
                     _ => {}

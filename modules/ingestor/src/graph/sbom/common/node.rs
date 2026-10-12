@@ -2,7 +2,7 @@ use crate::graph::sbom::{Checksum, ReferenceSource};
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use tracing::instrument;
-use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_common::db::chunk::owned_chunked;
 use trustify_entity::{sbom_node, sbom_node_checksum};
 use uuid::Uuid;
 
@@ -54,7 +54,7 @@ impl NodeCreator {
 
     #[instrument(skip_all, fields(num=self.nodes.len()), err(level=tracing::Level::INFO))]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
-        for batch in &self.nodes.into_iter().chunked() {
+        for batch in owned_chunked(self.nodes) {
             sbom_node::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([sbom_node::Column::SbomId, sbom_node::Column::NodeId])
@@ -66,7 +66,7 @@ impl NodeCreator {
                 .await?;
         }
 
-        for batch in &self.checksums.into_iter().chunked() {
+        for batch in owned_chunked(self.checksums) {
             sbom_node_checksum::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([

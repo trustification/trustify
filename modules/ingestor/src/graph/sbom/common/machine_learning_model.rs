@@ -5,7 +5,7 @@ use sea_orm::{ConnectionTrait, DbErr, EntityTrait, Set};
 use sea_query::OnConflict;
 use serde_cyclonedx::cyclonedx::v_1_6::Component;
 use serde_json::{Map, Value};
-use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_common::db::chunk::owned_chunked;
 use trustify_entity::sbom_ai;
 use uuid::Uuid;
 
@@ -78,7 +78,7 @@ impl MachineLearningModelCreator {
         self.nodes.create(db).await?;
         self.refs.create(db).await?;
 
-        for batch in &self.models.into_iter().chunked() {
+        for batch in owned_chunked(self.models) {
             sbom_ai::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([sbom_ai::Column::SbomId, sbom_ai::Column::NodeId])

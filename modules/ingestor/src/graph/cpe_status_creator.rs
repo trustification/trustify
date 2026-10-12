@@ -6,7 +6,7 @@ use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait, QueryFilter};
 use sea_query::{Expr, ExprTrait, OnConflict, PgFunc};
 use std::collections::{BTreeMap, BTreeSet};
 use tracing::instrument;
-use trustify_common::{cpe::Cpe, db::chunk::EntityChunkedIter};
+use trustify_common::{cpe::Cpe, db::chunk::owned_chunked};
 use trustify_entity::{cpe_status, status, version_range};
 use uuid::Uuid;
 
@@ -115,7 +115,7 @@ impl CpeStatusCreator {
         }
 
         // 3. Batch insert version ranges
-        for batch in &version_ranges.into_values().chunked() {
+        for batch in owned_chunked(version_ranges.into_values()) {
             version_range::Entity::insert_many(batch)
                 .on_conflict(OnConflict::new().do_nothing().to_owned())
                 .try_insert()
@@ -124,7 +124,7 @@ impl CpeStatusCreator {
         }
 
         // 4. Batch insert cpe_statuses
-        for batch in &cpe_statuses.into_values().chunked() {
+        for batch in owned_chunked(cpe_statuses.into_values()) {
             cpe_status::Entity::insert_many(batch)
                 .on_conflict(OnConflict::new().do_nothing().to_owned())
                 .try_insert()

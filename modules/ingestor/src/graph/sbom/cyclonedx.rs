@@ -161,7 +161,7 @@ impl SbomContext {
     pub async fn ingest_cyclonedx(
         &self,
         mut sbom: Box<CycloneDx>,
-        warnings: &dyn ReportSink,
+        warnings: &(dyn ReportSink + Sync),
         connection: &impl ConnectionTrait,
     ) -> Result<(), Error> {
         // pre-flight checks
@@ -171,7 +171,7 @@ impl SbomContext {
         let mut creator = Creator::new(self.sbom.sbom_id);
 
         // TODO: find a way to dynamically set up processors
-        let mut processors: Vec<Box<dyn Processor>> =
+        let mut processors: Vec<Box<dyn Processor + Send>> =
             vec![Box::new(RedHatProductComponentRelationships::new())];
 
         // init processors
@@ -311,7 +311,7 @@ impl<'a> Creator<'a> {
     pub async fn create(
         self,
         db: &impl ConnectionTrait,
-        processors: &mut [Box<dyn Processor>],
+        processors: &mut [Box<dyn Processor + Send>],
     ) -> Result<(), Error> {
         let mut creator = ComponentCreator::new(self.sbom_id, self.components.len());
 
@@ -601,7 +601,7 @@ impl ComponentCreator {
         ));
     }
 
-    fn post_process(&mut self, processors: &mut [Box<dyn Processor>]) {
+    fn post_process(&mut self, processors: &mut [Box<dyn Processor + Send>]) {
         PostContext {
             cpes: &self.cpes,
             purls: &self.purls,

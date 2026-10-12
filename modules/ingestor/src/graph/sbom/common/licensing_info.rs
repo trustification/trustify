@@ -1,7 +1,7 @@
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use tracing::instrument;
-use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_common::db::chunk::owned_chunked;
 use trustify_entity::licensing_infos;
 use uuid::Uuid;
 
@@ -68,7 +68,7 @@ impl LicensingInfoCreator {
     where
         C: ConnectionTrait,
     {
-        for batch in &self.license_refs.into_iter().chunked() {
+        for batch in owned_chunked(self.license_refs) {
             licensing_infos::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([

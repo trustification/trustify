@@ -25,7 +25,7 @@ use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use tracing::instrument;
-use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
+use trustify_common::{db::chunk::owned_chunked, purl::Purl};
 use trustify_entity::{
     organization, product, product_status, product_version_range, purl_status,
     remediation::{self, RemediationCategory},
@@ -356,35 +356,35 @@ impl<'a> StatusCreator<'a> {
         product_version_ranges.sort_by_key(|model| *model.id.as_ref());
         product_status_models.sort_by_key(|model| *model.id.as_ref());
 
-        for batch in &product_models.chunked() {
+        for batch in owned_chunked(product_models) {
             product::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &version_ranges.chunked() {
+        for batch in owned_chunked(version_ranges) {
             version_range::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &package_statuses.chunked() {
+        for batch in owned_chunked(package_statuses) {
             purl_status::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &product_version_ranges.chunked() {
+        for batch in owned_chunked(product_version_ranges) {
             product_version_range::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &product_status_models.chunked() {
+        for batch in owned_chunked(product_status_models) {
             product_status::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
@@ -499,21 +499,21 @@ impl<'a> RemediationCreator<'a> {
 
         remediation_models.sort_by_key(|model| *model.id.as_ref());
 
-        for batch in &remediation_models.chunked() {
+        for batch in owned_chunked(remediation_models) {
             remediation::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &remediation_purl_status_models.chunked() {
+        for batch in owned_chunked(remediation_purl_status_models) {
             remediation_purl_status::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &remediation_product_status_models.chunked() {
+        for batch in owned_chunked(remediation_product_status_models) {
             remediation_product_status::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)

@@ -5,7 +5,7 @@ use sea_orm::{ConnectionTrait, EntityTrait, Iterable, Set, TransactionTrait};
 use sea_query::OnConflict;
 use std::str::from_utf8;
 use tracing::instrument;
-use trustify_common::{db::chunk::EntityChunkedIter, hashing::Digests};
+use trustify_common::{db::chunk::owned_chunked, hashing::Digests};
 use trustify_entity::{labels::Labels, weakness};
 
 #[derive(Default)]
@@ -123,8 +123,8 @@ impl CweCatalogLoader {
                     }
                 }
 
-                for chunk in &batch.chunked() {
-                    weakness::Entity::insert_many(chunk)
+                for batch in owned_chunked(batch) {
+                    weakness::Entity::insert_many(batch)
                         .on_conflict(
                             OnConflict::column(weakness::Column::Id)
                                 .update_columns(weakness::Column::iter())

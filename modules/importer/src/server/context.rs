@@ -47,7 +47,7 @@ impl RunContext for ServiceRunContext {
         self.state.lock().await.check().await
     }
 
-    fn progress(&self, _message: String) -> impl Progress + Send + 'static {
+    fn progress(&self, _message: String) -> impl Progress + 'static {
         ServiceProgress::new(self.name.clone(), self.service.clone())
     }
 }
@@ -142,5 +142,96 @@ where
 
     async fn set_message(&mut self, _msg: String) {
         // we don't support that
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::runner::test::{assert_send, assert_send_sync, configuration};
+    use test_context::test_context;
+    use test_log::test;
+    use trustify_common::db::{ReadWrite, pagination_cache::PaginationCache};
+    use trustify_test_context::TrustifyContext;
+    use uuid::Uuid;
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn cancellation_checks_obey_cadence_and_latch(
+        ctx: &TrustifyContext,
+    ) -> anyhow::Result<()> {
+        assert_send_sync::<ServiceRunContext>();
+        let service =
+            ImporterService::new(ReadWrite::new(ctx.db.clone()), PaginationCache::for_test());
+        let name = format!("cancel-test-{}", Uuid::new_v4());
+        service.create(name.clone(), configuration()).await?;
+        let token = CancellationToken::new();
+        let context = ServiceRunContext::new(service.clone(), name.clone(), token.clone());
+        assert!(!assert_send(context.is_canceled()).await);
+        assert_eq!(
+            assert_send(context.check_canceled(|| "canceled")).await,
+            Ok(())
+        );
+        token.cancel();
+        assert_eq!(
+            assert_send(context.check_canceled(|| "canceled")).await,
+            Err("canceled")
+        );
+
+        let period = Duration::from_secs(20);
+        let mut check = CheckCancellation::new(
+            service.clone(),
+            name.clone(),
+            period,
+            CancellationToken::new(),
+        );
+        check.last_check = Instant::now() - period - Duration::from_secs(1);
+        assert!(!assert_send(check.check()).await);
+
+        let mut disabled = configuration();
+        disabled.disabled = true;
+        service.update_configuration(&name, None, disabled).await?;
+        check.last_check = Instant::now();
+        let checked_at = check.last_check;
+        assert!(
+            !assert_send(check.check()).await,
+            "the cached active state lasts until the deadline"
+        );
+        assert_eq!(check.last_check, checked_at);
+        check.last_check = Instant::now() - period - Duration::from_secs(1);
+        assert!(assert_send(check.check()).await);
+        assert!(check.token.is_cancelled());
+
+        service
+            .update_configuration(&name, None, configuration())
+            .await?;
+        check.last_check = Instant::now() - period - Duration::from_secs(1);
+        let canceled_at = check.last_check;
+        assert!(
+            assert_send(check.check()).await,
+            "cancellation is latched even after re-enabling"
+        );
+        assert_eq!(
+            check.last_check, canceled_at,
+            "canceled checks do not query again"
+        );
+
+        let mut deleted = CheckCancellation::new(
+            service.clone(),
+            name.clone(),
+            period,
+            CancellationToken::new(),
+        );
+        service.delete(&name, None).await?;
+        deleted.last_check = Instant::now();
+        let checked_at = deleted.last_check;
+        assert!(!assert_send(deleted.check()).await);
+        assert_eq!(deleted.last_check, checked_at);
+        deleted.last_check = Instant::now() - period - Duration::from_secs(1);
+        assert!(
+            assert_send(deleted.check()).await,
+            "a deleted importer cancels on the next check"
+        );
+        Ok(())
     }
 }

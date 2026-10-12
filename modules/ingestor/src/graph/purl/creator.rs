@@ -3,7 +3,7 @@ use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
 use sea_query::OnConflict;
 use std::collections::{BTreeMap, HashSet};
 use tracing::instrument;
-use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
+use trustify_common::{db::chunk::owned_chunked, purl::Purl};
 use trustify_entity::{
     qualified_purl::{self, Qualifiers},
     versioned_purl,
@@ -64,7 +64,7 @@ impl PurlCreator {
 
         // insert all package versions
 
-        for batch in &versions.into_values().chunked() {
+        for batch in owned_chunked(versions.into_values()) {
             versioned_purl::Entity::insert_many(batch)
                 .on_conflict(OnConflict::new().do_nothing().to_owned())
                 .try_insert()
@@ -74,7 +74,7 @@ impl PurlCreator {
 
         // insert all qualified packages
 
-        for batch in &qualifieds.into_values().chunked() {
+        for batch in owned_chunked(qualifieds.into_values()) {
             qualified_purl::Entity::insert_many(batch)
                 .on_conflict(OnConflict::new().do_nothing().to_owned())
                 .try_insert()

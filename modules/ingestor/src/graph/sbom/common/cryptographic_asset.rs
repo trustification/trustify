@@ -9,7 +9,7 @@ use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use serde_cyclonedx::cyclonedx::v_1_6::Component;
 use serde_json::Value;
-use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_common::db::chunk::owned_chunked;
 use trustify_entity::sbom_crypto::{self, CryptoAssetType};
 use uuid::Uuid;
 
@@ -93,7 +93,7 @@ impl CryptographicAssetCreator {
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         self.nodes.create(db).await?;
 
-        for batch in &self.models.into_iter().chunked() {
+        for batch in owned_chunked(self.models) {
             sbom_crypto::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([sbom_crypto::Column::SbomId, sbom_crypto::Column::NodeId])

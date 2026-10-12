@@ -1,6 +1,9 @@
 mod report;
 pub mod storage;
 
+#[cfg(test)]
+mod test;
+
 use crate::{
     model::SbomImporter,
     runner::{

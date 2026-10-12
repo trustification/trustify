@@ -34,11 +34,11 @@ pub struct PostContext<'a> {
 
 /// Helper running processors
 pub trait RunProcessors {
-    fn run(&mut self, processors: &mut [Box<dyn Processor>]);
+    fn run(&mut self, processors: &mut [Box<dyn Processor + Send>]);
 }
 
 impl RunProcessors for InitContext<'_> {
-    fn run(&mut self, processors: &mut [Box<dyn Processor>]) {
+    fn run(&mut self, processors: &mut [Box<dyn Processor + Send>]) {
         for processor in processors {
             processor.init(*self);
         }
@@ -46,7 +46,7 @@ impl RunProcessors for InitContext<'_> {
 }
 
 impl RunProcessors for PostContext<'_> {
-    fn run(&mut self, processors: &mut [Box<dyn Processor>]) {
+    fn run(&mut self, processors: &mut [Box<dyn Processor + Send>]) {
         for processor in processors {
             processor.post(self);
         }

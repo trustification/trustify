@@ -69,6 +69,7 @@ allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 allow-git = [
     "https://github.com/ctron/spdx-rs",
     "https://github.com/guacsec/trustify-ui.git",
+    "https://github.com/scm-rs/csaf-walker.git",
 ]
 
 [sources.allow-org]

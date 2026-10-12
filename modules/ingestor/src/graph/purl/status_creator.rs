@@ -6,7 +6,7 @@ use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait, QueryFilter};
 use sea_query::{Expr, ExprTrait, OnConflict, PgFunc};
 use std::collections::{BTreeMap, BTreeSet};
 use tracing::instrument;
-use trustify_common::{cpe::Cpe, db::chunk::EntityChunkedIter, purl::Purl};
+use trustify_common::{cpe::Cpe, db::chunk::owned_chunked, purl::Purl};
 use trustify_entity::{purl_status, status, version_range};
 use uuid::Uuid;
 
@@ -113,7 +113,7 @@ impl PurlStatusCreator {
         }
 
         // 3. Batch insert version ranges
-        for batch in &version_ranges.into_values().chunked() {
+        for batch in owned_chunked(version_ranges.into_values()) {
             version_range::Entity::insert_many(batch)
                 .on_conflict(OnConflict::new().do_nothing().to_owned())
                 .try_insert()
@@ -122,7 +122,7 @@ impl PurlStatusCreator {
         }
 
         // 4. Batch insert purl_statuses
-        for batch in &purl_statuses.into_values().chunked() {
+        for batch in owned_chunked(purl_statuses.into_values()) {
             purl_status::Entity::insert_many(batch)
                 .on_conflict(OnConflict::new().do_nothing().to_owned())
                 .try_insert()

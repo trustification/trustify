@@ -5,7 +5,7 @@ use sea_query::OnConflict;
 use spdx_rs::models::{Algorithm, ExternalDocumentReference};
 use std::collections::{HashSet, hash_set};
 use tracing::instrument;
-use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_common::db::chunk::owned_chunked;
 use trustify_entity::sbom_external_node::{DiscriminatorType, ExternalType};
 use trustify_entity::{package_relates_to_package, relationship::Relationship};
 use uuid::Uuid;
@@ -138,7 +138,7 @@ impl<ER: ExternalReferenceProcessor> RelationshipCreator<ER> {
 
         // TODO: If, in the future, we want to have this information, this should be removed.
 
-        log::trace!("Recording relationship - left: {left}, rel: {rel}, right: {right}");
+        tracing::trace!("Recording relationship - left: {left}, rel: {rel}, right: {right}");
 
         if let ("NONE" | "NOASSERTION", _) | (_, "NONE" | "NOASSERTION") = (&*left, &*right) {
             // either side is NONE or NOASSERTION, which we don't ingest at the moment.
@@ -191,7 +191,7 @@ impl<ER: ExternalReferenceProcessor> RelationshipCreator<ER> {
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         self.externals.create(db).await?;
 
-        for batch in &self.rels.into_iter().chunked() {
+        for batch in owned_chunked(self.rels) {
             package_relates_to_package::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([

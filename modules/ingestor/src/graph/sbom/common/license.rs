@@ -3,7 +3,7 @@ use sea_query::OnConflict;
 use spdx_expression::SpdxExpression;
 use std::collections::BTreeMap;
 use tracing::instrument;
-use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_common::db::chunk::owned_chunked;
 use trustify_entity::license;
 use uuid::Uuid;
 
@@ -86,7 +86,7 @@ impl LicenseCreator {
     where
         C: ConnectionTrait,
     {
-        for batch in &self.licenses.into_values().chunked() {
+        for batch in owned_chunked(self.licenses.into_values()) {
             license::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([license::Column::Id])

@@ -1,7 +1,7 @@
 use crate::graph::sbom::{ExternalReference, ReferenceSource};
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
-use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_common::db::chunk::owned_chunked;
 use trustify_entity::{
     sbom_external_node::{self, DiscriminatorType},
     sbom_node,
@@ -73,7 +73,7 @@ impl ExternalNodeCreator {
     }
 
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
-        for batch in &self.nodes.into_iter().chunked() {
+        for batch in owned_chunked(self.nodes) {
             sbom_node::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([sbom_node::Column::SbomId, sbom_node::Column::NodeId])
@@ -85,7 +85,7 @@ impl ExternalNodeCreator {
                 .await?;
         }
 
-        for batch in &self.externals.into_iter().chunked() {
+        for batch in owned_chunked(self.externals) {
             sbom_external_node::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([

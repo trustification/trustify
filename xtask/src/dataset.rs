@@ -155,9 +155,9 @@ impl GenerateDump {
             .build();
         let (stdout, stderr) = pg_dump.execute()?;
 
-        log::debug!("stdout: {stdout}");
-        log::debug!("stderr: {stderr}");
-        log::info!("Dumped to: {}", self.output.display());
+        tracing::debug!("stdout: {stdout}");
+        tracing::debug!("stderr: {stderr}");
+        tracing::info!("Dumped to: {}", self.output.display());
 
         // create storage dump
 
@@ -167,7 +167,7 @@ impl GenerateDump {
             tar.append_dir_all(".", storage_path)?;
             drop(tar);
 
-            log::info!("Dumped storage to: {}", file.display());
+            tracing::info!("Dumped storage to: {}", file.display());
         }
 
         // done
@@ -181,7 +181,7 @@ impl GenerateDump {
         // run importers
 
         for run in config.import {
-            log::info!(
+            tracing::info!(
                 "Ingesting: {}",
                 run.description.as_deref().unwrap_or("<unnamed>")
             );
@@ -193,12 +193,12 @@ impl GenerateDump {
 
         let service = IngestorService::new(Graph::new(), runner.storage.clone(), None);
         for path in config.paths {
-            log::info!("Ingesting: {}", path.display());
+            tracing::info!("Ingesting: {}", path.display());
             let path = wd.join(path);
             let path = path
                 .canonicalize()
                 .with_context(|| format!("failed to canonicalize '{}'", path.display()))?;
-            log::info!(" Resolved: {}", path.display());
+            tracing::info!(" Resolved: {}", path.display());
 
             let mut files = vec![];
 
@@ -220,7 +220,7 @@ impl GenerateDump {
             for file in files {
                 let name = file.as_os_str().to_string_lossy().to_string();
 
-                log::info!("Loading: {name}");
+                tracing::info!("Loading: {name}");
                 let data: Bytes = fs::read(file).await?.into();
 
                 let detector = Detector {
@@ -240,11 +240,11 @@ impl GenerateDump {
                             .await
                     })
                     .await?;
-                log::info!("  id: {}", result.id);
+                tracing::info!("  id: {}", result.id);
                 if !result.warnings.is_empty() {
-                    log::warn!("  warnings:");
+                    tracing::warn!("  warnings:");
                     for warning in result.warnings {
-                        log::warn!("    - {}", warning);
+                        tracing::warn!("    - {}", warning);
                     }
                 }
             }
@@ -252,7 +252,7 @@ impl GenerateDump {
 
         // done
 
-        log::info!("Done ingesting");
+        tracing::info!("Done ingesting");
 
         Ok(())
     }
@@ -301,7 +301,7 @@ impl RunContext for Context {
         false
     }
 
-    fn progress(&self, message: String) -> impl Progress + Send + 'static {
+    fn progress(&self, message: String) -> impl Progress + 'static {
         TracingProgress {
             name: format!("{}: {message}", self.name),
             period: Duration::from_secs(15),

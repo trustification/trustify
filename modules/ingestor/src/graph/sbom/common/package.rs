@@ -3,7 +3,7 @@ use crate::graph::sbom::{Checksum, ReferenceSource};
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use tracing::instrument;
-use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_common::db::chunk::owned_chunked;
 use trustify_entity::{sbom_package, sbom_package_license, sbom_package_license::LicenseCategory};
 use uuid::Uuid;
 
@@ -95,7 +95,7 @@ impl PackageCreator {
         self.nodes.create(db).await?;
         self.refs.create(db).await?;
 
-        for batch in &self.packages.into_iter().chunked() {
+        for batch in owned_chunked(self.packages) {
             sbom_package::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([
@@ -110,7 +110,7 @@ impl PackageCreator {
                 .await?;
         }
 
-        for batch in &self.sbom_package_licenses.into_iter().chunked() {
+        for batch in owned_chunked(self.sbom_package_licenses) {
             sbom_package_license::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([

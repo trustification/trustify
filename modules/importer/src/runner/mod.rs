@@ -15,6 +15,9 @@ pub mod quay;
 pub mod report;
 pub mod sbom;
 
+#[cfg(test)]
+pub(crate) mod test;
+
 use crate::{
     model::{ImporterConfiguration, auth::CredentialConfig},
     runner::{context::RunContext, report::ScannerError},

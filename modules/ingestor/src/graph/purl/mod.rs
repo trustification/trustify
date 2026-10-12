@@ -19,7 +19,7 @@ use std::{
 use tracing::instrument;
 use trustify_common::{
     db::{
-        chunk::EntityChunkedIter,
+        chunk::owned_chunked,
         limiter::{LimitedResult, LimiterTrait},
         pagination_cache::PaginationCache,
     },
@@ -361,7 +361,7 @@ pub async fn batch_create_base_purls<C: ConnectionTrait>(
     }
 
     // Batch insert packages
-    for batch in &packages.into_values().chunked() {
+    for batch in owned_chunked(packages.into_values()) {
         entity::base_purl::Entity::insert_many(batch)
             .on_conflict(OnConflict::new().do_nothing().to_owned())
             .try_insert()
@@ -715,7 +715,7 @@ mod tests {
             .get_qualified_packages_by_query(select, &ctx.db)
             .await?;
 
-        log::debug!("{result:?}");
+        tracing::debug!("{result:?}");
 
         assert_eq!(result.len(), 1);
         assert_eq!(

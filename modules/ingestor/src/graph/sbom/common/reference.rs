@@ -1,7 +1,7 @@
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use tracing::instrument;
-use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
+use trustify_common::{db::chunk::owned_chunked, purl::Purl};
 use trustify_entity::{sbom_node_cpe_ref, sbom_node_purl_ref};
 use uuid::Uuid;
 
@@ -64,7 +64,7 @@ impl ReferenceCreator {
         err(level=tracing::Level::INFO)
     )]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
-        for batch in &self.purl_refs.into_iter().chunked() {
+        for batch in owned_chunked(self.purl_refs) {
             sbom_node_purl_ref::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([
@@ -80,7 +80,7 @@ impl ReferenceCreator {
                 .await?;
         }
 
-        for batch in &self.cpe_refs.into_iter().chunked() {
+        for batch in owned_chunked(self.cpe_refs) {
             sbom_node_cpe_ref::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([

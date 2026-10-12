@@ -2,7 +2,7 @@ use crate::graph::sbom::{Checksum, ReferenceSource, common::node::NodeCreator};
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use tracing::instrument;
-use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_common::db::chunk::owned_chunked;
 use trustify_entity::sbom_file;
 use uuid::Uuid;
 
@@ -47,7 +47,7 @@ impl FileCreator {
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         self.nodes.create(db).await?;
 
-        for batch in &self.files.into_iter().chunked() {
+        for batch in owned_chunked(self.files) {
             sbom_file::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([sbom_file::Column::SbomId, sbom_file::Column::NodeId])

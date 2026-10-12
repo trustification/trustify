@@ -6,7 +6,7 @@ use std::{
     fmt::{Debug, Formatter},
 };
 use tracing::instrument;
-use trustify_common::{cpe::Cpe, db::chunk::EntityChunkedIter};
+use trustify_common::{cpe::Cpe, db::chunk::owned_chunked};
 use trustify_entity::cpe;
 use uuid::Uuid;
 
@@ -99,7 +99,7 @@ impl CpeCreator {
 
     #[instrument(skip(self, db), fields(num=self.cpes.len()), err(level=tracing::Level::INFO))]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
-        for batch in &self.cpes.into_values().map(|(_, cpe)| cpe).chunked() {
+        for batch in owned_chunked(self.cpes.into_values().map(|(_, cpe)| cpe)) {
             cpe::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([cpe::Column::Id])
