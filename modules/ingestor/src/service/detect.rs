@@ -219,7 +219,7 @@ fn detect_wire_format(bytes: &[u8]) -> WireFormat {
 fn parse_to_value(bytes: &[u8], wire: WireFormat) -> Result<serde_json::Value, Error> {
     match wire {
         WireFormat::Json => Ok(serde_json::from_slice(bytes)?),
-        WireFormat::Yaml => serde_yml::from_slice(bytes).map_err(|e| {
+        WireFormat::Yaml => serde_saphyr::from_slice(bytes).map_err(|e| {
             Error::UnsupportedFormat(format!(
                 "Document not recognized as JSON, XML, or valid YAML: {e}"
             ))

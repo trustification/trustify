@@ -515,7 +515,7 @@ impl InitData {
                 let raw = tokio::fs::read_to_string(path)
                     .await
                     .with_context(|| format!("reading validators config {}", path.display()))?;
-                let config: ValidatorsConfig = serde_yml::from_str(&raw)
+                let config: ValidatorsConfig = serde_saphyr::from_str(&raw)
                     .with_context(|| format!("parsing validators config {}", path.display()))?;
                 validation::build(&config)?
             }

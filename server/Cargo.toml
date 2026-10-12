@@ -33,7 +33,7 @@ log = { workspace = true }
 rand = { workspace = true }
 regex = { workspace = true }
 serde = { workspace = true }
-serde_yml = { workspace = true }
+serde-saphyr = { workspace = true }
 tokio = { workspace = true }
 url = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras", "yaml"] }
