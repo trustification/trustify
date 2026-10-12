@@ -158,7 +158,7 @@ mod tests {
 
     #[test]
     fn example_config_parses() {
-        let config: ValidatorsConfig = serde_yml::from_str(include_str!(
+        let config: ValidatorsConfig = serde_saphyr::from_str(include_str!(
             "../../../../../etc/validators/validators.yaml"
         ))
         .expect("parses example config");
@@ -178,7 +178,7 @@ validators:
       phase: structural
     formats: [csaf]
 "#;
-        let config: ValidatorsConfig = serde_yml::from_str(yaml).expect("parses");
+        let config: ValidatorsConfig = serde_saphyr::from_str(yaml).expect("parses");
         assert_eq!(config.validators.len(), 2);
         let validator = &config.validators[0];
         assert!(matches!(
@@ -208,7 +208,7 @@ validators:
       profile: extended
     formats: [csaf]
 "#;
-        let config: ValidatorsConfig = serde_yml::from_str(yaml).expect("parses");
+        let config: ValidatorsConfig = serde_saphyr::from_str(yaml).expect("parses");
         assert_eq!(config.validators.len(), 1);
         let validator = &config.validators[0];
         assert!(matches!(

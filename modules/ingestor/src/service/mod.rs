@@ -55,7 +55,7 @@ pub enum Error {
     #[error(transparent)]
     Xml(#[from] roxmltree::Error),
     #[error(transparent)]
-    Yaml(#[from] serde_yml::Error),
+    Yaml(#[from] serde_saphyr::Error),
     #[error(transparent)]
     Graph(#[from] GraphError),
     #[error(transparent)]

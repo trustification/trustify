@@ -71,7 +71,7 @@ impl GenerateDump {
                 path.pop();
                 Ok((
                     path,
-                    serde_yml::from_reader(BufReader::new(std::fs::File::open(input)?))?,
+                    serde_saphyr::from_reader(BufReader::new(std::fs::File::open(input)?))?,
                 ))
             }
             None => {
