@@ -163,7 +163,7 @@ impl Data {
                             url: database.to_url(),
                             schema: None,
                         },
-                        storage: storage.into(),
+                        storage,
                         direction,
                         migrations: self.name,
                         options,
