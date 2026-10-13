@@ -395,6 +395,74 @@ async fn get_recommendations(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     Ok(())
 }
 
+/// Verifies that /recommend returns correct per-stream recommendations when multiple
+/// advisories exist for the same CVE on the same base PURL with different version streams.
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn get_recommendations_multi_stream(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    // Given two advisories for the same CVE, each fixing a different version stream
+    ctx.ingest_json(minimal_csaf_vex(
+        "TEST-MULTI-STREAM-001",
+        "Test Product Stream 1",
+        &[(
+            "test-lib-1.0.0.redhat-00001",
+            "pkg:maven/org.example/test-lib@1.0.0.redhat-00001",
+        )],
+        &[("CVE-2099-10001", "fixed", &[0])],
+    ))
+    .await?;
+    ctx.ingest_json(minimal_csaf_vex(
+        "TEST-MULTI-STREAM-002",
+        "Test Product Stream 2",
+        &[(
+            "test-lib-2.0.0.redhat-00001",
+            "pkg:maven/org.example/test-lib@2.0.0.redhat-00001",
+        )],
+        &[("CVE-2099-10001", "fixed", &[0])],
+    ))
+    .await?;
+
+    // When requesting recommendations for both base versions
+    let app = caller_with(ctx, vendor_config(), PaginationCache::for_test()).await?;
+    let recommendations = recommend(
+        &app,
+        &[
+            "pkg:maven/org.example/test-lib@1.0.0",
+            "pkg:maven/org.example/test-lib@2.0.0",
+        ],
+    )
+    .await;
+
+    log::info!("{recommendations:#?}");
+
+    // Then each base version gets its own stream's vendor rebuild
+    let rec_1 = &recommendations["recommendations"]["pkg:maven/org.example/test-lib@1.0.0"];
+    assert_eq!(rec_1.as_array().unwrap().len(), 1);
+    assert_eq!(
+        rec_1[0]["package"],
+        "pkg:maven/org.example/test-lib@1.0.0.redhat-00001"
+    );
+
+    let rec_2 = &recommendations["recommendations"]["pkg:maven/org.example/test-lib@2.0.0"];
+    assert_eq!(rec_2.as_array().unwrap().len(), 1);
+    assert_eq!(
+        rec_2[0]["package"],
+        "pkg:maven/org.example/test-lib@2.0.0.redhat-00001"
+    );
+
+    // And each recommendation has non-empty vulnerability metadata
+    assert!(
+        !rec_1[0]["vulnerabilities"].as_array().unwrap().is_empty(),
+        "stream 1 should have vulnerability metadata"
+    );
+    assert!(
+        !rec_2[0]["vulnerabilities"].as_array().unwrap().is_empty(),
+        "stream 2 should have vulnerability metadata"
+    );
+
+    Ok(())
+}
+
 /// Verifies that PURLs without a version produce no recommendations.
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
