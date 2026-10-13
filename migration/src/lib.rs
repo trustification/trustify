@@ -1,8 +1,8 @@
 #![recursion_limit = "1024"]
 use crate::data::{MigrationTraitWithData, Migrations, MigratorWithData, Options};
 
-pub use sea_orm_migration::prelude::*;
 pub use sea_orm_migration::MigratorTraitSelf;
+pub use sea_orm_migration::prelude::*;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 
 pub mod data;
