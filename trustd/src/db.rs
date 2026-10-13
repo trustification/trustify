@@ -1,4 +1,7 @@
-use migration::{Migrator, data::{self, Direction, Options, Runner}};
+use migration::{
+    Migrator,
+    data::{self, Direction, Options, Runner},
+};
 use postgresql_embedded::{PostgreSQL, VersionReq};
 use std::{collections::HashMap, env, fs::create_dir_all, process::ExitCode, time::Duration};
 use trustify_common::{config::Database, db};
