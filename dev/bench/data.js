@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791904374865,
+  "lastUpdate": 1791905826611,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23309,6 +23309,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "6112cff2000241dfe411f323c20d7de033d06bca",
+          "message": "build(deps): bump handlebars from 4.7.9 to 4.7.10 in /docs/book\n\nBumps [handlebars](https://github.com/handlebars-lang/handlebars.js) from 4.7.9 to 4.7.10.\n- [Release notes](https://github.com/handlebars-lang/handlebars.js/releases)\n- [Changelog](https://github.com/handlebars-lang/handlebars.js/blob/v4.7.10/release-notes.md)\n- [Commits](https://github.com/handlebars-lang/handlebars.js/compare/v4.7.9...v4.7.10)\n\n---\nupdated-dependencies:\n- dependency-name: handlebars\n  dependency-version: 4.7.10\n  dependency-type: indirect\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2026-10-13T15:00:18Z",
+          "tree_id": "753b8ecd28b83514d1b22184b1f72d44d473a8c3",
+          "url": "https://github.com/guacsec/trustify/commit/6112cff2000241dfe411f323c20d7de033d06bca"
+        },
+        "date": 1791905824763,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 5,
             "unit": "s"
           }
         ]
