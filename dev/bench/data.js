@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791452479470,
+  "lastUpdate": 1791898976957,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23246,6 +23246,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/guacsec/trustify/commit/af6ffd72c38d093b04b92462204d7d6990bdbbe5"
         },
         "date": 1791452477436,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "279c8777b86e46d384342caee1ba3cc799deb013",
+          "message": "chore: replace serde_yaml_ng with serde-saphyr\n\nserde_yaml_ng has been stale since May 2024. serde-saphyr is actively\nmaintained, fuzz-tested, panic-free, and handles externally tagged enums\nnatively — removing the need for singleton_map_recursive wrappers.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-10-13T12:48:45Z",
+          "tree_id": "dd656b85733b0c15766b9e7f101cd69bc858550e",
+          "url": "https://github.com/guacsec/trustify/commit/279c8777b86e46d384342caee1ba3cc799deb013"
+        },
+        "date": 1791898974638,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
