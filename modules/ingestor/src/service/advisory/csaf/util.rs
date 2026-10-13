@@ -11,7 +11,7 @@ use std::collections::HashMap;
 pub fn branch_purl(
     branch: &Branch,
     on_invalid: OnInvalidData,
-    report: &dyn ReportSink,
+    report: &(dyn ReportSink + Sync),
 ) -> Result<Option<PackageUrl<'static>>, Error> {
     let Some(purl) = branch
         .product
@@ -30,7 +30,7 @@ pub fn branch_purl(
 pub fn branch_cpe(
     branch: &Branch,
     on_invalid: OnInvalidData,
-    report: &dyn ReportSink,
+    report: &(dyn ReportSink + Sync),
 ) -> Result<Option<cpe::uri::OwnedUri>, Error> {
     let Some(cpe) = branch
         .product
@@ -138,7 +138,7 @@ impl<'a> ResolveProductIdCache<'a> {
 pub fn gen_identifier(
     csaf: &Csaf,
     on_invalid: OnInvalidData,
-    report: &dyn ReportSink,
+    report: &(dyn ReportSink + Sync),
 ) -> Result<String, Error> {
     // From the spec:
     // > The combination of `/document/publisher/namespace` and `/document/tracking/id` identifies a CSAF document globally unique.

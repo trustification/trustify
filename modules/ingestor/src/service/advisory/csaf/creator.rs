@@ -84,7 +84,7 @@ impl<'a> StatusCreator<'a> {
         ps: &Option<ProductsT>,
         status: &'static str,
         on_invalid: OnInvalidData,
-        report: &dyn ReportSink,
+        report: &(dyn ReportSink + Sync),
     ) -> Result<(), Error> {
         for r in ps.iter().flat_map(|ps| &ps.0) {
             let mut product = ProductStatus {
@@ -356,35 +356,35 @@ impl<'a> StatusCreator<'a> {
         product_version_ranges.sort_by_key(|model| *model.id.as_ref());
         product_status_models.sort_by_key(|model| *model.id.as_ref());
 
-        for batch in &product_models.chunked() {
+        for batch in product_models.chunked() {
             product::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &version_ranges.chunked() {
+        for batch in version_ranges.chunked() {
             version_range::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &package_statuses.chunked() {
+        for batch in package_statuses.chunked() {
             purl_status::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &product_version_ranges.chunked() {
+        for batch in product_version_ranges.chunked() {
             product_version_range::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &product_status_models.chunked() {
+        for batch in product_status_models.chunked() {
             product_status::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
@@ -499,21 +499,21 @@ impl<'a> RemediationCreator<'a> {
 
         remediation_models.sort_by_key(|model| *model.id.as_ref());
 
-        for batch in &remediation_models.chunked() {
+        for batch in remediation_models.chunked() {
             remediation::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &remediation_purl_status_models.chunked() {
+        for batch in remediation_purl_status_models.chunked() {
             remediation_purl_status::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
-        for batch in &remediation_product_status_models.chunked() {
+        for batch in remediation_product_status_models.chunked() {
             remediation_product_status::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)

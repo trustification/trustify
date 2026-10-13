@@ -106,7 +106,7 @@ impl SbomContext {
     pub async fn ingest_spdx(
         &self,
         sbom_data: SPDX,
-        warnings: &dyn ReportSink,
+        warnings: &(dyn ReportSink + Sync),
         db: &impl ConnectionTrait,
     ) -> Result<(), Error> {
         // pre-flight checks
