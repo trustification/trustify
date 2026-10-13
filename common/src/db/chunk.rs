@@ -43,7 +43,6 @@ pub fn chunked_with<I>(values: usize, i: I) -> impl Iterator<Item = Vec<I::Item>
 where
     I: IntoIterator,
 {
-    // not using itertools' `chunks`, as its `RefCell` makes futures holding it `!Send`
     let size = ((u16::MAX - 128) as usize / values).max(1);
     let mut i = i.into_iter();
     std::iter::from_fn(move || {
