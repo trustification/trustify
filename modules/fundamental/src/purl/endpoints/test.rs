@@ -396,11 +396,13 @@ async fn get_recommendations(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 }
 
 /// Verifies that /recommend returns correct per-stream recommendations when multiple
-/// advisories exist for the same CVE on the same base PURL with different version streams.
+/// advisories exist for the same CVE on the same base PURL with different version streams,
+/// and that each stream's vulnerability metadata reflects its own advisory status.
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn get_recommendations_multi_stream(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // Given two advisories for the same CVE, each fixing a different version stream
+    // with distinguishable statuses so cross-contamination is detectable
     ctx.ingest_json(minimal_csaf_vex(
         "TEST-MULTI-STREAM-001",
         "Test Product Stream 1",
@@ -418,7 +420,7 @@ async fn get_recommendations_multi_stream(ctx: &TrustifyContext) -> Result<(), a
             "test-lib-2.0.0.redhat-00001",
             "pkg:maven/org.example/test-lib@2.0.0.redhat-00001",
         )],
-        &[("CVE-2099-10001", "fixed", &[0])],
+        &[("CVE-2099-10001", "known_affected", &[0])],
     ))
     .await?;
 
@@ -450,15 +452,14 @@ async fn get_recommendations_multi_stream(ctx: &TrustifyContext) -> Result<(), a
         "pkg:maven/org.example/test-lib@2.0.0.redhat-00001"
     );
 
-    // And each recommendation has non-empty vulnerability metadata
-    assert!(
-        !rec_1[0]["vulnerabilities"].as_array().unwrap().is_empty(),
-        "stream 1 should have vulnerability metadata"
-    );
-    assert!(
-        !rec_2[0]["vulnerabilities"].as_array().unwrap().is_empty(),
-        "stream 2 should have vulnerability metadata"
-    );
+    // And each recommendation carries its own stream's vulnerability status
+    let vuln_1 = &rec_1[0]["vulnerabilities"].as_array().unwrap()[0];
+    assert_eq!(vuln_1["id"], "CVE-2099-10001");
+    assert_eq!(vuln_1["status"], "Fixed");
+
+    let vuln_2 = &rec_2[0]["vulnerabilities"].as_array().unwrap()[0];
+    assert_eq!(vuln_2["id"], "CVE-2099-10001");
+    assert_eq!(vuln_2["status"], "Affected");
 
     Ok(())
 }
