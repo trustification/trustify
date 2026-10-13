@@ -9384,6 +9384,7 @@ dependencies = [
  "indicatif",
  "osv",
  "sea-orm",
+ "sea-orm-cli",
  "sea-orm-migration",
  "serde-cyclonedx",
  "serde_json",

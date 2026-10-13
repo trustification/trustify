@@ -118,6 +118,7 @@ sbom-walker = { version = "0.19.0", default-features = false, features = ["crypt
 scheck = "0.8.0"
 schemars = "1.0"
 sea-orm = { version = "2.0.4", features = ["debug-print"] }
+sea-orm-cli = { version = "2", default-features = false }
 sea-orm-migration = "2"
 sea-query = "1.0.2" # keep aligned with sea-orm
 semver = "1"
