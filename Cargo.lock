@@ -1358,7 +1358,7 @@ dependencies = [
  "bitflags 2.13.2",
  "cexpr",
  "clang-sys",
- "itertools 0.10.5",
+ "itertools 0.13.0",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -2294,7 +2294,7 @@ dependencies = [
 [[package]]
 name = "csaf-walker"
 version = "0.20.0"
-source = "git+https://github.com/scm-rs/csaf-walker?branch=feat%2Freport-sink-sync#aad3d4b5dc8a8eba4afb312599a284532d41e798"
+source = "git+https://github.com/scm-rs/csaf-walker?branch=main#a71244ac12a56522e77419c9aa9198ca71ba035d"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5172,7 +5172,7 @@ version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "51e219e79014df21a225b1860a479e2dcd7cbd9130f4defd4bd0e191ea31d67d"
 dependencies = [
- "base64 0.21.7",
+ "base64 0.22.1",
  "chrono",
  "getrandom 0.2.17",
  "http 1.5.0",
@@ -6276,7 +6276,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b570b25f7617e43d59005d0990ccb79e950a423952cea19671b7a876da390adf"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools 0.13.0",
  "proc-macro2",
  "quote",
  "syn 2.0.119",
@@ -7062,7 +7062,7 @@ dependencies = [
 [[package]]
 name = "sbom-walker"
 version = "0.20.0"
-source = "git+https://github.com/scm-rs/csaf-walker?branch=feat%2Freport-sink-sync#aad3d4b5dc8a8eba4afb312599a284532d41e798"
+source = "git+https://github.com/scm-rs/csaf-walker?branch=main#a71244ac12a56522e77419c9aa9198ca71ba035d"
 dependencies = [
  "anyhow",
  "bytes",
@@ -7455,7 +7455,7 @@ checksum = "1460dbd9c736920a78bd450eaa6902304605c493bd2222121849ba01ab8df997"
 dependencies = [
  "anyhow",
  "argon2",
- "base64 0.21.7",
+ "base64 0.22.1",
  "buffered-reader",
  "chrono",
  "ctor",
@@ -10095,7 +10095,7 @@ dependencies = [
 [[package]]
 name = "walker-common"
 version = "0.20.0"
-source = "git+https://github.com/scm-rs/csaf-walker?branch=feat%2Freport-sink-sync#aad3d4b5dc8a8eba4afb312599a284532d41e798"
+source = "git+https://github.com/scm-rs/csaf-walker?branch=main#a71244ac12a56522e77419c9aa9198ca71ba035d"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -10324,7 +10324,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

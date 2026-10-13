@@ -186,10 +186,10 @@ postgresql_embedded = { version = "0.20.0", default-features = false, features =
 postgresql_commands = { version = "0.20.0", default-features = false, features = ["tokio"] }
 
 [patch.crates-io]
-csaf-walker = { git = "https://github.com/scm-rs/csaf-walker", branch = "feat/report-sink-sync" }
-sbom-walker = { git = "https://github.com/scm-rs/csaf-walker", branch = "feat/report-sink-sync" }
-walker-common = { git = "https://github.com/scm-rs/csaf-walker", branch = "feat/report-sink-sync" }
-#walker-extras = { git = "https://github.com/scm-rs/csaf-walker", branch = "feat/report-sink-sync" }
+csaf-walker = { git = "https://github.com/scm-rs/csaf-walker", branch = "main" }
+sbom-walker = { git = "https://github.com/scm-rs/csaf-walker", branch = "main" }
+walker-common = { git = "https://github.com/scm-rs/csaf-walker", branch = "main" }
+#walker-extras = { git = "https://github.com/scm-rs/csaf-walker", branch = "main" }
 
 #csaf-walker = { path = "../csaf-walker/csaf" }
 #sbom-walker = { path = "../csaf-walker/sbom" }
