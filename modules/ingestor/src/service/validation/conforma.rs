@@ -183,7 +183,7 @@ fn is_loopback_host(host: &str) -> bool {
 fn input_content_type(bytes: &[u8]) -> Result<&'static str, ValidatorError> {
     if serde_json::from_slice::<serde::de::IgnoredAny>(bytes).is_ok() {
         Ok("application/json")
-    } else if serde_yml::from_slice::<serde::de::IgnoredAny>(bytes).is_ok() {
+    } else if serde_saphyr::from_slice::<serde::de::IgnoredAny>(bytes).is_ok() {
         Ok("application/yaml")
     } else {
         Err(ValidatorError::Backend(anyhow!(

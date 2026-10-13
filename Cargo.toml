@@ -30,7 +30,7 @@ version = "0.7.0-rc.1"
 edition = "2024"
 publish = false
 license = "Apache-2.0"
-rust-version = "1.94.0"
+rust-version = "1.96.0"
 
 [workspace.dependencies]
 actix-cors = "0.7"
@@ -125,7 +125,7 @@ serde = "1.0.183"
 serde-cyclonedx = "0.10.0"
 serde_json = { version = "1.0.114", features = ["raw_value"] }
 serde_qs = { version = "1", features = ["actix4"] }
-serde_yml = { package = "serde_yaml_ng", version = "0.10" }
+serde-saphyr = "1"
 sha2 = "0.11"
 spdx = "0.13.3"
 spdx-expression = "0.5.2"
