@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791898976957,
+  "lastUpdate": 1791904374865,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23280,6 +23280,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "26c96b551299542288bb6fb79a02c4e190700c6a",
+          "message": "fix: replace deprecated fetch_update with try_update\n\nAtomicUsize::fetch_update was renamed to try_update. Bump MSRV from\n1.94.0 to 1.96.0 to match the CI toolchain version.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-10-13T14:28:23Z",
+          "tree_id": "e628ee0c95430a8a8feaecf4f37cb28483517f73",
+          "url": "https://github.com/guacsec/trustify/commit/26c96b551299542288bb6fb79a02c4e190700c6a"
+        },
+        "date": 1791904372668,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
