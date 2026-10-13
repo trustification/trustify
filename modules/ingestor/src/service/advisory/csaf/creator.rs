@@ -84,7 +84,7 @@ impl<'a> StatusCreator<'a> {
         ps: &Option<ProductsT>,
         status: &'static str,
         on_invalid: OnInvalidData,
-        report: &(dyn ReportSink + Sync),
+        report: &dyn ReportSink,
     ) -> Result<(), Error> {
         for r in ps.iter().flat_map(|ps| &ps.0) {
             let mut product = ProductStatus {

@@ -30,7 +30,7 @@ impl ProductStatus {
         &mut self,
         branch: &Branch,
         on_invalid: OnInvalidData,
-        report: &(dyn ReportSink + Sync),
+        report: &dyn ReportSink,
     ) -> Result<(), Error> {
         match branch.category {
             CategoryOfTheBranch::ProductName => {
@@ -82,7 +82,7 @@ impl ProductStatus {
         &mut self,
         full_name: Option<FullProductNameT>,
         on_invalid: OnInvalidData,
-        report: &(dyn ReportSink + Sync),
+        report: &dyn ReportSink,
     ) -> Result<(), Error> {
         let Some(helper) = full_name.and_then(|full_name| full_name.product_identification_helper)
         else {
