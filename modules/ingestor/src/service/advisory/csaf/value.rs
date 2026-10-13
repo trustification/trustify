@@ -34,7 +34,7 @@ impl OnInvalidData {
     pub fn validate<T, E>(
         self,
         operation: Operation<'_, T, E>,
-        report: &(dyn ReportSink + Sync),
+        report: &dyn ReportSink,
     ) -> Result<Option<T>, Error>
     where
         E: Display,
@@ -117,37 +117,29 @@ mod test {
 
     /// Runs one of the [`Operation`] constructors, reporting only whether a value was
     /// produced. This erases the operation's result type so the cases can be tabulated.
-    type Check = fn(OnInvalidData, &str, &(dyn ReportSink + Sync)) -> Result<bool, Error>;
+    type Check = fn(OnInvalidData, &str, &dyn ReportSink) -> Result<bool, Error>;
 
     fn check_purl(
         mode: OnInvalidData,
         value: &str,
-        report: &(dyn ReportSink + Sync),
+        report: &dyn ReportSink,
     ) -> Result<bool, Error> {
         Ok(mode.validate(purl(value), report)?.is_some())
     }
 
-    fn check_cpe(
-        mode: OnInvalidData,
-        value: &str,
-        report: &(dyn ReportSink + Sync),
-    ) -> Result<bool, Error> {
+    fn check_cpe(mode: OnInvalidData, value: &str, report: &dyn ReportSink) -> Result<bool, Error> {
         Ok(mode.validate(cpe(value), report)?.is_some())
     }
 
     fn check_date(
         mode: OnInvalidData,
         value: &str,
-        report: &(dyn ReportSink + Sync),
+        report: &dyn ReportSink,
     ) -> Result<bool, Error> {
         Ok(mode.validate(date(value), report)?.is_some())
     }
 
-    fn check_url(
-        mode: OnInvalidData,
-        value: &str,
-        report: &(dyn ReportSink + Sync),
-    ) -> Result<bool, Error> {
+    fn check_url(mode: OnInvalidData, value: &str, report: &dyn ReportSink) -> Result<bool, Error> {
         Ok(mode.validate(url(value), report)?.is_some())
     }
 

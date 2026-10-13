@@ -33,7 +33,7 @@ use trustify_entity::labels::Labels;
 fn advisory_information(
     csaf: &Csaf,
     on_invalid: OnInvalidData,
-    report: &(dyn ReportSink + Sync),
+    report: &dyn ReportSink,
 ) -> Result<AdvisoryInformation, Error> {
     let tracking = &csaf.document.tracking;
 
@@ -159,7 +159,7 @@ impl<'g> CsafLoader<'g> {
         csaf: &Csaf,
         advisory: &AdvisoryContext<'_>,
         vulnerability: &Vulnerability,
-        report: &(dyn ReportSink + Sync),
+        report: &dyn ReportSink,
         connection: &C,
     ) -> Result<(), Error> {
         let Some(cve_id) = &vulnerability.cve else {
@@ -217,7 +217,7 @@ impl<'g> CsafLoader<'g> {
         advisory_vulnerability: &AdvisoryVulnerabilityContext<'_>,
         product_status: &ProductStatus,
         remediations: &[Remediation],
-        report: &(dyn ReportSink + Sync),
+        report: &dyn ReportSink,
         connection: &C,
     ) -> Result<(), Error> {
         let mut creator = StatusCreator::new(

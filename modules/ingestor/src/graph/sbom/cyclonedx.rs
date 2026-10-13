@@ -161,7 +161,7 @@ impl SbomContext {
     pub async fn ingest_cyclonedx(
         &self,
         mut sbom: Box<CycloneDx>,
-        warnings: &(dyn ReportSink + Sync),
+        warnings: &dyn ReportSink,
         connection: &impl ConnectionTrait,
     ) -> Result<(), Error> {
         // pre-flight checks
