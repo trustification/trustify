@@ -28,6 +28,7 @@ use sea_query::{
 use tracing::{Instrument, info_span, instrument};
 use trustify_common::{
     db::{
+        VersionMatches,
         chunk::chunked_with,
         limiter::{LimitedResult, LimiterTrait},
         pagination_cache::PaginationCache,
@@ -709,7 +710,7 @@ impl PurlService {
                 .filter(purl_status::Column::BasePurlId.is_in(base_chunk))
                 .filter(versioned_purl::Column::Id.is_in(winner_vp_ids.iter().copied()))
                 .filter(SimpleExpr::FunctionCall(
-                    Func::cust(trustify_common::db::VersionMatches)
+                    Func::cust(VersionMatches)
                         .arg(Expr::col(versioned_purl::Column::Version))
                         .arg(Expr::col((version_range::Entity, Asterisk))),
                 ))
@@ -793,7 +794,7 @@ impl PurlService {
             .left_join(version_range::Entity)
             .filter(purl_status::Column::BasePurlId.eq(base_purl_id))
             .filter(SimpleExpr::FunctionCall(
-                Func::cust(trustify_common::db::VersionMatches)
+                Func::cust(VersionMatches)
                     .arg(Expr::value(version))
                     .arg(Expr::col((version_range::Entity, Asterisk))),
             ))
