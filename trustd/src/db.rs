@@ -117,6 +117,7 @@ impl Run {
         ]);
         let settings = postgresql_embedded::Settings {
             version: VersionReq::parse("=17.2.0")?,
+            host: self.database.host.clone(),
             username: self.database.username.clone(),
             password: self.database.password.clone().into(),
             temporary: false,

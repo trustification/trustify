@@ -438,7 +438,7 @@ impl InitData {
             // without devmode doesn't make any sense. However, the pm-mode doesn't know about
             // devmode. Also, enabling devmode might trigger other logic.
             auth_devmode = auth_devmode || run.embedded_oidc;
-            embedded_oidc::spawn(run.embedded_oidc).await?
+            embedded_oidc::spawn(run.embedded_oidc, &run.http.bind_addr).await?
         };
 
         let (authn, authz) = run.auth.split(auth_devmode)?.unzip();

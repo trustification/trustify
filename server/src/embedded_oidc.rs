@@ -1,3 +1,5 @@
+use std::{net::IpAddr, str::FromStr};
+
 use anyhow::Context;
 use garage_door::{
     issuer::{Client, Issuer, RedirectUrl},
@@ -14,7 +16,7 @@ const SCOPE: &str = "openid read:document create:document delete:document update
 
 pub struct EmbeddedOidc(pub JoinHandle<Result<(), anyhow::Error>>);
 
-fn create(enabled: bool) -> anyhow::Result<Option<Server>> {
+fn create(enabled: bool, bind_addr: &str) -> anyhow::Result<Option<Server>> {
     if !enabled {
         log::info!("Embedded OIDC server is not active");
         return Ok(None);
@@ -68,6 +70,11 @@ fn create(enabled: bool) -> anyhow::Result<Option<Server>> {
     // create the server
 
     let mut server = Server::new();
+
+    if let Ok(ip_addr) = IpAddr::from_str(&bind_addr) {
+        server.bind(ip_addr);
+    }
+
     server
         .base(base)
         .port(port)
@@ -83,8 +90,8 @@ fn create(enabled: bool) -> anyhow::Result<Option<Server>> {
 /// Awaiting the function ensures that the server was started. Awaiting (the awaited) result of
 /// the functions waits for the embedded OIDC server to exit. Which should not happen, but is a
 /// sign that something went wrong.
-pub async fn spawn(enabled: bool) -> anyhow::Result<Option<EmbeddedOidc>> {
-    let Some(mut server) = create(enabled)? else {
+pub async fn spawn(enabled: bool, bind_addr: &str) -> anyhow::Result<Option<EmbeddedOidc>> {
+    let Some(mut server) = create(enabled, bind_addr)? else {
         return Ok(None);
     };
 
