@@ -15,7 +15,6 @@ use crate::{
         },
     },
 };
-use itertools::Itertools;
 use regex::Regex;
 use sea_orm::{
     ColumnTrait, Condition, ConnectionTrait, EntityTrait, FromQueryResult, LoaderTrait,
@@ -29,6 +28,7 @@ use sea_query::{
 use tracing::{Instrument, info_span, instrument};
 use trustify_common::{
     db::{
+        VersionMatches,
         chunk::chunked_with,
         limiter::{LimitedResult, LimiterTrait},
         pagination_cache::PaginationCache,
@@ -635,17 +635,44 @@ impl PurlService {
             return Ok(recommendations);
         }
 
-        // Batch fetch vulnerability statuses and qualified PURLs for all winners
-        let statuses_by_base = Self::fetch_vulnerability_statuses(
-            winners.iter().map(|w| w.base.id).unique(),
-            winners.iter().map(|w| w.versioned_purl.id),
-            connection,
-        )
-        .await?;
+        // Fetch vulnerability statuses per winner, keyed by versioned PURL ID.
+        // Using one call per winner rather than a single batch call avoids cross-version
+        // contamination: when the same base PURL appears with two different upstream versions
+        // (two different winner versioned PURLs), a batch call groups both versions' statuses
+        // under the same base_purl_id bucket. The best_by_vuln picker then selects by advisory
+        // date across both versions, which can assign a status from the wrong version to a
+        // winner. Isolating each winner to its own query ensures version-range matching is
+        // scoped to that winner's specific versioned PURL.
+        let mut statuses_by_vp: HashMap<Uuid, Vec<StatusInfo>> = HashMap::new();
+        for winner in &winners {
+            let per_winner = Self::fetch_vulnerability_statuses(
+                std::iter::once(winner.base.id),
+                std::iter::once(winner.versioned_purl.id),
+                connection,
+            )
+            .await?;
+            if let Some(infos) = per_winner.into_values().next() {
+                statuses_by_vp.insert(winner.versioned_purl.id, infos);
+            } else {
+                let is_synthetic = winner.versioned_purl.id
+                    == Uuid::new_v5(&winner.base.id, winner.versioned_purl.version.as_bytes());
+                if is_synthetic {
+                    let infos = Self::fetch_vulnerability_statuses_by_version(
+                        winner.base.id,
+                        &winner.versioned_purl.version,
+                        connection,
+                    )
+                    .await?;
+                    if !infos.is_empty() {
+                        statuses_by_vp.insert(winner.versioned_purl.id, infos);
+                    }
+                }
+            }
+        }
 
-        // Assemble recommendations from batched data
+        // Assemble recommendations from per-winner statuses
         for winner in winners {
-            let entry = Self::assemble_recommend_entry(&winner, &statuses_by_base);
+            let entry = Self::assemble_recommend_entry(&winner, &statuses_by_vp);
             recommendations.insert(winner.purl_string, vec![entry]);
         }
 
@@ -683,7 +710,7 @@ impl PurlService {
                 .filter(purl_status::Column::BasePurlId.is_in(base_chunk))
                 .filter(versioned_purl::Column::Id.is_in(winner_vp_ids.iter().copied()))
                 .filter(SimpleExpr::FunctionCall(
-                    Func::cust(trustify_common::db::VersionMatches)
+                    Func::cust(VersionMatches)
                         .arg(Expr::col(versioned_purl::Column::Version))
                         .arg(Expr::col((version_range::Entity, Asterisk))),
                 ))
@@ -745,6 +772,79 @@ impl PurlService {
         Ok(statuses_by_base)
     }
 
+    /// Resolves vulnerability statuses for a synthetic winner (no real `versioned_purl` row).
+    ///
+    /// Queries `purl_status` directly by `base_purl_id` and matches the version string as a
+    /// literal against `version_range`, bypassing the `versioned_purl` JOIN that fails for
+    /// advisory-synthesized winners.
+    #[instrument(skip_all, err(level = tracing::Level::INFO))]
+    async fn fetch_vulnerability_statuses_by_version<C: ConnectionTrait>(
+        base_purl_id: Uuid,
+        version: &str,
+        connection: &C,
+    ) -> Result<Vec<StatusInfo>, Error> {
+        let all_statuses = purl_status::Entity::find()
+            .columns([
+                version_range::Column::Id,
+                version_range::Column::LowVersion,
+                version_range::Column::LowInclusive,
+                version_range::Column::HighVersion,
+                version_range::Column::HighInclusive,
+            ])
+            .left_join(version_range::Entity)
+            .filter(purl_status::Column::BasePurlId.eq(base_purl_id))
+            .filter(SimpleExpr::FunctionCall(
+                Func::cust(VersionMatches)
+                    .arg(Expr::value(version))
+                    .arg(Expr::col((version_range::Entity, Asterisk))),
+            ))
+            .all(connection)
+            .instrument(info_span!("querying purl statuses for synthetic winner"))
+            .await?;
+
+        let vulns = all_statuses
+            .load_one(vulnerability::Entity, connection)
+            .await?;
+        let advisories_loaded = all_statuses.load_one(advisory::Entity, connection).await?;
+        let status_models = all_statuses.load_one(status::Entity, connection).await?;
+        let status_slug_map: HashMap<_, _> = status_models
+            .into_iter()
+            .flatten()
+            .map(|s| (s.id, s.slug))
+            .collect();
+        let remediations = all_statuses
+            .load_many_to_many(
+                remediation::Entity,
+                remediation_purl_status::Entity,
+                connection,
+            )
+            .await?;
+
+        let mut infos = Vec::new();
+        for (((vuln, advisory), ps), rems) in vulns
+            .into_iter()
+            .zip(advisories_loaded)
+            .zip(all_statuses)
+            .zip(remediations)
+        {
+            if let (Some(v), Some(advisory)) = (vuln, advisory) {
+                let slug = status_slug_map
+                    .get(&ps.status_id)
+                    .cloned()
+                    .unwrap_or_else(|| "unknown".to_string());
+                infos.push(StatusInfo {
+                    vuln_id: v.id,
+                    status_slug: slug,
+                    remediations: rems,
+                    advisory_date: advisory.modified.or(advisory.published),
+                    advisory_id: Some(advisory.identifier.clone()),
+                });
+            }
+        }
+
+        Ok(infos)
+    }
+
     /// Builds a single recommendation entry from a winner and its vulnerability statuses.
     ///
     /// Returns the versioned PURL (without qualifiers) as the recommended package string.
@@ -752,7 +852,7 @@ impl PurlService {
     /// know which qualifiers match the caller's environment.
     fn assemble_recommend_entry(
         winner: &Winner<'_>,
-        statuses_by_base: &HashMap<Uuid, Vec<StatusInfo>>,
+        statuses_by_vp: &HashMap<Uuid, Vec<StatusInfo>>,
     ) -> RecommendEntry {
         let package_str = Purl {
             ty: winner.base.r#type.clone(),
@@ -763,25 +863,15 @@ impl PurlService {
         }
         .to_string();
 
-        // When the same vulnerability appears in multiple advisories with different statuses,
-        // keep the one from the most recent advisory so that newer assessments (e.g. "fixed")
-        // take precedence over older ones (e.g. "affected").
-        let mut best_by_vuln: HashMap<&str, &StatusInfo> = HashMap::new();
-        for info in statuses_by_base.get(&winner.base.id).into_iter().flatten() {
-            best_by_vuln
-                .entry(&info.vuln_id)
-                .and_modify(|existing| {
-                    if info.advisory_date > existing.advisory_date {
-                        *existing = info;
-                    }
-                })
-                .or_insert(info);
-        }
-
+        // Report all advisory statuses without dedup — each advisory's assessment is
+        // independent. Consumers see every source's view (e.g. vendor "Fixed" alongside
+        // upstream "Affected") with the advisory_id to distinguish them.
         RecommendEntry {
             package: package_str,
-            vulnerabilities: best_by_vuln
-                .into_values()
+            vulnerabilities: statuses_by_vp
+                .get(&winner.versioned_purl.id)
+                .into_iter()
+                .flatten()
                 .map(|info| {
                     let vex_status = match info.status_slug.as_str() {
                         "affected" => VexStatus::Affected,
@@ -796,6 +886,7 @@ impl PurlService {
                         status: Some(vex_status),
                         justification: None,
                         remediations: RemediationSummary::from_entities(&info.remediations),
+                        advisory_id: info.advisory_id.clone(),
                     }
                 })
                 .collect(),
@@ -860,7 +951,8 @@ impl PurlService {
         // In advisory-only deployments without vendor SBOMs, these purl_status rows are the
         // only source of vendor-rebuilt version strings. Using a deterministic UUID (v5 of
         // base_purl_id + version) lets the rest of the pipeline treat them uniformly;
-        // fetch_vulnerability_statuses simply returns no rows for them, which is acceptable.
+        // recommend_purls() detects these synthetic winners and uses a fallback query
+        // (fetch_vulnerability_statuses_by_version) to resolve their vulnerability metadata.
         Self::extend_with_advisory_versions(
             base_purls.iter().map(|bp| bp.id),
             &mut by_base,

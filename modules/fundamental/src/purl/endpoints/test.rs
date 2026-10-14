@@ -382,15 +382,203 @@ async fn get_recommendations(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
         "pkg:maven/jakarta.el/jakarta.el-api@3.0.3.redhat-00002",
     );
 
-    let mut cves = recommendations["recommendations"]["pkg:maven/jakarta.el/jakarta.el-api@3.0.3"]
-        [0]["vulnerabilities"]
+    let mut cves: Vec<&str> = recommendations["recommendations"]
+        ["pkg:maven/jakarta.el/jakarta.el-api@3.0.3"][0]["vulnerabilities"]
         .as_array()
         .unwrap()
         .iter()
         .map(|val| val["id"].as_str().unwrap())
-        .collect::<Vec<_>>();
+        .collect();
     cves.sort();
+    cves.dedup();
     assert_eq!(cves, vec!["CVE-2022-45787", "CVE-2023-28867"]);
+
+    Ok(())
+}
+
+/// Verifies that /recommend returns correct per-stream recommendations when multiple
+/// advisories exist for the same CVE on the same base PURL with different version streams.
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn get_recommendations_multi_stream(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    // Given two advisories for the same CVE, each fixing a different version stream
+    ctx.ingest_json(minimal_csaf_vex(
+        "TEST-MULTI-STREAM-001",
+        "Test Product Stream 1",
+        &[(
+            "test-lib-1.0.0.redhat-00001",
+            "pkg:maven/org.example/test-lib@1.0.0.redhat-00001",
+        )],
+        &[("CVE-2099-10001", "fixed", &[0])],
+    ))
+    .await?;
+    ctx.ingest_json(minimal_csaf_vex(
+        "TEST-MULTI-STREAM-002",
+        "Test Product Stream 2",
+        &[(
+            "test-lib-2.0.0.redhat-00001",
+            "pkg:maven/org.example/test-lib@2.0.0.redhat-00001",
+        )],
+        &[("CVE-2099-10001", "fixed", &[0])],
+    ))
+    .await?;
+
+    // When requesting recommendations for both base versions
+    let app = caller_with(ctx, vendor_config(), PaginationCache::for_test()).await?;
+    let recommendations = recommend(
+        &app,
+        &[
+            "pkg:maven/org.example/test-lib@1.0.0",
+            "pkg:maven/org.example/test-lib@2.0.0",
+        ],
+    )
+    .await;
+
+    log::info!("{recommendations:#?}");
+
+    // Then each base version gets its own stream's vendor rebuild
+    let rec_1 = &recommendations["recommendations"]["pkg:maven/org.example/test-lib@1.0.0"];
+    assert_eq!(rec_1.as_array().unwrap().len(), 1);
+    assert_eq!(
+        rec_1[0]["package"],
+        "pkg:maven/org.example/test-lib@1.0.0.redhat-00001"
+    );
+
+    let rec_2 = &recommendations["recommendations"]["pkg:maven/org.example/test-lib@2.0.0"];
+    assert_eq!(rec_2.as_array().unwrap().len(), 1);
+    assert_eq!(
+        rec_2[0]["package"],
+        "pkg:maven/org.example/test-lib@2.0.0.redhat-00001"
+    );
+
+    // And each recommendation has non-empty vulnerability metadata
+    assert!(
+        !rec_1[0]["vulnerabilities"].as_array().unwrap().is_empty(),
+        "stream 1 should have vulnerability metadata"
+    );
+    assert!(
+        !rec_2[0]["vulnerabilities"].as_array().unwrap().is_empty(),
+        "stream 2 should have vulnerability metadata"
+    );
+
+    Ok(())
+}
+
+/// Verifies that /recommend reports all advisory statuses per CVE with advisory_id,
+/// without collapsing conflicting assessments from different sources.
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn get_recommendations_multi_advisory_statuses(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    // Given two advisories for the same CVE: one says "fixed", the other says "known_affected"
+    ctx.ingest_json(minimal_csaf_vex(
+        "TEST-VENDOR-FIX-001",
+        "Vendor Product",
+        &[(
+            "crosslib-1.0.0.redhat-00001",
+            "pkg:maven/com.example/crosslib@1.0.0.redhat-00001",
+        )],
+        &[("CVE-2099-30001", "fixed", &[0])],
+    ))
+    .await?;
+    ctx.ingest_json(minimal_csaf_vex(
+        "TEST-UPSTREAM-001",
+        "Upstream Product",
+        &[(
+            "crosslib-1.0.0.redhat-00001-upstream",
+            "pkg:maven/com.example/crosslib@1.0.0.redhat-00001",
+        )],
+        &[("CVE-2099-30001", "known_affected", &[0])],
+    ))
+    .await?;
+
+    // When requesting a recommendation
+    let app = caller_with(ctx, vendor_config(), PaginationCache::for_test()).await?;
+    let recommendations = recommend(&app, &["pkg:maven/com.example/crosslib@1.0.0"]).await;
+
+    log::info!("{recommendations:#?}");
+
+    // Then both advisory statuses appear for the same CVE
+    let rec = &recommendations["recommendations"]["pkg:maven/com.example/crosslib@1.0.0"];
+    let vulns = rec[0]["vulnerabilities"].as_array().unwrap();
+    assert!(
+        vulns.len() >= 2,
+        "expected at least 2 entries (one per advisory), got {}",
+        vulns.len()
+    );
+
+    let statuses: Vec<&str> = vulns
+        .iter()
+        .filter(|v| v["id"].as_str() == Some("CVE-2099-30001"))
+        .map(|v| v["status"].as_str().unwrap_or("unknown"))
+        .collect();
+    assert!(
+        statuses.contains(&"Fixed"),
+        "vendor fix should be present, got: {statuses:?}"
+    );
+    assert!(
+        statuses.contains(&"Affected"),
+        "upstream affected should be present, got: {statuses:?}"
+    );
+
+    // And each entry includes its advisory source
+    let advisory_ids: Vec<Option<&str>> = vulns
+        .iter()
+        .filter(|v| v["id"].as_str() == Some("CVE-2099-30001"))
+        .map(|v| v["advisory_id"].as_str())
+        .collect();
+    assert!(
+        advisory_ids.iter().all(|id| id.is_some()),
+        "every status entry should have an advisory_id"
+    );
+
+    Ok(())
+}
+
+/// Verifies that /recommend returns vulnerability metadata for advisory-synthesized winners
+/// (no real versioned_purl row in the database).
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn get_recommendations_advisory_only(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    // Given a VEX advisory that creates a vendor rebuild versioned_purl
+    ctx.ingest_json(minimal_csaf_vex(
+        "TEST-ADVISORY-ONLY-001",
+        "Test Product Advisory Only",
+        &[(
+            "advlib-1.0.0.redhat-00001",
+            "pkg:maven/com.example/advlib@1.0.0.redhat-00001",
+        )],
+        &[("CVE-2099-20001", "fixed", &[0])],
+    ))
+    .await?;
+
+    // And the real versioned_purl row is removed, forcing the synthetic path
+    use sea_orm::ConnectionTrait;
+    ctx.db
+        .execute_unprepared(
+            "DELETE FROM versioned_purl WHERE version = '1.0.0.redhat-00001' \
+             AND base_purl_id = (SELECT id FROM base_purl WHERE name = 'advlib')",
+        )
+        .await?;
+
+    // When requesting a recommendation for the base version
+    let app = caller_with(ctx, vendor_config(), PaginationCache::for_test()).await?;
+    let recommendations = recommend(&app, &["pkg:maven/com.example/advlib@1.0.0"]).await;
+
+    log::info!("{recommendations:#?}");
+
+    // Then the recommendation includes the vendor rebuild AND vulnerability metadata
+    let rec = &recommendations["recommendations"]["pkg:maven/com.example/advlib@1.0.0"];
+    assert_eq!(rec.as_array().unwrap().len(), 1);
+    assert_eq!(
+        rec[0]["package"],
+        "pkg:maven/com.example/advlib@1.0.0.redhat-00001"
+    );
+    assert!(
+        !rec[0]["vulnerabilities"].as_array().unwrap().is_empty(),
+        "advisory-only winners should have vulnerability metadata"
+    );
 
     Ok(())
 }
@@ -445,15 +633,30 @@ async fn get_recommendations_dedup(ctx: &TrustifyContext) -> Result<(), anyhow::
 
     log::info!("{recommendations:#?}");
 
-    // Then the recommendation contains a single deduplicated vulnerability
+    // Then all advisory assessments are reported (one per advisory, no dedup)
     let entry =
         &recommendations["recommendations"].as_object().unwrap()["pkg:cargo/hyper@0.14.1"][0];
-    assert_eq!(entry["vulnerabilities"].as_array().unwrap().len(), 1);
-    assert_eq!(
-        entry["vulnerabilities"].as_array().unwrap()[0]["id"]
-            .as_str()
-            .unwrap(),
-        "CVE-2021-32714"
+    let vulns = entry["vulnerabilities"].as_array().unwrap();
+    assert!(
+        vulns.len() >= 2,
+        "expected entries from both advisories, got {}",
+        vulns.len()
+    );
+    assert!(
+        vulns
+            .iter()
+            .all(|v| v["id"].as_str() == Some("CVE-2021-32714")),
+        "all entries should be for CVE-2021-32714"
+    );
+    let mut advisory_ids: Vec<&str> = vulns
+        .iter()
+        .filter_map(|v| v["advisory_id"].as_str())
+        .collect();
+    advisory_ids.sort();
+    advisory_ids.dedup();
+    assert!(
+        advisory_ids.len() >= 2,
+        "expected distinct advisory sources, got: {advisory_ids:?}"
     );
 
     Ok(())
@@ -603,9 +806,12 @@ async fn get_recommendations_mixed(ctx: &TrustifyContext) -> Result<(), anyhow::
         entry[0]["package"],
         "pkg:maven/jakarta.el/jakarta.el-api@3.0.3.redhat-00002"
     );
-    assert_eq!(
-        entry[0]["vulnerabilities"],
-        json!([{"id": "CVE-2022-45787", "status": "NotAffected", "remediations": []}])
+    let vulns = entry[0]["vulnerabilities"].as_array().unwrap();
+    assert!(
+        vulns
+            .iter()
+            .any(|v| v["id"] == "CVE-2022-45787" && v["status"] == "NotAffected"),
+        "expected CVE-2022-45787 with NotAffected status"
     );
     assert_eq!(
         recommendations["recommendations"]["pkg:maven/com.example/nonexistent@1.0.0"],
