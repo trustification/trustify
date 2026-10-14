@@ -2294,7 +2294,7 @@ dependencies = [
 [[package]]
 name = "csaf-walker"
 version = "0.20.0"
-source = "git+https://github.com/scm-rs/csaf-walker?branch=main#a71244ac12a56522e77419c9aa9198ca71ba035d"
+source = "git+https://github.com/scm-rs/csaf-walker?branch=prepare%2Fcyclonedx-rs-0.20#37f299530860626c2be9f680fcc4f8ef453d1cdc"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2427,6 +2427,23 @@ dependencies = [
  "serde",
  "serde_json",
  "strum 0.28.0",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "cyclonedx-rs"
+version = "0.10.1"
+source = "git+https://github.com/scm-rs/cyclonedx-rs?branch=release%2F0.10.1#d42a5f1ca216f4d42f3eb9729af630aa17314d88"
+dependencies = [
+ "anyhow",
+ "derive_builder 0.20.2",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "schemafy_lib",
+ "serde",
+ "serde_json",
+ "syn 2.0.119",
  "thiserror 2.0.21",
 ]
 
@@ -7062,11 +7079,12 @@ dependencies = [
 [[package]]
 name = "sbom-walker"
 version = "0.20.0"
-source = "git+https://github.com/scm-rs/csaf-walker?branch=main#a71244ac12a56522e77419c9aa9198ca71ba035d"
+source = "git+https://github.com/scm-rs/csaf-walker?branch=prepare%2Fcyclonedx-rs-0.20#37f299530860626c2be9f680fcc4f8ef453d1cdc"
 dependencies = [
  "anyhow",
  "bytes",
  "csv",
+ "cyclonedx-rs",
  "digest 0.11.3",
  "fluent-uri",
  "futures",
@@ -7076,7 +7094,6 @@ dependencies = [
  "reqwest 0.13.5",
  "sequoia-openpgp",
  "serde",
- "serde-cyclonedx",
  "serde_json",
  "sha2 0.11.1",
  "spdx-rs",
@@ -7483,24 +7500,6 @@ checksum = "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba"
 dependencies = [
  "serde_core",
  "serde_derive",
-]
-
-[[package]]
-name = "serde-cyclonedx"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "011f64837acc52a678d9e1a11b478f1eda4a587f97e3c7633c77091a877cb202"
-dependencies = [
- "anyhow",
- "derive_builder 0.20.2",
- "prettyplease",
- "proc-macro2",
- "quote",
- "schemafy_lib",
- "serde",
- "serde_json",
- "syn 2.0.119",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -9055,6 +9054,7 @@ dependencies = [
  "chrono",
  "clap",
  "cpe",
+ "cyclonedx-rs",
  "deepsize",
  "flate2",
  "hex",
@@ -9082,7 +9082,6 @@ dependencies = [
  "sea-orm-migration",
  "sea-query",
  "serde",
- "serde-cyclonedx",
  "serde_json",
  "spdx-expression",
  "spdx-rs",
@@ -9182,6 +9181,7 @@ dependencies = [
  "clap",
  "csaf-rs",
  "cve",
+ "cyclonedx-rs",
  "futures-util",
  "humantime",
  "indicatif",
@@ -9189,7 +9189,6 @@ dependencies = [
  "sea-orm",
  "sea-orm-cli",
  "sea-orm-migration",
- "serde-cyclonedx",
  "serde_json",
  "spdx-rs",
  "strum 0.28.0",
@@ -9295,6 +9294,7 @@ dependencies = [
  "csaf-rs",
  "csv",
  "cve",
+ "cyclonedx-rs",
  "flate2",
  "futures",
  "futures-util",
@@ -9318,7 +9318,6 @@ dependencies = [
  "sea-query",
  "semver",
  "serde",
- "serde-cyclonedx",
  "serde_json",
  "serde_qs",
  "sha2 0.11.1",
@@ -9429,6 +9428,7 @@ dependencies = [
  "csaf-rs",
  "cve",
  "cvss-rs 0.5.0",
+ "cyclonedx-rs",
  "hex",
  "humantime",
  "jsonpath-rust",
@@ -9447,7 +9447,6 @@ dependencies = [
  "sea-query",
  "semver",
  "serde",
- "serde-cyclonedx",
  "serde-saphyr",
  "serde_json",
  "spdx-expression",
@@ -9538,8 +9537,8 @@ dependencies = [
  "actix-web",
  "actix-web-static-files",
  "anyhow",
+ "cyclonedx-rs",
  "serde",
- "serde-cyclonedx",
  "serde_json",
  "spdx-rs",
  "test-log",
@@ -10095,7 +10094,7 @@ dependencies = [
 [[package]]
 name = "walker-common"
 version = "0.20.0"
-source = "git+https://github.com/scm-rs/csaf-walker?branch=main#a71244ac12a56522e77419c9aa9198ca71ba035d"
+source = "git+https://github.com/scm-rs/csaf-walker?branch=prepare%2Fcyclonedx-rs-0.20#37f299530860626c2be9f680fcc4f8ef453d1cdc"
 dependencies = [
  "anyhow",
  "async-trait",

@@ -123,7 +123,7 @@ sea-orm-migration = "2"
 sea-query = "1.0.2" # keep aligned with sea-orm
 semver = "1"
 serde = "1.0.183"
-serde-cyclonedx = "0.10.0"
+serde-cyclonedx = { package = "cyclonedx-rs", version = "0.10.1", git = "https://github.com/scm-rs/cyclonedx-rs", branch = "release/0.10.1" }
 serde_json = { version = "1.0.114", features = ["raw_value"] }
 serde_qs = { version = "1", features = ["actix4"] }
 serde-saphyr = "1"
@@ -186,15 +186,16 @@ postgresql_embedded = { version = "0.20.0", default-features = false, features =
 postgresql_commands = { version = "0.20.0", default-features = false, features = ["tokio"] }
 
 [patch.crates-io]
-csaf-walker = { git = "https://github.com/scm-rs/csaf-walker", branch = "main" }
-sbom-walker = { git = "https://github.com/scm-rs/csaf-walker", branch = "main" }
-walker-common = { git = "https://github.com/scm-rs/csaf-walker", branch = "main" }
+csaf-walker = { git = "https://github.com/scm-rs/csaf-walker", branch = "prepare/cyclonedx-rs-0.20" }
+sbom-walker = { git = "https://github.com/scm-rs/csaf-walker", branch = "prepare/cyclonedx-rs-0.20" }
+walker-common = { git = "https://github.com/scm-rs/csaf-walker", branch = "prepare/cyclonedx-rs-0.20" }
 #walker-extras = { git = "https://github.com/scm-rs/csaf-walker", branch = "main" }
 
 #csaf-walker = { path = "../csaf-walker/csaf" }
 #sbom-walker = { path = "../csaf-walker/sbom" }
 #walker-common = { path = "../csaf-walker/common" }
 #walker-extras = { path = "../csaf-walker/extras" }
+
 
 #garage-door = { git = "https://github.com/ctron/garage-door", rev = "c02fdbbb95d4482d97497dfb62c41dede023b2ea" }
 #garage-door = { path = "../garage-door" }
