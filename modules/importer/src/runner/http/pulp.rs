@@ -3,7 +3,7 @@ use bytes::Bytes;
 use regex::Regex;
 use std::{future::Future, sync::Arc};
 use url::Url;
-use walker_common::fetcher::{self, Fetcher};
+use walker_common::fetcher::Fetcher;
 
 /// Errors produced by the Pulp Manifest discovery strategy.
 #[derive(Debug, thiserror::Error)]
@@ -13,7 +13,7 @@ pub enum Error {
     ManifestFetch {
         url: String,
         #[source]
-        source: fetcher::Error,
+        source: anyhow::Error,
     },
     /// The `PULP_MANIFEST` response body is not valid UTF-8.
     #[error("PULP_MANIFEST at {url} is not valid UTF-8")]
@@ -165,6 +165,10 @@ fn matches_patterns(filename: &str, patterns: &[Regex]) -> bool {
 /// to the shared retrieval layer.
 pub struct PulpManifest {
     fetcher: Arc<Fetcher>,
+    /// When API-key auth is configured, this pair of clients applies a
+    /// credential-stripping redirect policy to the manifest fetch — the same
+    /// protection used for individual file downloads.
+    protected_clients: Option<(reqwest::Client, reqwest::Client)>,
     /// Compiled patterns stored in an `Arc` so each `discover()` call increments a
     /// reference count rather than deep-copying every `Regex`.
     only_patterns: Arc<[Regex]>,
@@ -174,7 +178,11 @@ impl PulpManifest {
     /// Creates a new `PulpManifest` strategy, compiling `only_patterns` as regular expressions.
     ///
     /// Returns an error if any pattern is invalid. Empty `only_patterns` includes all files.
-    pub fn new(fetcher: Fetcher, only_patterns: Vec<String>) -> Result<Self, Error> {
+    pub fn new(
+        fetcher: Fetcher,
+        only_patterns: Vec<String>,
+        protected_clients: Option<(reqwest::Client, reqwest::Client)>,
+    ) -> Result<Self, Error> {
         let compiled = only_patterns
             .into_iter()
             .map(|p| {
@@ -186,6 +194,7 @@ impl PulpManifest {
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self {
             fetcher: Arc::new(fetcher),
+            protected_clients,
             only_patterns: compiled.into(),
         })
     }
@@ -197,6 +206,7 @@ impl DiscoveryStrategy for PulpManifest {
         source: &Url,
     ) -> impl Future<Output = anyhow::Result<Vec<DiscoveredFile>>> + Send {
         let fetcher = Arc::clone(&self.fetcher);
+        let protected_clients = self.protected_clients.clone();
         let source = source.clone();
         let patterns = Arc::clone(&self.only_patterns);
 
@@ -204,14 +214,23 @@ impl DiscoveryStrategy for PulpManifest {
             let murl = manifest_url(&source);
             let murl_str = murl.to_string();
 
-            let bytes: Bytes =
+            let bytes: Bytes = if let Some((ref auth_client, ref plain_client)) = protected_clients
+            {
+                super::fetch_file_protected(auth_client, plain_client, murl.as_str())
+                    .await
+                    .map_err(|e| Error::ManifestFetch {
+                        url: murl_str.clone(),
+                        source: e,
+                    })?
+            } else {
                 fetcher
                     .fetch(murl.as_str())
                     .await
                     .map_err(|e| Error::ManifestFetch {
                         url: murl_str.clone(),
-                        source: e,
-                    })?;
+                        source: e.into(),
+                    })?
+            };
 
             let content = std::str::from_utf8(&bytes)
                 .map_err(|_| Error::ManifestEncoding { url: murl_str })?;
