@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    iter::once,
+};
 
 use crate::{
     Error,
@@ -642,11 +645,11 @@ impl PurlService {
         // date across both versions, which can assign a status from the wrong version to a
         // winner. Isolating each winner to its own query ensures version-range matching is
         // scoped to that winner's specific versioned PURL.
-        let mut statuses_by_vp: HashMap<Uuid, Vec<StatusInfo>> = HashMap::new();
+        let mut statuses_by_vp = HashMap::new();
         for winner in &winners {
             let per_winner = Self::fetch_vulnerability_statuses(
-                std::iter::once(winner.base.id),
-                std::iter::once(winner.versioned_purl.id),
+                once(winner.base.id),
+                once(winner.versioned_purl.id),
                 connection,
             )
             .await?;
