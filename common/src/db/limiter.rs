@@ -37,7 +37,6 @@ use sea_orm::{
     QueryTrait, Select, SelectModel, SelectThree, SelectThreeModel, SelectTwo, SelectTwoModel,
     Selector, SelectorTrait,
 };
-use sea_query::QueryStatementBuilder;
 use std::num::NonZeroU64;
 use tracing::instrument;
 
@@ -106,6 +105,12 @@ where
     S1: SelectorTrait + 'a,
     S2: SelectorTrait + 'a,
 {
+    /// Replace the item query, keeping the validated limit and unpaginated count query.
+    pub fn with_selector(mut self, selector: Selector<S1>) -> Self {
+        self.selector = selector;
+        self
+    }
+
     /// Fetch the items and return a handle for computing the total count.
     /// If the limit is zero, no query is executed and an empty result is returned.
     #[instrument(skip(self), err(level=tracing::Level::INFO))]
@@ -128,8 +133,8 @@ where
 
 /// Build a cache key from a sea-query select statement.
 fn cache_key_from<Q: QueryTrait>(query: &Q) -> String {
-    let (sql, values) = query.as_query().build_any(&sea_query::PostgresQueryBuilder);
-    format!("{}|{:?}", sql, values)
+    let stmt = query.build(sea_orm::DatabaseBackend::Postgres);
+    format!("{}|{:?}", stmt.sql, stmt.values)
 }
 
 pub trait LimiterTrait<'a, C>: Sized
@@ -331,12 +336,13 @@ where
     }
 }
 
-impl<'a, C, M1, M2, M3, E1, E2, E3> LimiterTrait<'a, C> for SelectThree<E1, E2, E3>
+impl<'a, C, M1, M2, M3, E1, E2, E3, TOP> LimiterTrait<'a, C> for SelectThree<E1, E2, E3, TOP>
 where
     C: ConnectionTrait,
     E1: EntityTrait<Model = M1>,
     E2: EntityTrait<Model = M2>,
     E3: EntityTrait<Model = M3>,
+    TOP: sea_orm::Topology + Clone,
     M1: FromQueryResult + Sized + Send + Sync + 'a,
     M2: FromQueryResult + Sized + Send + Sync + 'a,
     M3: FromQueryResult + Sized + Send + Sync + 'a,

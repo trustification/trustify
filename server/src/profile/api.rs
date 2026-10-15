@@ -459,8 +459,11 @@ impl InitData {
 
         let db = db::Database::new(&run.database).await?;
 
+        let storage = run.storage.into_storage(run.devmode).await?;
+
         if run.devmode {
-            trustify_db::Database(&db).migrate().await?;
+            let migrator = trustify_db::Migrator::new(storage.clone(), ());
+            trustify_db::Database(&db).migrate(&migrator).await?;
         }
 
         let ro_config = run.database_ro.to_database_config(&run.database)?;
@@ -478,8 +481,6 @@ impl InitData {
             .readiness
             .register("database", spawn_db_check(db.clone())?)
             .await;
-
-        let storage = run.storage.into_storage(run.devmode).await?;
 
         let ui = UI {
             version: env!("CARGO_PKG_VERSION").to_string(),
@@ -515,7 +516,7 @@ impl InitData {
                 let raw = tokio::fs::read_to_string(path)
                     .await
                     .with_context(|| format!("reading validators config {}", path.display()))?;
-                let config: ValidatorsConfig = serde_yml::from_str(&raw)
+                let config: ValidatorsConfig = serde_saphyr::from_str(&raw)
                     .with_context(|| format!("parsing validators config {}", path.display()))?;
                 validation::build(&config)?
             }

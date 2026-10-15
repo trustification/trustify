@@ -173,7 +173,7 @@ impl ProgressLogger {
 pub trait DocumentProcessor {
     fn process<D>(
         &self,
-        db: &(impl ConnectionTrait + TransactionTrait),
+        db: &(impl ConnectionTrait + TransactionTrait<Transaction = DatabaseTransaction>),
         storage: &DispatchBackend,
         options: &Options,
         f: impl Handler<D>,
@@ -221,7 +221,7 @@ impl<'c> DocumentProcessor for SchemaManager<'c> {
     /// actual system is still running from the read-only clone of the original data.
     async fn process<D>(
         &self,
-        db: &(impl ConnectionTrait + TransactionTrait),
+        db: &(impl ConnectionTrait + TransactionTrait<Transaction = DatabaseTransaction>),
         storage: &DispatchBackend,
         options: &Options,
         f: impl Handler<D>,
@@ -356,5 +356,24 @@ impl Migrations {
     pub fn data(mut self, migration: impl MigrationTraitWithData + 'static) -> Self {
         self.all.push(Migration::Data(Box::new(migration)));
         self
+    }
+
+    /// Convert into SeaORM's `Vec<Box<dyn MigrationTrait>>`, wrapping data migrations with the
+    /// provided storage backend and options.
+    pub fn into_migration_vec(
+        self,
+        storage: DispatchBackend,
+        options: Options,
+    ) -> Vec<Box<dyn MigrationTrait>> {
+        self.into_iter()
+            .map(|migration| match migration {
+                Migration::Normal(m) => m,
+                Migration::Data(m) => Box::new(MigrationWithData {
+                    storage: storage.clone(),
+                    options: options.clone(),
+                    migration: m,
+                }) as Box<dyn MigrationTrait>,
+            })
+            .collect()
     }
 }

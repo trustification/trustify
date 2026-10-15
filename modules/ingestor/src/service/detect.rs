@@ -162,45 +162,34 @@ impl DocumentDetector {
     ) -> Result<IngestResult, Error> {
         match self.document {
             DetectedDocument::Csaf(csaf) => {
-                CsafLoader::new(graph)
-                    .load(labels, *csaf, digests, tx)
-                    .await
+                Box::pin(CsafLoader::new(graph).load(labels, *csaf, digests, tx)).await
             }
             DetectedDocument::Cve(cve) => {
-                CveLoader::new(graph).load(labels, *cve, digests, tx).await
+                Box::pin(CveLoader::new(graph).load(labels, *cve, digests, tx)).await
             }
             DetectedDocument::Nvd(cve) => {
-                NvdLoader::new(graph).load(labels, *cve, digests, tx).await
+                Box::pin(NvdLoader::new(graph).load(labels, *cve, digests, tx)).await
             }
             DetectedDocument::Osv(osv) => {
-                OsvLoader::new(graph)
-                    .load(labels, *osv, digests, issuer, tx)
-                    .await
+                Box::pin(OsvLoader::new(graph).load(labels, *osv, digests, issuer, tx)).await
             }
             DetectedDocument::Spdx(value) => {
-                SpdxLoader::new(graph)
-                    .load(labels, value, digests, tx)
-                    .await
+                Box::pin(SpdxLoader::new(graph).load(labels, value, digests, tx)).await
             }
             DetectedDocument::CycloneDx(cdx) => {
-                CyclonedxLoader::new(graph)
-                    .ingest(labels, cdx, digests, tx)
-                    .await
+                Box::pin(CyclonedxLoader::new(graph).ingest(labels, cdx, digests, tx)).await
             }
             DetectedDocument::ClearlyDefined(value) => {
-                ClearlyDefinedLoader::new(graph)
-                    .load(labels, value, digests, tx)
-                    .await
+                Box::pin(ClearlyDefinedLoader::new(graph).load(labels, value, digests, tx)).await
             }
             DetectedDocument::ClearlyDefinedCuration(curation) => {
-                ClearlyDefinedCurationLoader::new(graph)
-                    .load(labels, *curation, digests, tx)
-                    .await
+                Box::pin(
+                    ClearlyDefinedCurationLoader::new(graph).load(labels, *curation, digests, tx),
+                )
+                .await
             }
             DetectedDocument::CweCatalog(bytes) => {
-                CweCatalogLoader::new()
-                    .load_bytes(labels, &bytes, digests, tx)
-                    .await
+                Box::pin(CweCatalogLoader::new().load_bytes(labels, &bytes, digests, tx)).await
             }
             DetectedDocument::CisaKev(catalog) => {
                 KevLoader::new().load(labels, *catalog, digests, tx).await
@@ -230,7 +219,7 @@ fn detect_wire_format(bytes: &[u8]) -> WireFormat {
 fn parse_to_value(bytes: &[u8], wire: WireFormat) -> Result<serde_json::Value, Error> {
     match wire {
         WireFormat::Json => Ok(serde_json::from_slice(bytes)?),
-        WireFormat::Yaml => serde_yml::from_slice(bytes).map_err(|e| {
+        WireFormat::Yaml => serde_saphyr::from_slice(bytes).map_err(|e| {
             Error::UnsupportedFormat(format!(
                 "Document not recognized as JSON, XML, or valid YAML: {e}"
             ))

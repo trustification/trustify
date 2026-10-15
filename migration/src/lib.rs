@@ -1,9 +1,9 @@
-#![recursion_limit = "512"]
-use crate::data::{
-    Migration, MigrationTraitWithData, MigrationWithData, Migrations, MigratorWithData,
-};
+#![recursion_limit = "1024"]
+use crate::data::{MigrationTraitWithData, Migrations, MigratorWithData, Options};
 
+pub use sea_orm_migration::MigratorTraitSelf;
 pub use sea_orm_migration::prelude::*;
+use trustify_module_storage::service::dispatch::DispatchBackend;
 
 pub mod data;
 
@@ -85,19 +85,21 @@ mod m0002380_version_function_parallelism;
 
 pub trait MigratorExt: Send {
     fn build_migrations() -> Migrations;
-
-    fn into_migrations() -> Vec<Box<dyn MigrationTrait>> {
-        Self::build_migrations()
-            .into_iter()
-            .map(|migration| match migration {
-                Migration::Normal(migration) => migration,
-                Migration::Data(migration) => Box::new(MigrationWithData::new(migration)),
-            })
-            .collect()
-    }
 }
 
-pub struct Migrator;
+pub struct Migrator {
+    pub storage: DispatchBackend,
+    pub options: Options,
+}
+
+impl Migrator {
+    pub fn new(storage: impl Into<DispatchBackend>, options: impl Into<Options>) -> Self {
+        Self {
+            storage: storage.into(),
+            options: options.into(),
+        }
+    }
+}
 
 impl MigratorExt for Migrator {
     fn build_migrations() -> Migrations {
@@ -187,26 +189,24 @@ impl<M: MigratorExt> MigratorWithData for M {
 }
 
 #[async_trait::async_trait]
-impl MigratorTrait for Migrator {
-    fn migrations() -> Vec<Box<dyn MigrationTrait>> {
-        Self::into_migrations()
+impl MigratorTraitSelf for Migrator {
+    fn migrations(&self) -> Vec<Box<dyn MigrationTrait>> {
+        Self::build_migrations().into_migration_vec(self.storage.clone(), self.options.clone())
     }
 }
 
 pub struct Now;
 
 impl Iden for Now {
-    #[allow(clippy::unwrap_used)]
-    fn unquoted(&self, s: &mut dyn Write) {
-        write!(s, "now").unwrap()
+    fn unquoted(&self) -> &str {
+        "now"
     }
 }
 
 pub struct UuidV4;
 
 impl Iden for UuidV4 {
-    #[allow(clippy::unwrap_used)]
-    fn unquoted(&self, s: &mut dyn Write) {
-        write!(s, "gen_random_uuid").unwrap()
+    fn unquoted(&self) -> &str {
+        "gen_random_uuid"
     }
 }

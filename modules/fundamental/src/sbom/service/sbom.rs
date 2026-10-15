@@ -1,7 +1,10 @@
 use super::SbomService;
 use crate::{
     Error,
-    common::license_filtering::{LICENSE, license_text_coalesce},
+    common::{
+        LicenseInfo,
+        license_filtering::{LICENSE, license_text_coalesce},
+    },
     purl::model::summary::purl::PurlSummary,
     sbom::model::{
         AffectedSeverity, ModelCatcher, SbomAdvisorySummary, SbomExternalPackageReference,
@@ -12,9 +15,9 @@ use crate::{
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromJsonQueryResult, FromQueryResult,
     IntoSimpleExpr, QueryFilter, QueryOrder, QueryResult, QuerySelect, QueryTrait, RelationTrait,
-    Select, SelectColumns, Statement, StreamTrait, prelude::Uuid,
+    Select, Statement, StreamTrait, prelude::Uuid,
 };
-use sea_query::{ColumnType, Expr, JoinType, UnionType, extension::postgres::PgExpr};
+use sea_query::{ColumnType, Expr, ExprTrait, JoinType, UnionType, extension::postgres::PgExpr};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::HashMap, fmt::Debug, sync::Arc, vec::Vec};
@@ -38,15 +41,16 @@ use trustify_entity::{
     labels::Labels,
     license, organization, package_relates_to_package, qualified_purl,
     relationship::Relationship,
-    sbom, sbom_ai, sbom_group_assignment, sbom_license_expanded, sbom_node, sbom_node_cpe_ref,
-    sbom_node_purl_ref, sbom_package, sbom_package_license, source_document, status,
-    versioned_purl, vulnerability,
+    sbom, sbom_ai, sbom_crypto, sbom_group_assignment, sbom_license_expanded, sbom_node,
+    sbom_node_cpe_ref, sbom_node_purl_ref, sbom_package, sbom_package_license, source_document,
+    status, versioned_purl, vulnerability,
 };
 
 #[derive(Clone, Debug, Default)]
 pub struct FetchOptions {
     labels: Labels,
     groups: Option<Vec<Uuid>>,
+    crypto: Option<Vec<String>>,
     pub advisories: bool,
 }
 
@@ -63,6 +67,11 @@ impl FetchOptions {
                 .filter_map(|s| Uuid::parse_str(s.as_ref()).ok())
                 .collect(),
         );
+        self
+    }
+
+    pub fn crypto(mut self, names: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        self.crypto = Some(names.into_iter().map(|s| s.into()).collect());
         self
     }
 
@@ -156,7 +165,7 @@ impl SbomService {
             vec![ids.clone().into()],
         );
 
-        let result = connection.query_all(stmt).await?;
+        let result = connection.query_all_raw(stmt).await?;
 
         let source_document_ids: Vec<_> = result
             .iter()
@@ -184,7 +193,7 @@ impl SbomService {
             );
 
             let gc_result = connection
-                .execute(gc_stmt)
+                .execute_raw(gc_stmt)
                 .instrument(info_span!("delete_sboms::gc"))
                 .await?;
             log::debug!(
@@ -227,6 +236,23 @@ impl SbomService {
                         .select_only()
                         .column(sbom_group_assignment::Column::SbomId)
                         .filter(sbom_group_assignment::Column::GroupId.is_in(group_ids))
+                        .into_query(),
+                ),
+            );
+        }
+
+        if let Some(crypto_names) = options.crypto {
+            query = query.filter(
+                sbom::Column::SbomId.in_subquery(
+                    sbom_crypto::Entity::find()
+                        .join(JoinType::InnerJoin, sbom_node::Relation::Crypto.def().rev())
+                        .select_only()
+                        .column(sbom_crypto::Column::SbomId)
+                        .filter(
+                            sbom_crypto::Column::AssetType
+                                .eq(sbom_crypto::CryptoAssetType::Algorithm),
+                        )
+                        .filter(sbom_node::Column::Name.is_in(crypto_names))
                         .into_query(),
                 ),
             );
@@ -569,6 +595,171 @@ impl SbomService {
         .map(|r| r.map_all(|rel| rel.package))
     }
 
+    /// Load the packages describing an SBOM, with their PURLs, CPEs and licenses.
+    ///
+    /// PURLs, CPEs and licenses are independent one-to-many relations of a node. Selecting
+    /// them in one statement multiplies rows (`purls × cpes × licenses`) and forces `DISTINCT`
+    /// aggregation over that inflated set, so each dimension is loaded separately and joined
+    /// in memory instead.
+    #[instrument(skip(self, db), err(level=tracing::Level::INFO))]
+    pub async fn describing_packages<C: ConnectionTrait>(
+        &self,
+        sbom_id: Uuid,
+        db: &C,
+    ) -> Result<Vec<SbomPackage>, Error> {
+        let nodes: Vec<PackageCatcherBase> = package_relates_to_package::Entity::find()
+            .filter(package_relates_to_package::Column::SbomId.eq(sbom_id))
+            .filter(package_relates_to_package::Column::Relationship.eq(Relationship::Describes))
+            .join(
+                JoinType::Join,
+                package_relates_to_package::Relation::Right.def(),
+            )
+            .join(JoinType::Join, sbom_node::Relation::Package.def())
+            .select_only()
+            .distinct()
+            .column_as(sbom_node::Column::NodeId, "id")
+            .column_as(sbom_node::Column::Name, "name")
+            .column_as(sbom_package::Column::Group, "group")
+            .column_as(sbom_package::Column::Version, "version")
+            .order_by_asc(sbom_node::Column::NodeId)
+            .into_model()
+            .all(db)
+            .await?;
+
+        if nodes.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let node_ids: Vec<_> = nodes.iter().map(|node| node.id.clone()).collect();
+        let mut purls = self.node_purls(sbom_id, &node_ids, db).await?;
+        let mut cpes = self.node_cpes(sbom_id, &node_ids, db).await?;
+        let mut licenses = self.node_licenses(sbom_id, &node_ids, db).await?;
+
+        Ok(nodes
+            .into_iter()
+            .map(|node| SbomPackage {
+                purl: purls.remove(&node.id).unwrap_or_default(),
+                cpe: cpes.remove(&node.id).unwrap_or_default(),
+                licenses: licenses.remove(&node.id).unwrap_or_default(),
+                id: node.id,
+                name: node.name,
+                group: node.group,
+                version: node.version,
+                #[allow(deprecated)]
+                licenses_ref_mapping: Vec::new(),
+            })
+            .collect())
+    }
+
+    /// Load the PURLs of the provided nodes, keyed by node ID.
+    async fn node_purls<C: ConnectionTrait>(
+        &self,
+        sbom_id: Uuid,
+        node_ids: &[String],
+        db: &C,
+    ) -> Result<HashMap<String, Vec<PurlSummary>>, Error> {
+        let rows = sbom_node_purl_ref::Entity::find()
+            .filter(sbom_node_purl_ref::Column::SbomId.eq(sbom_id))
+            .filter(sbom_node_purl_ref::Column::NodeId.is_in(node_ids.to_vec()))
+            .find_also_related(qualified_purl::Entity)
+            .order_by_asc(qualified_purl::Column::Purl)
+            .all(db)
+            .await?;
+
+        let mut result: HashMap<String, Vec<PurlSummary>> = HashMap::new();
+        for (reference, purl) in rows {
+            let Some(purl) = purl else { continue };
+            result
+                .entry(reference.node_id)
+                .or_default()
+                .push(PurlSummary::from_entity(&purl));
+        }
+        Ok(result)
+    }
+
+    /// Load the CPEs of the provided nodes, keyed by node ID.
+    async fn node_cpes<C: ConnectionTrait>(
+        &self,
+        sbom_id: Uuid,
+        node_ids: &[String],
+        db: &C,
+    ) -> Result<HashMap<String, Vec<String>>, Error> {
+        let rows = sbom_node_cpe_ref::Entity::find()
+            .filter(sbom_node_cpe_ref::Column::SbomId.eq(sbom_id))
+            .filter(sbom_node_cpe_ref::Column::NodeId.is_in(node_ids.to_vec()))
+            .find_also_related(cpe::Entity)
+            .order_by_asc(cpe::Column::Id)
+            .all(db)
+            .await?;
+
+        let mut result: HashMap<String, Vec<String>> = HashMap::new();
+        for (reference, cpe) in rows {
+            let Some(cpe) = cpe else { continue };
+            match Cpe::try_from(CpeDto::from(cpe)) {
+                Ok(cpe) => result
+                    .entry(reference.node_id)
+                    .or_default()
+                    .push(cpe.to_string()),
+                Err(err) => log::warn!("Failed to build CPE: {err}"),
+            }
+        }
+        Ok(result)
+    }
+
+    /// Load the license assertions of the provided nodes, keyed by node ID.
+    async fn node_licenses<C: ConnectionTrait>(
+        &self,
+        sbom_id: Uuid,
+        node_ids: &[String],
+        db: &C,
+    ) -> Result<HashMap<String, Vec<LicenseInfo>>, Error> {
+        #[derive(FromQueryResult)]
+        struct Row {
+            node_id: String,
+            license_name: String,
+            license_type: i32,
+        }
+
+        let rows: Vec<Row> = sbom_package_license::Entity::find()
+            .filter(sbom_package_license::Column::SbomId.eq(sbom_id))
+            .filter(sbom_package_license::Column::NodeId.is_in(node_ids.to_vec()))
+            .join(
+                JoinType::LeftJoin,
+                sbom_package_license::Relation::SbomLicenseExpanded.def(),
+            )
+            .join(
+                JoinType::LeftJoin,
+                sbom_license_expanded::Relation::ExpandedLicense.def(),
+            )
+            .join(
+                JoinType::LeftJoin,
+                sbom_package_license::Relation::License.def(),
+            )
+            .filter(Expr::col((license::Entity, license::Column::Text)).is_not_null())
+            .select_only()
+            .distinct()
+            .column(sbom_package_license::Column::NodeId)
+            .column_as(license_text_coalesce(), "license_name")
+            .column(sbom_package_license::Column::LicenseType)
+            .order_by_asc(license_text_coalesce())
+            .order_by_asc(sbom_package_license::Column::LicenseType)
+            .into_model()
+            .all(db)
+            .await?;
+
+        let mut result: HashMap<String, Vec<LicenseInfo>> = HashMap::new();
+        for row in rows {
+            result.entry(row.node_id).or_default().push(
+                LicenseBasicInfo {
+                    license_name: row.license_name,
+                    license_type: row.license_type,
+                }
+                .into(),
+            );
+        }
+        Ok(result)
+    }
+
     /// Count packages for multiple SBOMs in a single query.
     #[instrument(skip(self, db), err(level=tracing::Level::INFO))]
     pub async fn batch_package_counts<C: ConnectionTrait>(
@@ -610,11 +801,11 @@ impl SbomService {
             .filter(package_relates_to_package::Column::SbomId.is_in(sbom_ids.to_vec()))
             .filter(package_relates_to_package::Column::Relationship.eq(Relationship::Describes))
             .select_only()
-            .select_column(package_relates_to_package::Column::SbomId)
-            .select_column_as(sbom_node::Column::NodeId, "id")
-            .select_column_as(sbom_node::Column::Name, "name")
-            .select_column_as(sbom_package::Column::Group, "group")
-            .select_column_as(sbom_package::Column::Version, "version")
+            .column(package_relates_to_package::Column::SbomId)
+            .column_as(sbom_node::Column::NodeId, "id")
+            .column_as(sbom_node::Column::Name, "name")
+            .column_as(sbom_package::Column::Group, "group")
+            .column_as(sbom_package::Column::Version, "version")
             // join the right side (the described node) → package
             .join(
                 JoinType::Join,
@@ -672,7 +863,7 @@ impl SbomService {
             vec![sbom_ids.to_vec().into()],
         );
 
-        let rows = db.query_all(stmt).await?;
+        let rows = db.query_all_raw(stmt).await?;
 
         let mut result: HashMap<Uuid, SbomAdvisorySummary> = HashMap::new();
         for row in rows {
@@ -867,14 +1058,14 @@ impl SbomService {
         let mut query = package_relates_to_package::Entity::find()
             .filter(package_relates_to_package::Column::SbomId.eq(sbom_id))
             .select_only()
-            .select_column_as(sbom_node::Column::NodeId, "id")
-            .select_column_as(sbom_node::Column::Name, "name")
-            .select_column_as(
+            .column_as(sbom_node::Column::NodeId, "id")
+            .column_as(sbom_node::Column::Name, "name")
+            .column_as(
                 package_relates_to_package::Column::Relationship,
                 "relationship",
             )
-            .select_column_as(sbom_package::Column::Group, "group")
-            .select_column_as(sbom_package::Column::Version, "version")
+            .column_as(sbom_package::Column::Group, "group")
+            .column_as(sbom_package::Column::Version, "version")
             // join the other side
             .join(JoinType::Join, join.def())
             .join(JoinType::Join, sbom_node::Relation::Package.def());
@@ -1086,7 +1277,7 @@ where
         )
         .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
         // aggregate the purls
-        .select_column_as(
+        .column_as(
             Expr::cust_with_exprs(
                 "coalesce(array_agg(distinct $1) filter (where $2), '{}')",
                 [
@@ -1100,7 +1291,7 @@ where
         )
         .join(JoinType::LeftJoin, sbom_node_cpe_ref::Relation::Cpe.def())
         // aggregate the cpes
-        .select_column_as(
+        .column_as(
             Expr::cust_with_exprs(
                 "to_json(coalesce(array_agg(distinct $1) filter (where $2), '{}'))",
                 [
@@ -1123,7 +1314,7 @@ where
     E: EntityTrait,
 {
     query
-        .select_column_as(
+        .column_as(
             Expr::cust_with_exprs(
                 "coalesce(json_agg(distinct jsonb_build_object('license_name', $1, 'license_type', $2)) filter (where $3), '[]'::json)",
                 [
