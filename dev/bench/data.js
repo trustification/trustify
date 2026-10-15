@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792072727997,
+  "lastUpdate": 1792077651315,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23541,6 +23541,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "a399232ad0193510ed0d80203d760fa08b8ea454",
+          "message": "test(db): verify chunk contents",
+          "timestamp": "2026-10-15T17:00:51+02:00",
+          "tree_id": "589bd846dc770df9e75e1ff934e9dc5e268a4c0d",
+          "url": "https://github.com/guacsec/trustify/commit/a399232ad0193510ed0d80203d760fa08b8ea454"
+        },
+        "date": 1792077648691,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
