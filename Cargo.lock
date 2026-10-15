@@ -1358,7 +1358,7 @@ dependencies = [
  "bitflags 2.13.2",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools 0.10.5",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -2294,7 +2294,8 @@ dependencies = [
 [[package]]
 name = "csaf-walker"
 version = "0.20.0"
-source = "git+https://github.com/scm-rs/csaf-walker?branch=prepare%2Fcyclonedx-rs-0.20#37f299530860626c2be9f680fcc4f8ef453d1cdc"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "267b6377b398312f124ee2b17043dca97af9b118b08a522270329861eb041297"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2433,7 +2434,8 @@ dependencies = [
 [[package]]
 name = "cyclonedx-rs"
 version = "0.10.1"
-source = "git+https://github.com/scm-rs/cyclonedx-rs?branch=release%2F0.10.1#d42a5f1ca216f4d42f3eb9729af630aa17314d88"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c42cf6e4a94d65bb802aedc58a1a1cef93511311fad6baa3eb7cefbd7f2f86d"
 dependencies = [
  "anyhow",
  "derive_builder 0.20.2",
@@ -5189,7 +5191,7 @@ version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "51e219e79014df21a225b1860a479e2dcd7cbd9130f4defd4bd0e191ea31d67d"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.21.7",
  "chrono",
  "getrandom 0.2.17",
  "http 1.5.0",
@@ -6293,7 +6295,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b570b25f7617e43d59005d0990ccb79e950a423952cea19671b7a876da390adf"
 dependencies = [
  "anyhow",
- "itertools 0.13.0",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 2.0.119",
@@ -7079,7 +7081,8 @@ dependencies = [
 [[package]]
 name = "sbom-walker"
 version = "0.20.0"
-source = "git+https://github.com/scm-rs/csaf-walker?branch=prepare%2Fcyclonedx-rs-0.20#37f299530860626c2be9f680fcc4f8ef453d1cdc"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12cf38c6763cb3c47696069c1188b144cf2850bb5e52fcab909b8e3ef42fba7d"
 dependencies = [
  "anyhow",
  "bytes",
@@ -7472,7 +7475,7 @@ checksum = "1460dbd9c736920a78bd450eaa6902304605c493bd2222121849ba01ab8df997"
 dependencies = [
  "anyhow",
  "argon2",
- "base64 0.22.1",
+ "base64 0.21.7",
  "buffered-reader",
  "chrono",
  "ctor",
@@ -7509,7 +7512,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b8050abb251097357e24aff63ba2c52a6309ecb7d23a5474023df960a02694d8"
 dependencies = [
  "annotate-snippets 0.12.16",
- "base64 0.23.1",
+ "base64 0.21.7",
  "encoding_rs_io",
  "granit-parser",
  "nohash-hasher",
@@ -10094,7 +10097,8 @@ dependencies = [
 [[package]]
 name = "walker-common"
 version = "0.20.0"
-source = "git+https://github.com/scm-rs/csaf-walker?branch=prepare%2Fcyclonedx-rs-0.20#37f299530860626c2be9f680fcc4f8ef453d1cdc"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60ce6127acce15d2d047c62b0d82725a59454aff7ed463b493dab2050b056d26"
 dependencies = [
  "anyhow",
  "async-trait",
