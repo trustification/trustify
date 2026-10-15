@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792054962676,
+  "lastUpdate": 1792057977546,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23391,6 +23391,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/guacsec/trustify/commit/64df00efaa6a9399e791ab876f78afbc7905657a"
         },
         "date": 1792054960358,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "b9dbd32d525d598936a66cbf80977b75b61d2fb1",
+          "message": "fix: restore generic vers scheme parsing and update SPDX license count\n\nvers-rs 0.1.3 DynamicVersionRange only supports semver/npm/deb/cargo,\nbreaking parsing of rpm, generic and other schemes. Use\nVersVersionRange<String> (the renamed GenericVersionRange) instead.\n\nspdx 0.13.6 adds 13 licenses, bump the expected count to 747.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+          "timestamp": "2026-10-15T11:35:59+02:00",
+          "tree_id": "ded4fbdd8c82b1f667dbd8e5957c99fa6a317263",
+          "url": "https://github.com/guacsec/trustify/commit/b9dbd32d525d598936a66cbf80977b75b61d2fb1"
+        },
+        "date": 1792057975203,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
