@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792067169766,
+  "lastUpdate": 1792072727997,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23512,6 +23512,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rromerom@redhat.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "47c073442f6b511e8b9ba8af9e57029072190e54",
+          "message": "feat(importer): digest-based continuation and credential-safe redirects for HTTP/Pulp importer\n\nReplace the ignored `_continuation` parameter in `run_once_http` with an\nactive `HashMap<String, String>` (url → sha256) that persists between runs.\nFiles whose SHA-256 matches the stored continuation entry are skipped without\nfetching or re-ingesting. After successful ingestion the map is updated;\nafter integrity errors it is not (forcing a re-fetch on the next run).\n\nFor API-key auth, build a dedicated reqwest Client pair with a redirect\npolicy that stops at cross-host boundaries, then re-fetch the redirect\ntarget with a plain (unauthenticated) client so credentials are never\nsent to CDN servers. Apply the same protection to PULP_MANIFEST fetches.\nReject HTTPS-to-HTTP protocol downgrades on redirects to prevent\ncredential exposure over plain HTTP.\n\nTests:\n- skip and re-fetch behaviour using wiremock request counting\n- API-key header not forwarded on cross-host redirects\n- protocol downgrade detection\n\nImplements TC-6455\nImplements TC-6915\nImplements TC-6916\n\nAssisted-by: Claude Code",
+          "timestamp": "2026-10-15T13:14:25Z",
+          "tree_id": "29a238af00f79e2bc5762b650fb5b5008ef57b1c",
+          "url": "https://github.com/guacsec/trustify/commit/47c073442f6b511e8b9ba8af9e57029072190e54"
+        },
+        "date": 1792072725527,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
