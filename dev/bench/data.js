@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792057977546,
+  "lastUpdate": 1792060901429,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23425,6 +23425,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "3f41fa0bdaa7a6bf47cee4dc28d9762aeeca13ee",
+          "message": "docs: add concurrent data migration procedure guide\n\nAdd a step-by-step guide for running data migrations with concurrency,\nincluding environment variables, single/multi-runner examples, and a\nfull Kubernetes Job manifest covering the complete workflow.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-10-15T12:23:41+02:00",
+          "tree_id": "9ef3f5e8bc85d662b16622c73e3dae977ef96752",
+          "url": "https://github.com/guacsec/trustify/commit/3f41fa0bdaa7a6bf47cee4dc28d9762aeeca13ee"
+        },
+        "date": 1792060899356,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
