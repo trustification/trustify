@@ -58,8 +58,16 @@ mod test {
     #[test]
     fn chunks() {
         let size = (u16::MAX - 128) as usize;
-        let batches: Vec<_> = chunked_with(1, 0..size * 2 + 1).map(|b| b.len()).collect();
-        assert_eq!(batches, vec![size, size, 1]);
+        let input = 0..size * 2 + 1;
+        let batches: Vec<_> = chunked_with(1, input.clone()).collect();
+        assert_eq!(
+            batches.iter().map(|batch| batch.len()).collect::<Vec<_>>(),
+            vec![size, size, 1]
+        );
+        assert_eq!(
+            batches.into_iter().flatten().collect::<Vec<_>>(),
+            input.collect::<Vec<_>>()
+        );
         assert_eq!(chunked_with(1, 0..0).count(), 0);
     }
 }
