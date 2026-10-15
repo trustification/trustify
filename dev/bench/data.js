@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792060901429,
+  "lastUpdate": 1792064952586,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23449,6 +23449,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/guacsec/trustify/commit/3f41fa0bdaa7a6bf47cee4dc28d9762aeeca13ee"
         },
         "date": 1792060899356,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "1664942b49f0d10374a83f75fd8501846511b166",
+          "message": "chore: re-generate openapi spec",
+          "timestamp": "2026-10-15T11:00:45Z",
+          "tree_id": "e60723a9e2fa8c6ae0645cafbd51e45091388a85",
+          "url": "https://github.com/guacsec/trustify/commit/1664942b49f0d10374a83f75fd8501846511b166"
+        },
+        "date": 1792064950174,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
