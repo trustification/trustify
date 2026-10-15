@@ -18,10 +18,10 @@ use crate::{
 };
 use csaf::schema::csaf2_0::schema::CommonSecurityAdvisoryFramework as Csaf;
 use cve::Cve;
+use cyclonedx_rs::cyclonedx::v_1_7::CycloneDx;
 use osv::schema::Vulnerability;
 use quick_xml::{Reader, events::Event};
 use sea_orm::{ConnectionTrait, TransactionTrait};
-use cyclonedx_rs::cyclonedx::v_1_7::CycloneDx;
 use std::io::Cursor;
 use tracing::instrument;
 use trustify_common::hashing::Digests;

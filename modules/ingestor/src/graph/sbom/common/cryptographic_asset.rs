@@ -5,9 +5,9 @@ use crate::{
     service::Error,
 };
 use anyhow::anyhow;
+use cyclonedx_rs::cyclonedx::v_1_7::Component;
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
-use cyclonedx_rs::cyclonedx::v_1_7::Component;
 use serde_json::Value;
 use trustify_common::db::chunk::EntityChunkedIter;
 use trustify_entity::sbom_crypto::{self, CryptoAssetType};

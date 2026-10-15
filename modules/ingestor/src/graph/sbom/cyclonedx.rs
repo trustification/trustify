@@ -18,15 +18,15 @@ use crate::{
     service::Error,
 };
 use base64::{Engine, prelude::BASE64_STANDARD};
+use cyclonedx_rs::cyclonedx::v_1_7::{
+    Attachment, Component, ComponentEvidenceIdentity, CycloneDx, License, LicenseChoiceItemUrl,
+    OrganizationalContact,
+};
 use sbom_walker::{
     model::sbom::serde_cyclonedx::Sbom,
     report::{ReportSink, check},
 };
 use sea_orm::ConnectionTrait;
-use cyclonedx_rs::cyclonedx::v_1_7::{
-    Attachment, Component, ComponentEvidenceIdentity, CycloneDx, License, LicenseChoiceItemUrl,
-    OrganizationalContact,
-};
 use std::{borrow::Cow, collections::HashMap, str::FromStr};
 use time::{OffsetDateTime, format_description::well_known::Iso8601};
 use tracing::instrument;
