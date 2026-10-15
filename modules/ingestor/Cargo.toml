@@ -38,7 +38,7 @@ sea-orm = { workspace = true }
 sea-query = { workspace = true }
 semver = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-serde-cyclonedx = { workspace = true }
+cyclonedx-rs = { workspace = true }
 serde_json = { workspace = true }
 serde-saphyr = { workspace = true }
 spdx-expression = { workspace = true }

@@ -1,4 +1,4 @@
-use serde_cyclonedx::cyclonedx::v_1_7::CycloneDx;
+use cyclonedx_rs::cyclonedx::v_1_7::CycloneDx;
 use std::collections::HashMap;
 
 /// extract CycloneDX SBOM general purpose properties

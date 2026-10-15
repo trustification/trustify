@@ -23,7 +23,7 @@ use sbom_walker::{
     report::{ReportSink, check},
 };
 use sea_orm::ConnectionTrait;
-use serde_cyclonedx::cyclonedx::v_1_7::{
+use cyclonedx_rs::cyclonedx::v_1_7::{
     Attachment, Component, ComponentEvidenceIdentity, CycloneDx, License, LicenseChoiceItemUrl,
     OrganizationalContact,
 };
