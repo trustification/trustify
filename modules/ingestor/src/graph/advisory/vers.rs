@@ -1,12 +1,12 @@
 use crate::graph::advisory::version::{Version, VersionInfo, VersionSpec};
 use trustify_entity::version_scheme::VersionScheme;
-use vers_rs::{Comparator, GenericVersionRange, VersError};
+use vers_rs::{Comparator, DynamicVersionRange, VersError, VersionRange};
 
 /// Parse a `vers:` URI and convert to one or more [`VersionInfo`] values.
 pub fn parse_vers(input: &str) -> Result<Vec<VersionInfo>, VersError> {
-    let range: GenericVersionRange<String> = input.parse()?;
-    let scheme = VersionScheme::from(range.versioning_scheme.as_str());
-    Ok(convert_constraints(&range.constraints, scheme))
+    let range: DynamicVersionRange = input.parse()?;
+    let scheme = VersionScheme::from(range.versioning_scheme());
+    Ok(convert_constraints(range.constraints(), scheme))
 }
 
 fn convert_constraints(
