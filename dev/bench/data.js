@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791964360584,
+  "lastUpdate": 1792054962676,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23367,6 +23367,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rromerom@redhat.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "64df00efaa6a9399e791ab876f78afbc7905657a",
+          "message": "build(deps): pin vers-rs to 0.1.3 minimum\n\nRequire vers-rs >= 0.1.3 since 0.1.2 API is incompatible after the\nGenericVersionRange to DynamicVersionRange rename.\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-10-15T10:48:07+02:00",
+          "tree_id": "3efc3a65348815ccaef6e8752eecff628707dbda",
+          "url": "https://github.com/guacsec/trustify/commit/64df00efaa6a9399e791ab876f78afbc7905657a"
+        },
+        "date": 1792054960358,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
