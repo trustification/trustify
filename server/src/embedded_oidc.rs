@@ -71,7 +71,7 @@ fn create(enabled: bool, bind_addr: &str) -> anyhow::Result<Option<Server>> {
 
     let mut server = Server::new();
 
-    if let Ok(ip_addr) = IpAddr::from_str(&bind_addr) {
+    if let Ok(ip_addr) = IpAddr::from_str(bind_addr) {
         server.bind(ip_addr);
     }
 
