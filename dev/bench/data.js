@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792064952586,
+  "lastUpdate": 1792067169766,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23483,6 +23483,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "manuel.hatzl@ferrous-systems.com",
+            "name": "Manuel Hatzl",
+            "username": "mhatzl"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "5b076bf82ad4e97547091de6cfe2a0f90d9bb8f7",
+          "message": "Remove unnecessary reference",
+          "timestamp": "2026-10-15T14:17:07+02:00",
+          "tree_id": "8329f9a7c01c77db13ca028b87bd88463a54161d",
+          "url": "https://github.com/guacsec/trustify/commit/5b076bf82ad4e97547091de6cfe2a0f90d9bb8f7"
+        },
+        "date": 1792067168088,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
