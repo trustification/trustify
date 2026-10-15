@@ -53,7 +53,9 @@ crate::graph::db_context::parse_status(value)?;
 ```
 
 3-segment paths (e.g. `std::fmt::Result`, `entity::advisory_vulnerability::Model`) are not
-flagged by the lint and are acceptable.
+flagged by the lint. They are still subject to the
+[Prefer `use` Over Inline Qualified Paths](#import-style--prefer-use-over-inline-qualified-paths)
+convention — the lint threshold is not a style allowance.
 
 ### Import Style — Qualified Names for Common Types
 
