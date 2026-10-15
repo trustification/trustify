@@ -1,9 +1,9 @@
 use crate::graph::sbom::{
     Checksum, ReferenceSource, common::node::NodeCreator, common::reference::ReferenceCreator,
 };
+use cyclonedx_rs::cyclonedx::v_1_7::Component;
 use sea_orm::{ConnectionTrait, DbErr, EntityTrait, Set};
 use sea_query::OnConflict;
-use cyclonedx_rs::cyclonedx::v_1_7::Component;
 use serde_json::{Map, Value};
 use trustify_common::db::chunk::EntityChunkedIter;
 use trustify_entity::sbom_ai;
