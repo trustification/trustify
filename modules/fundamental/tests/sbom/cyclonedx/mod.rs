@@ -6,7 +6,7 @@ mod purl;
 mod reingest;
 
 use super::*;
-use serde_cyclonedx::cyclonedx::v_1_7::CycloneDx;
+use cyclonedx_rs::cyclonedx::v_1_7::CycloneDx;
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;

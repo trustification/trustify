@@ -1,4 +1,4 @@
-use serde_cyclonedx::cyclonedx::v_1_7::{Hash, HashAlg};
+use cyclonedx_rs::cyclonedx::v_1_7::{Hash, HashAlg};
 use spdx_rs::models::Algorithm;
 use std::borrow::Cow;
 

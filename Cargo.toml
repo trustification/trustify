@@ -123,7 +123,7 @@ sea-orm-migration = "2"
 sea-query = "1.0.2" # keep aligned with sea-orm
 semver = "1"
 serde = "1.0.183"
-serde-cyclonedx = { package = "cyclonedx-rs", version = "0.10.1" }
+cyclonedx-rs = "0.10.1"
 serde_json = { version = "1.0.114", features = ["raw_value"] }
 serde_qs = { version = "1", features = ["actix4"] }
 serde-saphyr = "1"
