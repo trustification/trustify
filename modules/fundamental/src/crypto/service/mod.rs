@@ -32,6 +32,15 @@ use trustify_entity::{
 };
 use uuid::Uuid;
 
+fn most_severe_verdict(a: Option<String>, b: Option<String>) -> Option<String> {
+    match (a.as_deref(), b.as_deref()) {
+        (_, Some("non_compliant")) | (Some("non_compliant"), _) => Some("non_compliant".into()),
+        (_, Some("warning")) | (Some("warning"), _) => Some("warning".into()),
+        (_, Some("compliant")) | (Some("compliant"), _) => Some("compliant".into()),
+        _ => None,
+    }
+}
+
 pub struct CryptoService {
     cache: PaginationCache,
     evaluator: Option<Box<dyn evaluator::PolicyEvaluator>>,
@@ -125,6 +134,26 @@ impl CryptoService {
         // Deduplicate: OID is the canonical identity for an algorithm — different SBOMs may spell
         // the same algorithm differently ("AES", "AES-256-XT", "AES128") but share an OID.
         // Use (oid, asset_type) as the key when an OID is present, fall back to (name, asset_type).
+        //
+        // First pass: aggregate packages_count (sum) and policy_verdict (most-severe) per identity
+        // so that the deduplicated entry reflects data from all SBOMs, not just the first row.
+        let mut agg: HashMap<(String, String), (i64, Option<String>)> = HashMap::new();
+        for (crypto, node_opt) in all_items.iter().zip(all_nodes.iter()) {
+            let Some(node) = node_opt.as_ref() else {
+                continue;
+            };
+            let identity = crypto.oid.clone().unwrap_or_else(|| node.name.clone());
+            let key = (identity, crypto.asset_type.to_string());
+            let pc = pkg_counts
+                .get(&(crypto.sbom_id, crypto.node_id.clone()))
+                .copied()
+                .unwrap_or(0);
+            let entry = agg.entry(key).or_insert((0, None));
+            entry.0 += pc;
+            entry.1 = most_severe_verdict(entry.1.take(), crypto.policy_verdict.clone());
+        }
+
+        // Second pass: emit one entry per identity using aggregated values.
         let mut seen: HashSet<(String, String)> = HashSet::new();
         let unique: Vec<CryptoAlgorithmSummary> = all_items
             .into_iter()
@@ -136,21 +165,18 @@ impl CryptoService {
                     .clone()
                     .unwrap_or_else(|| node.name.clone());
                 let key = (identity, crypto.asset_type.to_string());
-                if !seen.insert(key) {
+                if !seen.insert(key.clone()) {
                     return None;
                 }
+                let (agg_pc, agg_verdict) = agg.remove(&key).unwrap_or_default();
                 let primitive = crypto
                     .properties
                     .get("algorithmProperties")
                     .and_then(|ap| ap.get("primitive"))
                     .and_then(|p| p.as_str())
                     .map(String::from);
-                let pc = pkg_counts
-                    .get(&(crypto.sbom_id, crypto.node_id.clone()))
-                    .copied()
-                    .unwrap_or(0);
                 let sc = sbom_counts.get(&node.name).copied().unwrap_or(0);
-                let policy_status = crypto.policy_verdict.as_deref().and_then(|v| match v {
+                let policy_status = agg_verdict.as_deref().and_then(|v| match v {
                     "compliant" => Some(PolicyVerdict::Compliant),
                     "warning" => Some(PolicyVerdict::Warning),
                     "non_compliant" => Some(PolicyVerdict::NonCompliant),
@@ -165,7 +191,7 @@ impl CryptoService {
                     primitive,
                     properties: crypto.properties,
                     policy_status,
-                    packages_count: pc,
+                    packages_count: agg_pc,
                     sboms_count: sc,
                 })
             })
