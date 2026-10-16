@@ -28,16 +28,42 @@ use trustify_common::{
 };
 use trustify_entity::{
     package_relates_to_package, relationship::Relationship, sbom_crypto,
-    sbom_crypto::CryptoAssetType, sbom_node,
+    sbom_crypto::{CryptoAssetType, PolicyVerdictDb},
+    sbom_node,
 };
 use uuid::Uuid;
 
-fn most_severe_verdict(a: Option<String>, b: Option<String>) -> Option<String> {
-    match (a.as_deref(), b.as_deref()) {
-        (_, Some("non_compliant")) | (Some("non_compliant"), _) => Some("non_compliant".into()),
-        (_, Some("warning")) | (Some("warning"), _) => Some("warning".into()),
-        (_, Some("compliant")) | (Some("compliant"), _) => Some("compliant".into()),
+fn most_severe_verdict(
+    a: Option<PolicyVerdictDb>,
+    b: Option<PolicyVerdictDb>,
+) -> Option<PolicyVerdictDb> {
+    match (a, b) {
+        (_, Some(PolicyVerdictDb::NonCompliant)) | (Some(PolicyVerdictDb::NonCompliant), _) => {
+            Some(PolicyVerdictDb::NonCompliant)
+        }
+        (_, Some(PolicyVerdictDb::Warning)) | (Some(PolicyVerdictDb::Warning), _) => {
+            Some(PolicyVerdictDb::Warning)
+        }
+        (_, Some(PolicyVerdictDb::Compliant)) | (Some(PolicyVerdictDb::Compliant), _) => {
+            Some(PolicyVerdictDb::Compliant)
+        }
         _ => None,
+    }
+}
+
+fn db_to_policy_verdict(v: PolicyVerdictDb) -> PolicyVerdict {
+    match v {
+        PolicyVerdictDb::Compliant => PolicyVerdict::Compliant,
+        PolicyVerdictDb::Warning => PolicyVerdict::Warning,
+        PolicyVerdictDb::NonCompliant => PolicyVerdict::NonCompliant,
+    }
+}
+
+fn policy_to_db_verdict(v: PolicyVerdict) -> PolicyVerdictDb {
+    match v {
+        PolicyVerdict::Compliant => PolicyVerdictDb::Compliant,
+        PolicyVerdict::Warning => PolicyVerdictDb::Warning,
+        PolicyVerdict::NonCompliant => PolicyVerdictDb::NonCompliant,
     }
 }
 
@@ -137,7 +163,7 @@ impl CryptoService {
         //
         // First pass: aggregate packages_count (sum) and policy_verdict (most-severe) per identity
         // so that the deduplicated entry reflects data from all SBOMs, not just the first row.
-        let mut agg: HashMap<(String, String), (i64, Option<String>)> = HashMap::new();
+        let mut agg: HashMap<(String, String), (i64, Option<PolicyVerdictDb>)> = HashMap::new();
         for (crypto, node_opt) in all_items.iter().zip(all_nodes.iter()) {
             let Some(node) = node_opt.as_ref() else {
                 continue;
@@ -150,7 +176,7 @@ impl CryptoService {
                 .unwrap_or(0);
             let entry = agg.entry(key).or_insert((0, None));
             entry.0 += pc;
-            entry.1 = most_severe_verdict(entry.1.take(), crypto.policy_verdict.clone());
+            entry.1 = most_severe_verdict(entry.1, crypto.policy_verdict);
         }
 
         // Second pass: emit one entry per identity using aggregated values.
@@ -176,12 +202,7 @@ impl CryptoService {
                     .and_then(|p| p.as_str())
                     .map(String::from);
                 let sc = sbom_counts.get(&node.name).copied().unwrap_or(0);
-                let policy_status = agg_verdict.as_deref().and_then(|v| match v {
-                    "compliant" => Some(PolicyVerdict::Compliant),
-                    "warning" => Some(PolicyVerdict::Warning),
-                    "non_compliant" => Some(PolicyVerdict::NonCompliant),
-                    _ => None,
-                });
+                let policy_status = agg_verdict.map(db_to_policy_verdict);
                 Some(CryptoAlgorithmSummary {
                     sbom_id: crypto.sbom_id,
                     node_id: crypto.node_id,
@@ -232,12 +253,7 @@ impl CryptoService {
                     .copied()
                     .unwrap_or(0);
                 let sc = sbom_counts.get(&node.name).copied().unwrap_or(0);
-                let policy_status = crypto.policy_verdict.as_deref().and_then(|v| match v {
-                    "compliant" => Some(PolicyVerdict::Compliant),
-                    "warning" => Some(PolicyVerdict::Warning),
-                    "non_compliant" => Some(PolicyVerdict::NonCompliant),
-                    _ => None,
-                });
+                let policy_status = crypto.policy_verdict.map(db_to_policy_verdict);
                 Some(CryptoAlgorithmSummary {
                     sbom_id: crypto.sbom_id,
                     node_id: crypto.node_id,
@@ -266,33 +282,26 @@ impl CryptoService {
         connection: &C,
     ) -> Result<PolicySummaryResult, Error> {
         // Fetch (name, oid, policy_verdict) for all algorithm rows.
-        let rows: Vec<(String, Option<String>, Option<String>)> = sbom_crypto::Entity::find()
-            .join(JoinType::InnerJoin, sbom_node::Relation::Crypto.def().rev())
-            .filter(sbom_crypto::Column::AssetType.eq(CryptoAssetType::Algorithm))
-            .select_only()
-            .column(sbom_node::Column::Name)
-            .column(sbom_crypto::Column::Oid)
-            .column(sbom_crypto::Column::PolicyVerdict)
-            .into_tuple()
-            .all(connection)
-            .await?;
+        let rows: Vec<(String, Option<String>, Option<PolicyVerdictDb>)> =
+            sbom_crypto::Entity::find()
+                .join(JoinType::InnerJoin, sbom_node::Relation::Crypto.def().rev())
+                .filter(sbom_crypto::Column::AssetType.eq(CryptoAssetType::Algorithm))
+                .select_only()
+                .column(sbom_node::Column::Name)
+                .column(sbom_crypto::Column::Oid)
+                .column(sbom_crypto::Column::PolicyVerdict)
+                .into_tuple()
+                .all(connection)
+                .await?;
 
         // Deduplicate by OID (canonical) or name (fallback): keep the most severe verdict.
-        let mut by_identity: HashMap<String, Option<String>> = HashMap::new();
+        let mut by_identity: HashMap<String, Option<PolicyVerdictDb>> = HashMap::new();
         for (name, oid, verdict) in rows {
             let identity = oid.unwrap_or(name);
             by_identity
                 .entry(identity)
                 .and_modify(|existing| {
-                    // Most severe: non_compliant > warning > compliant > None
-                    *existing = match (existing.as_deref(), verdict.as_deref()) {
-                        (_, Some("non_compliant")) => Some("non_compliant".into()),
-                        (Some("non_compliant"), _) => existing.clone(),
-                        (_, Some("warning")) => Some("warning".into()),
-                        (Some("warning"), _) => existing.clone(),
-                        (_, Some("compliant")) => Some("compliant".into()),
-                        _ => existing.clone(),
-                    };
+                    *existing = most_severe_verdict(*existing, verdict);
                 })
                 .or_insert(verdict);
         }
@@ -301,11 +310,11 @@ impl CryptoService {
             by_identity
                 .values()
                 .fold((0, 0, 0, 0), |(t, c, w, n), verdict| {
-                    match verdict.as_deref() {
-                        Some("compliant") => (t + 1, c + 1, w, n),
-                        Some("warning") => (t + 1, c, w + 1, n),
-                        Some("non_compliant") => (t + 1, c, w, n + 1),
-                        _ => (t + 1, c, w, n),
+                    match verdict {
+                        Some(PolicyVerdictDb::Compliant) => (t + 1, c + 1, w, n),
+                        Some(PolicyVerdictDb::Warning) => (t + 1, c, w + 1, n),
+                        Some(PolicyVerdictDb::NonCompliant) => (t + 1, c, w, n + 1),
+                        None => (t + 1, c, w, n),
                     }
                 });
 
@@ -482,15 +491,10 @@ impl CryptoService {
             .collect();
 
         for result in &results {
-            let verdict_str = match result.verdict {
-                PolicyVerdict::Compliant => "compliant",
-                PolicyVerdict::Warning => "warning",
-                PolicyVerdict::NonCompliant => "non_compliant",
-            };
             let active: sbom_crypto::ActiveModel = sbom_crypto::ActiveModel {
                 sbom_id: ActiveValue::Unchanged(result.sbom_id),
                 node_id: ActiveValue::Unchanged(result.node_id.clone()),
-                policy_verdict: ActiveValue::Set(Some(verdict_str.to_string())),
+                policy_verdict: ActiveValue::Set(Some(policy_to_db_verdict(result.verdict))),
                 ..Default::default()
             };
             active.update(connection).await.map_err(|e| {

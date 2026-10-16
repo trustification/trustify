@@ -10,7 +10,7 @@ pub struct Model {
     pub asset_type: CryptoAssetType,
     pub properties: serde_json::Value,
     pub oid: Option<String>,
-    pub policy_verdict: Option<String>,
+    pub policy_verdict: Option<PolicyVerdictDb>,
 }
 
 /// Possible types of the cryptographic assets within a CBOM
@@ -44,6 +44,30 @@ pub enum CryptoAssetType {
     /// Other cryptographic assets related to algorithms, certificates, and protocols such as keys and tokens.
     #[sea_orm(string_value = "related-crypto-material")]
     RelatedCryptoMaterial,
+}
+
+/// Validated policy verdict stored in the database.
+/// The column is TEXT with a CHECK constraint — only these three values (or NULL) are accepted.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    EnumIter,
+    DeriveActiveEnum,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::None)")]
+#[serde(rename_all = "snake_case")]
+pub enum PolicyVerdictDb {
+    #[sea_orm(string_value = "compliant")]
+    Compliant,
+    #[sea_orm(string_value = "warning")]
+    Warning,
+    #[sea_orm(string_value = "non_compliant")]
+    NonCompliant,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

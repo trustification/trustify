@@ -9,7 +9,7 @@ impl MigrationTrait for Migration {
         manager
             .get_connection()
             .execute_unprepared(
-                r#"ALTER TABLE sbom_crypto ADD COLUMN IF NOT EXISTS policy_verdict TEXT;"#,
+                r#"ALTER TABLE sbom_crypto ADD COLUMN IF NOT EXISTS policy_verdict TEXT CHECK (policy_verdict IN ('compliant', 'warning', 'non_compliant'));"#,
             )
             .await
             .map(|_| ())
