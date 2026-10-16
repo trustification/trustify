@@ -36,6 +36,11 @@ impl ConformaClient {
             .await
             .context("failed to reach Conforma evaluation endpoint")?;
 
+        let response = response
+            .error_for_status()
+            .context("Conforma returned a non-success status")
+            .map_err(|e| crate::Error::Internal(e.to_string()))?;
+
         let bytes = response
             .bytes()
             .await
@@ -109,9 +114,8 @@ fn into_finding(r: RawResult) -> EvaluatorFinding {
     EvaluatorFinding { node_id, oid: None }
 }
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize)]
 struct RawConformaReport {
-    #[serde(default)]
     filepaths: Vec<RawFilePath>,
 }
 
