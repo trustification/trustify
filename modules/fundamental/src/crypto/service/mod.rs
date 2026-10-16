@@ -180,11 +180,11 @@ impl CryptoService {
             r#"WITH "_base" AS ({inner_sql}),
 "_agg" AS (
     SELECT
-        COALESCE("oid", "node_name")                  AS "_identity",
-        "asset_type"::text                            AS "_asset_type",
-        COUNT(DISTINCT "sbom_id")::bigint             AS "sboms_count",
+        COALESCE("_base"."oid", "_base"."node_name")  AS "_identity",
+        "_base"."asset_type"::text                    AS "_asset_type",
+        COUNT(DISTINCT "_base"."sbom_id")::bigint     AS "sboms_count",
         COALESCE(SUM("_prp"."_pkg_count"), 0)::bigint AS "packages_count",
-        MAX(CASE "policy_verdict"
+        MAX(CASE "_base"."policy_verdict"
             WHEN 'non_compliant' THEN 3
             WHEN 'warning'       THEN 2
             WHEN 'compliant'     THEN 1
@@ -197,7 +197,7 @@ impl CryptoService {
         GROUP BY "sbom_id", "right_node_id"
     ) "_prp" ON "_prp"."sbom_id"       = "_base"."sbom_id"
             AND "_prp"."right_node_id" = "_base"."node_id"
-    GROUP BY COALESCE("oid", "node_name"), "asset_type"::text
+    GROUP BY COALESCE("_base"."oid", "_base"."node_name"), "_base"."asset_type"::text
 ),
 "_deduped" AS (
     SELECT DISTINCT ON (
