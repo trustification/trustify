@@ -114,7 +114,7 @@ mod v2 {
         request_body = RecommendRequest,
         responses(
             (status = 200, description = "Get recommendations and remediations for provided purls", body = RecommendResponse),
-            (status = 422, description = "Endpoint disabled — TRUSTD_RECOMMEND_PATTERNS not configured"),
+            (status = 503, description = "Endpoint disabled — TRUSTD_RECOMMEND_PATTERNS not configured"),
         )
     )]
     #[post("/v2/purl/recommend")]
@@ -144,7 +144,7 @@ mod v3 {
         request_body = RecommendRequest,
         responses(
             (status = 200, description = "Get recommendations and remediations for provided purls", body = RecommendResponse),
-            (status = 422, description = "Endpoint disabled — TRUSTD_RECOMMEND_PATTERNS not configured"),
+            (status = 503, description = "Endpoint disabled — TRUSTD_RECOMMEND_PATTERNS not configured"),
         )
     )]
     #[post("/v3/purl/recommend")]
@@ -170,7 +170,7 @@ mod v3 {
         responses(
             (status = 200, description = "Aggregated recommendation report for the requested SBOMs", body = RecommendReportResponse),
             (status = 413, description = "Total package count across requested SBOMs exceeds the configured limit"),
-            (status = 422, description = "Endpoint disabled — TRUSTD_RECOMMEND_PATTERNS not configured"),
+            (status = 503, description = "Endpoint disabled — TRUSTD_RECOMMEND_PATTERNS not configured"),
         )
     )]
     #[post("/v3/purl/recommend/report")]

@@ -101,11 +101,11 @@ pub struct CapabilityDisabled(pub Capability);
 
 impl actix_web::ResponseError for CapabilityDisabled {
     fn status_code(&self) -> actix_web::http::StatusCode {
-        actix_web::http::StatusCode::UNPROCESSABLE_ENTITY
+        actix_web::http::StatusCode::SERVICE_UNAVAILABLE
     }
 
     fn error_response(&self) -> actix_web::HttpResponse {
-        actix_web::HttpResponse::UnprocessableEntity().json(ErrorInformation {
+        actix_web::HttpResponse::ServiceUnavailable().json(ErrorInformation {
             error: "CapabilityDisabled".into(),
             message: self.to_string(),
             details: None,
