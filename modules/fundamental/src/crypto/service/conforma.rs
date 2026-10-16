@@ -6,20 +6,30 @@ use serde::Deserialize;
 
 use super::evaluator::{AlgorithmInput, EvaluatorFinding, EvaluatorReport, PolicyEvaluator};
 
+/// Timeout for the Conforma validation request + response body.
+const CONFORMA_REQUEST_TIMEOUT: Duration = Duration::from_secs(60);
+/// Timeout used only for the readiness probe (fast fail).
+const CONFORMA_READY_TIMEOUT: Duration = Duration::from_secs(5);
+
 pub struct ConformaClient {
     base_url: String,
+    client: reqwest::Client,
 }
 
 impl ConformaClient {
     pub fn new(base_url: String) -> Self {
-        Self { base_url }
+        let client = reqwest::Client::builder()
+            .timeout(CONFORMA_REQUEST_TIMEOUT)
+            .build()
+            .expect("failed to build Conforma HTTP client");
+        Self { base_url, client }
     }
 
     async fn run(&self, input: serde_json::Value) -> Result<RawConformaReport, crate::Error> {
         self.wait_ready().await?;
 
-        let client = reqwest::Client::new();
-        let response = client
+        let response = self
+            .client
             .post(format!("{}/v1/validate/input", self.base_url))
             .json(&input)
             .send()
@@ -44,7 +54,7 @@ impl ConformaClient {
 
     async fn wait_ready(&self) -> Result<(), crate::Error> {
         let client = reqwest::Client::builder()
-            .timeout(Duration::from_secs(5))
+            .timeout(CONFORMA_READY_TIMEOUT)
             .build()
             .context("failed to build HTTP client")?;
         let deadline = tokio::time::Instant::now() + Duration::from_secs(30);
