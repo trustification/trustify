@@ -13,8 +13,9 @@ use crate::{
     },
 };
 use sea_orm::{
-    ActiveModelTrait, ActiveValue, ColumnTrait, Condition, ConnectionTrait, EntityTrait, JoinType,
-    LoaderTrait, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    ActiveModelTrait, ActiveValue, ColumnTrait, Condition, ConnectionTrait, EntityTrait,
+    FromQueryResult, JoinType, LoaderTrait, PaginatorTrait, QueryFilter, QueryOrder, QuerySelect,
+    QueryTrait, RelationTrait, Statement,
 };
 use std::collections::{HashMap, HashSet};
 use tracing::instrument;
@@ -65,6 +66,20 @@ fn policy_to_db_verdict(v: PolicyVerdict) -> PolicyVerdictDb {
         PolicyVerdict::Warning => PolicyVerdictDb::Warning,
         PolicyVerdict::NonCompliant => PolicyVerdictDb::NonCompliant,
     }
+}
+
+/// Raw result row for the global (cross-SBOM) algorithm listing query.
+#[derive(Debug, FromQueryResult)]
+struct GlobalAlgoRow {
+    sbom_id: Uuid,
+    node_id: String,
+    asset_type: String,
+    properties: serde_json::Value,
+    oid: Option<String>,
+    node_name: String,
+    policy_verdict: Option<String>,
+    packages_count: i64,
+    sboms_count: i64,
 }
 
 pub struct CryptoService {
@@ -132,93 +147,159 @@ impl CryptoService {
             return self.build_summaries(items, total, connection).await;
         }
 
-        // Global view: fetch all matching rows, deduplicate by (name, asset_type) in memory,
-        // then apply pagination. This ensures each algorithm appears exactly once regardless
-        // of how many SBOMs contain it.
-        let all_items = select
+        // Global view: push deduplication, aggregation, and pagination to the database.
+        //
+        // A CTE wraps the user-filtered base rows. _agg computes per-identity aggregates
+        // (total packages, distinct SBOMs, most-severe verdict) across all SBOMs.
+        // _deduped picks one representative row per identity using DISTINCT ON.
+        // The final SELECT joins them and applies LIMIT/OFFSET for the requested page.
+        //
+        // Relationship 8 = Generates (see entity/src/relationship.rs).
+        let backend = connection.get_database_backend();
+
+        // Build the filtered base query, adding sbom_node.name so the outer CTE can reference it.
+        let inner_stmt = select
+            .column_as(sbom_node::Column::Name, "node_name")
             .filtering_with(
                 query,
                 Columns::from_entity::<sbom_crypto::Entity>()
                     .add_columns(Columns::from_entity::<sbom_node::Entity>()),
             )?
-            .order_by_asc(sbom_node::Column::Name)
-            .order_by_asc(sbom_crypto::Column::AssetType)
-            .order_by_asc(sbom_crypto::Column::SbomId)
+            .build(backend);
+
+        let inner_sql = &inner_stmt.sql;
+        // Collect inner bind values so we can extend them for the page query.
+        let inner_values: Vec<sea_orm::Value> = inner_stmt
+            .values
+            .as_ref()
+            .map(|v| v.0.clone())
+            .unwrap_or_default();
+        let n = inner_values.len();
+
+        let page_sql = format!(
+            r#"WITH "_base" AS ({inner_sql}),
+"_agg" AS (
+    SELECT
+        COALESCE("oid", "node_name")                  AS "_identity",
+        "asset_type"::text                            AS "_asset_type",
+        COUNT(DISTINCT "sbom_id")::bigint             AS "sboms_count",
+        COALESCE(SUM("_prp"."_pkg_count"), 0)::bigint AS "packages_count",
+        MAX(CASE "policy_verdict"
+            WHEN 'non_compliant' THEN 3
+            WHEN 'warning'       THEN 2
+            WHEN 'compliant'     THEN 1
+            ELSE 0 END)                               AS "_verdict_severity"
+    FROM "_base"
+    LEFT JOIN (
+        SELECT "sbom_id", "right_node_id", COUNT(*)::bigint AS "_pkg_count"
+        FROM "package_relates_to_package"
+        WHERE "relationship" = 8
+        GROUP BY "sbom_id", "right_node_id"
+    ) "_prp" ON "_prp"."sbom_id"       = "_base"."sbom_id"
+            AND "_prp"."right_node_id" = "_base"."node_id"
+    GROUP BY COALESCE("oid", "node_name"), "asset_type"::text
+),
+"_deduped" AS (
+    SELECT DISTINCT ON (
+        COALESCE("_base"."oid", "_base"."node_name"),
+        "_base"."asset_type"::text
+    )
+        "_base"."sbom_id",
+        "_base"."node_id",
+        "_base"."asset_type"::text    AS "asset_type",
+        "_base"."properties",
+        "_base"."oid",
+        "_base"."node_name",
+        "_agg"."packages_count",
+        "_agg"."sboms_count",
+        CASE "_agg"."_verdict_severity"
+            WHEN 3 THEN 'non_compliant'
+            WHEN 2 THEN 'warning'
+            WHEN 1 THEN 'compliant'
+            ELSE NULL END             AS "policy_verdict"
+    FROM "_base"
+    INNER JOIN "_agg"
+        ON  "_agg"."_identity"    = COALESCE("_base"."oid", "_base"."node_name")
+        AND "_agg"."_asset_type"  = "_base"."asset_type"::text
+    ORDER BY
+        COALESCE("_base"."oid", "_base"."node_name"),
+        "_base"."asset_type"::text,
+        "_base"."sbom_id"
+)
+SELECT * FROM "_deduped"
+ORDER BY "node_name", "asset_type"
+LIMIT ${} OFFSET ${}"#,
+            n + 1,
+            n + 2,
+        );
+
+        let count_sql = format!(
+            r#"WITH "_base" AS ({inner_sql})
+SELECT COUNT(*) AS "count"
+FROM (
+    SELECT DISTINCT COALESCE("oid", "node_name"), "asset_type"::text
+    FROM "_base"
+) AS "_c""#
+        );
+
+        // Append LIMIT and OFFSET to the bind values for the page query.
+        let mut page_values = inner_values.clone();
+        page_values.push((paginated.limit() as i64).into());
+        page_values.push((paginated.offset() as i64).into());
+
+        let page_stmt =
+            Statement::from_sql_and_values(backend, page_sql, page_values);
+        let rows = GlobalAlgoRow::find_by_statement(page_stmt)
             .all(connection)
             .await?;
 
-        let all_nodes = all_items.load_one(sbom_node::Entity, connection).await?;
-        let pkg_counts = self.batch_packages_count(&all_items, connection).await?;
+        let total: Option<u64> = if paginated.total() {
+            #[derive(Debug, FromQueryResult)]
+            struct Count {
+                count: i64,
+            }
+            let count_stmt =
+                Statement::from_sql_and_values(backend, count_sql, inner_values);
+            Count::find_by_statement(count_stmt)
+                .one(connection)
+                .await?
+                .map(|c| c.count as u64)
+        } else {
+            None
+        };
 
-        let all_names: Vec<String> = all_items
-            .iter()
-            .zip(&all_nodes)
-            .filter_map(|(_, n)| n.as_ref().map(|n| n.name.clone()))
-            .collect();
-        let sbom_counts = self.batch_sboms_count(&all_names, connection).await?;
-
-        // Deduplicate: OID is the canonical identity for an algorithm — different SBOMs may spell
-        // the same algorithm differently ("AES", "AES-256-XT", "AES128") but share an OID.
-        // Use (oid, asset_type) as the key when an OID is present, fall back to (name, asset_type).
-        //
-        // First pass: aggregate packages_count (sum) and policy_verdict (most-severe) per identity
-        // so that the deduplicated entry reflects data from all SBOMs, not just the first row.
-        let mut agg: HashMap<(String, String), (i64, Option<PolicyVerdictDb>)> = HashMap::new();
-        for (crypto, node_opt) in all_items.iter().zip(all_nodes.iter()) {
-            let Some(node) = node_opt.as_ref() else {
-                continue;
-            };
-            let identity = crypto.oid.clone().unwrap_or_else(|| node.name.clone());
-            let key = (identity, crypto.asset_type.to_string());
-            let pc = pkg_counts
-                .get(&(crypto.sbom_id, crypto.node_id.clone()))
-                .copied()
-                .unwrap_or(0);
-            let entry = agg.entry(key).or_insert((0, None));
-            entry.0 += pc;
-            entry.1 = most_severe_verdict(entry.1, crypto.policy_verdict);
-        }
-
-        // Second pass: emit one entry per identity using aggregated values.
-        let mut seen: HashSet<(String, String)> = HashSet::new();
-        let unique: Vec<CryptoAlgorithmSummary> = all_items
+        let items: Vec<CryptoAlgorithmSummary> = rows
             .into_iter()
-            .zip(all_nodes)
-            .filter_map(|(crypto, node)| {
-                let node = node?;
-                let identity = crypto
-                    .oid
-                    .clone()
-                    .unwrap_or_else(|| node.name.clone());
-                let key = (identity, crypto.asset_type.to_string());
-                if !seen.insert(key.clone()) {
-                    return None;
-                }
-                let (agg_pc, agg_verdict) = agg.remove(&key).unwrap_or_default();
-                let primitive = crypto
+            .filter_map(|row| {
+                let asset_type = CryptoAssetType::try_from(row.asset_type.as_str()).ok()?;
+                let primitive = row
                     .properties
                     .get("algorithmProperties")
                     .and_then(|ap| ap.get("primitive"))
                     .and_then(|p| p.as_str())
                     .map(String::from);
-                let sc = sbom_counts.get(&node.name).copied().unwrap_or(0);
-                let policy_status = agg_verdict.map(db_to_policy_verdict);
+                let policy_status = row.policy_verdict.as_deref().and_then(|v| match v {
+                    "compliant" => Some(PolicyVerdict::Compliant),
+                    "warning" => Some(PolicyVerdict::Warning),
+                    "non_compliant" => Some(PolicyVerdict::NonCompliant),
+                    _ => None,
+                });
                 Some(CryptoAlgorithmSummary {
-                    sbom_id: crypto.sbom_id,
-                    node_id: crypto.node_id,
-                    name: node.name,
-                    asset_type: crypto.asset_type,
-                    oid: crypto.oid,
+                    sbom_id: row.sbom_id,
+                    node_id: row.node_id,
+                    name: row.node_name,
+                    asset_type,
+                    oid: row.oid,
                     primitive,
-                    properties: crypto.properties,
+                    properties: row.properties,
                     policy_status,
-                    packages_count: agg_pc,
-                    sboms_count: sc,
+                    packages_count: row.packages_count,
+                    sboms_count: row.sboms_count,
                 })
             })
             .collect();
 
-        Ok(paginated.paginate_array(&unique))
+        Ok(PaginatedResults { items, total })
     }
 
     async fn build_summaries<C: ConnectionTrait>(
