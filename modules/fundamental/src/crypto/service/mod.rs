@@ -28,7 +28,9 @@ use trustify_common::{
     model::{PaginatedResults, Pagination},
 };
 use trustify_entity::{
-    package_relates_to_package, relationship::Relationship, sbom_crypto,
+    package_relates_to_package,
+    relationship::Relationship,
+    sbom_crypto,
     sbom_crypto::{CryptoAssetType, PolicyVerdictDb},
     sbom_node,
 };
@@ -89,12 +91,17 @@ pub struct CryptoService {
 
 impl CryptoService {
     pub fn new(cache: PaginationCache, conforma_url: Option<String>) -> Self {
-        Self {
-            cache,
-            evaluator: conforma_url
-                .map(conforma::ConformaClient::new)
-                .map(|c| Box::new(c) as Box<dyn evaluator::PolicyEvaluator>),
-        }
+        let evaluator = conforma_url.and_then(|url| match conforma::ConformaClient::new(url) {
+            Ok(client) => Some(Box::new(client) as Box<dyn evaluator::PolicyEvaluator>),
+            Err(e) => {
+                tracing::warn!(
+                    "Conforma HTTP client could not be built ({e}); \
+                         policy evaluation disabled"
+                );
+                None
+            }
+        });
+        Self { cache, evaluator }
     }
 
     pub fn has_evaluator(&self) -> bool {
@@ -247,8 +254,7 @@ FROM (
         page_values.push((paginated.limit() as i64).into());
         page_values.push((paginated.offset() as i64).into());
 
-        let page_stmt =
-            Statement::from_sql_and_values(backend, page_sql, page_values);
+        let page_stmt = Statement::from_sql_and_values(backend, page_sql, page_values);
         let rows = GlobalAlgoRow::find_by_statement(page_stmt)
             .all(connection)
             .await?;
@@ -258,8 +264,7 @@ FROM (
             struct Count {
                 count: i64,
             }
-            let count_stmt =
-                Statement::from_sql_and_values(backend, count_sql, inner_values);
+            let count_stmt = Statement::from_sql_and_values(backend, count_sql, inner_values);
             Count::find_by_statement(count_stmt)
                 .one(connection)
                 .await?
@@ -390,13 +395,11 @@ FROM (
         let (total, compliant, warning, non_compliant) =
             by_identity
                 .values()
-                .fold((0, 0, 0, 0), |(t, c, w, n), verdict| {
-                    match verdict {
-                        Some(PolicyVerdictDb::Compliant) => (t + 1, c + 1, w, n),
-                        Some(PolicyVerdictDb::Warning) => (t + 1, c, w + 1, n),
-                        Some(PolicyVerdictDb::NonCompliant) => (t + 1, c, w, n + 1),
-                        None => (t + 1, c, w, n),
-                    }
+                .fold((0, 0, 0, 0), |(t, c, w, n), verdict| match verdict {
+                    Some(PolicyVerdictDb::Compliant) => (t + 1, c + 1, w, n),
+                    Some(PolicyVerdictDb::Warning) => (t + 1, c, w + 1, n),
+                    Some(PolicyVerdictDb::NonCompliant) => (t + 1, c, w, n + 1),
+                    None => (t + 1, c, w, n),
                 });
 
         Ok(PolicySummaryResult {
@@ -578,9 +581,10 @@ FROM (
                 policy_verdict: ActiveValue::Set(Some(policy_to_db_verdict(result.verdict))),
                 ..Default::default()
             };
-            active.update(connection).await.map_err(|e| {
-                Error::Internal(format!("failed to persist policy verdict: {e}"))
-            })?;
+            active
+                .update(connection)
+                .await
+                .map_err(|e| Error::Internal(format!("failed to persist policy verdict: {e}")))?;
         }
 
         let summary = PolicySummaryResult {

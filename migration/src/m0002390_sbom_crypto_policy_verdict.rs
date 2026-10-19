@@ -18,9 +18,7 @@ impl MigrationTrait for Migration {
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
             .get_connection()
-            .execute_unprepared(
-                r#"ALTER TABLE sbom_crypto DROP COLUMN IF EXISTS policy_verdict;"#,
-            )
+            .execute_unprepared(r#"ALTER TABLE sbom_crypto DROP COLUMN IF EXISTS policy_verdict;"#)
             .await
             .map(|_| ())
     }

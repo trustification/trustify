@@ -7,8 +7,8 @@ use crate::crypto::{
 };
 use actix_web::{HttpResponse, Responder, get, post, web};
 use sea_orm::TransactionTrait;
-use trustify_common::db::DbError;
 use trustify_auth::{ReadSbom, authorizer::Require};
+use trustify_common::db::DbError;
 use trustify_common::{
     db::{self, pagination_cache::PaginationCache, query::Query},
     model::{Paginated, PaginatedResults},

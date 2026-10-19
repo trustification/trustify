@@ -17,12 +17,12 @@ pub struct ConformaClient {
 }
 
 impl ConformaClient {
-    pub fn new(base_url: String) -> Self {
+    pub fn new(base_url: String) -> Result<Self, crate::Error> {
         let client = reqwest::Client::builder()
             .timeout(CONFORMA_REQUEST_TIMEOUT)
             .build()
-            .expect("failed to build Conforma HTTP client");
-        Self { base_url, client }
+            .map_err(|e| crate::Error::Internal(e.to_string()))?;
+        Ok(Self { base_url, client })
     }
 
     async fn run(&self, input: serde_json::Value) -> Result<RawConformaReport, crate::Error> {
