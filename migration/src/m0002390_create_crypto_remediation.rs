@@ -59,6 +59,16 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
+        // Enforce non-empty required name columns at the DB level.
+        manager
+            .get_connection()
+            .execute_unprepared(
+                "ALTER TABLE crypto_remediation \
+                 ADD CONSTRAINT crypto_remediation_nonempty \
+                 CHECK (algorithm_name <> '' AND replacement_name <> '')",
+            )
+            .await?;
+
         Ok(())
     }
 

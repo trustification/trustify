@@ -136,6 +136,22 @@ impl CryptoService {
         if mappings.is_empty() {
             return Ok(0);
         }
+
+        for m in &mappings {
+            if m.algorithm_name.is_empty() {
+                return Err(Error::BadRequest(
+                    "algorithm_name must not be empty".into(),
+                    None,
+                ));
+            }
+            if m.replacement_name.is_empty() {
+                return Err(Error::BadRequest(
+                    "replacement_name must not be empty".into(),
+                    None,
+                ));
+            }
+        }
+
         let count = mappings.len();
         let models: Vec<crypto_remediation::ActiveModel> = mappings
             .into_iter()
