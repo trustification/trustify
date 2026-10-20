@@ -112,6 +112,9 @@ jobs:
           sudo mkdir /mnt/trustify
           sudo chmod a+rwx /mnt/trustify
 
+      - name: Install tzdata for embedded PostgreSQL timezone support
+        run: sudo apt-get install -y --no-install-recommends tzdata
+
       - uses: taiki-e/install-action@82cd3e7658a6f96c86c0234aeeda1748937cb0a1 # v2
         with:
           tool: cargo-nextest

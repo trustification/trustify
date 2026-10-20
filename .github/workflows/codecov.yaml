@@ -56,6 +56,9 @@ jobs:
       - name: Start S3 mock
         run: |
           docker compose -f etc/deploy/compose/compose-s3mock.yaml up -d --wait
+ 
+      - name: Install tzdata for embedded PostgreSQL timezone support
+        run: sudo apt-get install -y --no-install-recommends tzdata 
 
       - uses: taiki-e/install-action@v2
         with:
