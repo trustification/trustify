@@ -12,6 +12,11 @@ ignore = [
     { id = "RUSTSEC-2023-0071", reason = "transitive dep via sequoia-openpgp; no fix available" },
     # h2 0.3.x: unbounded empty DATA frames (dev-only via actix-http; no 0.3.x patch)
     { id = "RUSTSEC-2026-0258", reason = "dev-dep only via actix-http; h2 0.3.x EOL, no patch available" },
+    # zip: extract() vulnerabilities (SUID/SGID, symlink traversal, permission application).
+    # Trustify never calls extract(); it reads entries individually via by_index()/ZipWriter.
+    { id = "RUSTSEC-2026-0367", reason = "extract() not used; trustify reads zip entries individually" },
+    { id = "RUSTSEC-2026-0368", reason = "extract() not used; trustify reads zip entries individually" },
+    { id = "RUSTSEC-2026-0369", reason = "extract() not used; trustify reads zip entries individually" },
 ]
 
 [licenses]
