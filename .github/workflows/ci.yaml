@@ -15,6 +15,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  POSTGRESQL_VERSION: "=17.2.0"
 
 jobs:
 
@@ -52,12 +53,14 @@ jobs:
 
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: postgresql-${{ env.POSTGRESQL_VERSION }}
 
       - name: Cache Theseus Postgresql Installation
         uses: actions/cache@v4
         with:
           path: ~/.theseus/postgresql
-          key: ${{ runner.os }}-theseus-postgresql-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-theseus-postgresql-${{ env.POSTGRESQL_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Format
         run: cargo fmt --check
