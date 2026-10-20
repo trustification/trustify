@@ -75,11 +75,15 @@ pub async fn create_for(
         // can resolve timezone names (including the default "UTC") at startup.
         #[cfg(unix)]
         {
-            let tz_link = postgresql.settings().installation_dir.join("share/timezone");
+            use std::os::unix::fs::symlink;
+            let tz_link = postgresql
+                .settings()
+                .installation_dir
+                .join("share/timezone");
             if !tz_link.exists() {
                 let system_tz = std::path::Path::new("/usr/share/zoneinfo");
                 if system_tz.exists() {
-                    let _ = std::os::unix::fs::symlink(system_tz, &tz_link);
+                    let _ = symlink(system_tz, &tz_link);
                 }
             }
         }
