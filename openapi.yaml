@@ -1176,6 +1176,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PolicyEvaluationResponse'
+  /api/v3/crypto/remediation:
+    get:
+      tags:
+      - crypto
+      operationId: listCryptoRemediations
+      responses:
+        '200':
+          description: All stored remediation mappings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RemediationMapping'
+  /api/v3/crypto/remediation/import:
+    post:
+      tags:
+      - crypto
+      operationId: importCryptoRemediations
+      requestBody:
+        description: 'Remediation mappings as JSON array or CSV (use Content-Type: text/csv for CSV)'
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/RemediationImportItem'
+        required: true
+      responses:
+        '200':
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RemediationImportResult'
   /api/v3/crypto/summary:
     get:
       tags:
@@ -5451,6 +5486,7 @@ components:
       - policy_status
       - packages_count
       - sboms_count
+      - recommendation
       properties:
         asset_type:
           $ref: '#/components/schemas/CryptoAssetType'
@@ -5473,6 +5509,11 @@ components:
           - 'null'
         properties:
           type: object
+        recommendation:
+          type:
+          - string
+          - 'null'
+          description: NIST PQC replacement recommendation for this algorithm, if a mapping exists.
         sbom_id:
           type: string
           format: uuid
@@ -6490,6 +6531,7 @@ components:
             - policy_status
             - packages_count
             - sboms_count
+            - recommendation
             properties:
               asset_type:
                 $ref: '#/components/schemas/CryptoAssetType'
@@ -6512,6 +6554,11 @@ components:
                 - 'null'
               properties:
                 type: object
+              recommendation:
+                type:
+                - string
+                - 'null'
+                description: NIST PQC replacement recommendation for this algorithm, if a mapping exists.
               sbom_id:
                 type: string
                 format: uuid
@@ -7801,6 +7848,69 @@ components:
       - no_fix_planned
       - none_available
       - will_not_fix
+    RemediationImportItem:
+      type: object
+      description: One entry in a remediation import payload (CSV row or JSON array element).
+      required:
+      - algorithm_name
+      - replacement_name
+      properties:
+        algorithm_name:
+          type: string
+        algorithm_primitive:
+          type:
+          - string
+          - 'null'
+        replacement_name:
+          type: string
+        replacement_primitive:
+          type:
+          - string
+          - 'null'
+        replacement_standard:
+          type:
+          - string
+          - 'null'
+    RemediationImportResult:
+      type: object
+      description: Result returned after a remediation import operation.
+      required:
+      - count
+      properties:
+        count:
+          type: integer
+          description: Number of mappings processed (inserted or updated).
+          minimum: 0
+    RemediationMapping:
+      type: object
+      description: A single algorithm-to-NIST-replacement remediation mapping.
+      required:
+      - id
+      - algorithm_name
+      - algorithm_primitive
+      - replacement_name
+      - replacement_standard
+      - replacement_primitive
+      properties:
+        algorithm_name:
+          type: string
+        algorithm_primitive:
+          type:
+          - string
+          - 'null'
+        id:
+          type: string
+          format: uuid
+        replacement_name:
+          type: string
+        replacement_primitive:
+          type:
+          - string
+          - 'null'
+        replacement_standard:
+          type:
+          - string
+          - 'null'
     RemediationSummary:
       type: object
       required:
