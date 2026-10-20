@@ -151,9 +151,9 @@ tracing-opentelemetry = "0.33.0"
 tracing-subscriber = { version = "0.3.20", default-features = false }
 url = "2.5.0"
 urlencoding = "2"
-utoipa = "5.1.3"
-utoipa-actix-web = { version = "0.1.0" }
-utoipa-swagger-ui = "9.0.0"
+utoipa = "6.0.0"
+utoipa-actix-web = { version = "0.2.0" }
+utoipa-swagger-ui = "10.0.1"
 uuid = "1.23.3"
 vers-rs = "0.1.3"
 walkdir = "2.5"
