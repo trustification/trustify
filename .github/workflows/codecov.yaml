@@ -58,7 +58,7 @@ jobs:
           docker compose -f etc/deploy/compose/compose-s3mock.yaml up -d --wait
  
       - name: Install tzdata for embedded PostgreSQL timezone support
-        run: sudo apt-get install -y --no-install-recommends tzdata 
+        run: sudo apt-get install -y --no-install-recommends tzdata
 
       - uses: taiki-e/install-action@v2
         with:
@@ -73,7 +73,6 @@ jobs:
         run: cargo llvm-cov --codecov --jobs 1 --all-features --output-path codecov.json
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" # for embedded postgresql
-          TZDIR: /usr/share/zoneinfo # let theseus postgresql find timezone data
 
       - uses: codecov/codecov-action@v7
         if: github.repository_owner == 'guacsec'

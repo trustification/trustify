@@ -69,6 +69,21 @@ pub async fn create_for(
             .setup()
             .await
             .context("Setting up the test database")?;
+
+        // The theseus musl PostgreSQL binary ships without a timezone directory.
+        // Symlink the system zoneinfo into the share directory so that PostgreSQL
+        // can resolve timezone names (including the default "UTC") at startup.
+        #[cfg(unix)]
+        {
+            let tz_link = postgresql.settings().installation_dir.join("share/timezone");
+            if !tz_link.exists() {
+                let system_tz = std::path::Path::new("/usr/share/zoneinfo");
+                if system_tz.exists() {
+                    let _ = std::os::unix::fs::symlink(system_tz, &tz_link);
+                }
+            }
+        }
+
         postgresql
             .start()
             .await
