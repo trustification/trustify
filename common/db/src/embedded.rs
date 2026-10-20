@@ -10,23 +10,13 @@ pub fn default_settings() -> anyhow::Result<Settings> {
     // **NOTE:** Changing the default version here, one should also change the env-var in the CI job
     let version = VersionReq::parse(option_env!("POSTGRESQL_VERSION").unwrap_or("=17.2.0"))
         .context("valid psql version")?;
-    let mut settings = Settings {
+    Ok(Settings {
         version,
         username: "postgres".to_string(),
         password: "trustify".to_string(),
         temporary: true,
         ..Default::default()
-    };
-    // The theseus musl PostgreSQL binary is compiled with --with-system-tzdata=/usr/share/zoneinfo,
-    // which may not be present on all CI runners. Override timezone and log_timezone with POSIX
-    // timezone strings (UTC0 = UTC +0) that PostgreSQL resolves without any data file lookup.
-    settings
-        .configuration
-        .insert("timezone".to_string(), "UTC0".to_string());
-    settings
-        .configuration
-        .insert("log_timezone".to_string(), "UTC0".to_string());
-    Ok(settings)
+    })
 }
 
 /// Create a new, embedded database instance
@@ -79,21 +69,6 @@ pub async fn create_for(
             .setup()
             .await
             .context("Setting up the test database")?;
-
-        // The theseus binary compiles with --with-system-tzdata=/usr/share/zoneinfo,
-        // which may be absent on CI runners. Overriding timezone in postgresql.conf
-        // with a POSIX string (UTC0) prevents the startup validation from hitting the
-        // system timezone database for even the compiled-in default.
-        let pg_conf = postgresql.settings().data_dir.join("postgresql.conf");
-        if pg_conf.exists() {
-            use std::io::Write;
-            if let Ok(mut f) = std::fs::OpenOptions::new().append(true).open(&pg_conf) {
-                let _ = writeln!(f, "\n# override: avoid system-tzdata dependency");
-                let _ = writeln!(f, "timezone = 'UTC0'");
-                let _ = writeln!(f, "log_timezone = 'UTC0'");
-            }
-        }
-
         postgresql
             .start()
             .await
