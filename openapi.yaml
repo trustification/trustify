@@ -1196,13 +1196,16 @@ paths:
       - crypto
       operationId: importCryptoRemediations
       requestBody:
-        description: 'Remediation mappings as JSON array or CSV (use Content-Type: text/csv for CSV)'
+        description: 'Algorithm-to-replacement mappings as a JSON array (application/json) or CSV rows (text/csv) with headers: algorithm_name, algorithm_primitive, replacement_name, replacement_standard, replacement_primitive'
         content:
           application/json:
             schema:
               type: array
               items:
                 $ref: '#/components/schemas/RemediationImportItem'
+          text/csv:
+            schema:
+              type: string
         required: true
       responses:
         '200':

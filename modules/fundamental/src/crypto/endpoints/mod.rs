@@ -165,8 +165,13 @@ fn normalize_optional_strings(mut item: RemediationImportItem) -> RemediationImp
     tag = "crypto",
     operation_id = "importCryptoRemediations",
     request_body(
-        content = Vec<RemediationImportItem>,
-        description = "Remediation mappings as JSON array or CSV (use Content-Type: text/csv for CSV)",
+        description = "Algorithm-to-replacement mappings as a JSON array (application/json) \
+                       or CSV rows (text/csv) with headers: algorithm_name, algorithm_primitive, \
+                       replacement_name, replacement_standard, replacement_primitive",
+        content(
+            (Vec<RemediationImportItem> = "application/json"),
+            (String = "text/csv"),
+        ),
     ),
     responses(
         (status = 200, description = "Import result", body = RemediationImportResult),
