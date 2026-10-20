@@ -79,6 +79,21 @@ pub async fn create_for(
             .setup()
             .await
             .context("Setting up the test database")?;
+
+        // The theseus binary compiles with --with-system-tzdata=/usr/share/zoneinfo,
+        // which may be absent on CI runners. Overriding timezone in postgresql.conf
+        // with a POSIX string (UTC0) prevents the startup validation from hitting the
+        // system timezone database for even the compiled-in default.
+        let pg_conf = postgresql.settings().data_dir.join("postgresql.conf");
+        if pg_conf.exists() {
+            use std::io::Write;
+            if let Ok(mut f) = std::fs::OpenOptions::new().append(true).open(&pg_conf) {
+                let _ = writeln!(f, "\n# override: avoid system-tzdata dependency");
+                let _ = writeln!(f, "timezone = 'UTC0'");
+                let _ = writeln!(f, "log_timezone = 'UTC0'");
+            }
+        }
+
         postgresql
             .start()
             .await
