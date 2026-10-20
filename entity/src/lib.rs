@@ -4,6 +4,7 @@ pub mod advisory_vulnerability_score;
 pub mod base_purl;
 pub mod cpe;
 pub mod cpe_status;
+pub mod crypto_remediation;
 pub mod expanded_license;
 pub mod exploit;
 pub mod exploit_intelligence_job;
