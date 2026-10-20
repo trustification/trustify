@@ -12,6 +12,11 @@ ignore = [
     { id = "RUSTSEC-2023-0071", reason = "transitive dep via sequoia-openpgp; no fix available" },
     # h2 0.3.x: unbounded empty DATA frames (dev-only via actix-http; no 0.3.x patch)
     { id = "RUSTSEC-2026-0258", reason = "dev-dep only via actix-http; h2 0.3.x EOL, no patch available" },
+    # zip: three extraction advisories published 2026-10-20 (SUID/SGID bits, symlink escapes)
+    # zip is a transitive dep; no patched version available yet — track for upgrade
+    { id = "RUSTSEC-2026-0367", reason = "transitive dep via zip; no patched version available yet" },
+    { id = "RUSTSEC-2026-0368", reason = "transitive dep via zip; no patched version available yet" },
+    { id = "RUSTSEC-2026-0369", reason = "transitive dep via zip; no patched version available yet" },
 ]
 
 [licenses]
