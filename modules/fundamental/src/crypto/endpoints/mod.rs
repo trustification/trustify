@@ -196,7 +196,9 @@ pub async fn import_remediations(
             .map(normalize_optional_strings)
             .collect()
     } else {
-        serde_json::from_slice(&bytes).map_err(|e| Error::BadRequest(e.to_string().into(), None))?
+        let parsed: Vec<RemediationImportItem> = serde_json::from_slice(&bytes)
+            .map_err(|e| Error::BadRequest(e.to_string().into(), None))?;
+        parsed.into_iter().map(normalize_optional_strings).collect()
     };
 
     let tx = db_rw.begin().await?;
