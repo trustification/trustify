@@ -2,3 +2,10 @@ allow-unwrap-in-tests = true
 allow-expect-in-tests = true
 allow-panic-in-tests = true
 absolute-paths-max-segments = 3
+
+# zip::extract() has known vulnerabilities (RUSTSEC-2026-0367/0368/0369) that are
+# ignored in deny.toml because trustify never calls extract(). This lint ensures
+# it stays that way.
+[[disallowed-methods]]
+path = "zip::ZipArchive::extract"
+reason = "vulnerable to symlink/SUID attacks (RUSTSEC-2026-0367/0368/0369); use by_index() instead"
