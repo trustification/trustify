@@ -10,13 +10,23 @@ pub fn default_settings() -> anyhow::Result<Settings> {
     // **NOTE:** Changing the default version here, one should also change the env-var in the CI job
     let version = VersionReq::parse(option_env!("POSTGRESQL_VERSION").unwrap_or("=17.2.0"))
         .context("valid psql version")?;
-    Ok(Settings {
+    let mut settings = Settings {
         version,
         username: "postgres".to_string(),
         password: "trustify".to_string(),
         temporary: true,
         ..Default::default()
-    })
+    };
+    // The theseus musl PostgreSQL binary is compiled with --with-system-tzdata=/usr/share/zoneinfo,
+    // which may not be present on all CI runners. Override timezone and log_timezone with POSIX
+    // timezone strings (UTC0 = UTC +0) that PostgreSQL resolves without any data file lookup.
+    settings
+        .configuration
+        .insert("timezone".to_string(), "UTC0".to_string());
+    settings
+        .configuration
+        .insert("log_timezone".to_string(), "UTC0".to_string());
+    Ok(settings)
 }
 
 /// Create a new, embedded database instance
@@ -69,25 +79,6 @@ pub async fn create_for(
             .setup()
             .await
             .context("Setting up the test database")?;
-
-        // The theseus musl PostgreSQL binary ships without a timezone directory.
-        // Symlink the system zoneinfo into the share directory so that PostgreSQL
-        // can resolve timezone names (including the default "UTC") at startup.
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::symlink;
-            let tz_link = postgresql
-                .settings()
-                .installation_dir
-                .join("share/timezone");
-            if !tz_link.exists() {
-                let system_tz = std::path::Path::new("/usr/share/zoneinfo");
-                if system_tz.exists() {
-                    let _ = symlink(system_tz, &tz_link);
-                }
-            }
-        }
-
         postgresql
             .start()
             .await
