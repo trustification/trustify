@@ -73,6 +73,7 @@ jobs:
         run: cargo llvm-cov --codecov --jobs 1 --all-features --output-path codecov.json
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" # for embedded postgresql
+          TZDIR: /usr/share/zoneinfo # let theseus postgresql find timezone data
 
       - uses: codecov/codecov-action@v7
         if: github.repository_owner == 'guacsec'

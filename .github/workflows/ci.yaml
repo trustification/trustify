@@ -128,6 +128,7 @@ jobs:
           TRUSTIFY_S3_AWS_REGION: eu-west-1
           TRUSTIFY_S3_AWS_BUCKET: guacsec-migration-dumps
           TMPDIR: /mnt/trustify
+          TZDIR: /usr/share/zoneinfo # let theseus postgresql find timezone data
 
       - name: Doc tests
         if: steps.filter.outputs.non_md_changes == 'true'
