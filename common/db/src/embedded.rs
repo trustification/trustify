@@ -73,15 +73,27 @@ pub async fn create_for(
         // The theseus PostgreSQL binary bundles timezone data in share/timezone/ but
         // ships UCT without the UTC alias. Copy UCT → UTC so that the default timezone
         // name resolves at server startup and during SQLx connection setup.
-        let tz_dir = postgresql
-            .settings()
-            .installation_dir
-            .join("share/timezone");
-        if tz_dir.exists() {
-            let uct = tz_dir.join("UCT");
-            let utc = tz_dir.join("UTC");
-            if uct.exists() && !utc.exists() {
-                let _ = std::fs::copy(&uct, &utc);
+        //
+        // After a cache hit, installation_dir is updated to the versioned subdirectory
+        // (e.g. .trustify/postgres/17.2.0/). After a fresh install it stays as the parent
+        // (e.g. .trustify/postgres/), so we search one level of subdirectories as well.
+        let install_dir = postgresql.settings().installation_dir.clone();
+        let share_candidates = std::iter::once(install_dir.join("share")).chain(
+            std::fs::read_dir(&install_dir)
+                .into_iter()
+                .flatten()
+                .flatten()
+                .map(|e| e.path().join("share")),
+        );
+        for share in share_candidates {
+            let tz_dir = share.join("timezone");
+            if tz_dir.exists() {
+                let uct = tz_dir.join("UCT");
+                let utc = tz_dir.join("UTC");
+                if uct.exists() && !utc.exists() {
+                    let _ = std::fs::copy(&uct, &utc);
+                }
+                break;
             }
         }
 
