@@ -43,13 +43,14 @@ impl<'g> DatasetLoader<'g> {
 
         for i in 0..zip.len() {
             let mut file = zip.by_index(i)?;
+            let entry_name = file.name()?.into_owned();
 
-            log::debug!("archive entry: {}", file.name());
+            log::debug!("archive entry: {}", entry_name);
 
             if !file.is_file() {
                 continue;
             }
-            if file.name() == ".DS_Store" || file.name().ends_with("/.DS_Store") {
+            if entry_name == ".DS_Store" || entry_name.ends_with("/.DS_Store") {
                 continue;
             }
 
