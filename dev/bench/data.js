@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792572544187,
+  "lastUpdate": 1792589144663,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23652,6 +23652,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/guacsec/trustify/commit/1cdcbcdb75a6c707094d6cc6073b797b784f3e51"
         },
         "date": 1792572541320,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "7f38deb34acb8fae3b27de0b4bd953bfb5263db8",
+          "message": "chore(deps): update Swagger UI requirement and upgrade zip",
+          "timestamp": "2026-10-21T12:41:59Z",
+          "tree_id": "3db84add45cc3593f08cba5859fc494185c347d0",
+          "url": "https://github.com/guacsec/trustify/commit/7f38deb34acb8fae3b27de0b4bd953bfb5263db8"
+        },
+        "date": 1792589141891,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
