@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792078260985,
+  "lastUpdate": 1792569185661,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23599,6 +23599,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rromerom@redhat.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "4e6d2adca849e6f8f6adb3005ab712f4c316d4a1",
+          "message": "docs(conventions): consolidate three import-style sections into one\n\nMerge \"Absolute Paths\", \"Qualified Names for Common Types\", and \"Prefer\nuse Over Inline Qualified Paths\" into a single \"Import Style\" section\nwith one rule (always use imports) and one exception (ambiguous names\nstay qualified). Eliminates contradictory statements that caused\nconvention violations to be missed in review.\n\nImplements TC-6983\n\nCo-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>",
+          "timestamp": "2026-10-21T07:03:38Z",
+          "tree_id": "78e36bb9c3039fd7bd97597115f328c74b9b443c",
+          "url": "https://github.com/guacsec/trustify/commit/4e6d2adca849e6f8f6adb3005ab712f4c316d4a1"
+        },
+        "date": 1792569183425,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
