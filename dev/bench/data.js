@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792569185661,
+  "lastUpdate": 1792572544187,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23628,6 +23628,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "1cdcbcdb75a6c707094d6cc6073b797b784f3e51",
+          "message": "build(deps): bump certifi from 2026.6.17 to 2026.10.19 in /tools/perf\n\nBumps [certifi](https://github.com/certifi/python-certifi) from 2026.6.17 to 2026.10.19.\n- [Commits](https://github.com/certifi/python-certifi/compare/2026.06.17...2026.10.19)\n\n---\nupdated-dependencies:\n- dependency-name: certifi\n  dependency-version: 2026.10.19\n  dependency-type: indirect\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+          "timestamp": "2026-10-21T08:04:35Z",
+          "tree_id": "d047afe739ab6383f0b4be7477f2e749aa8703e9",
+          "url": "https://github.com/guacsec/trustify/commit/1cdcbcdb75a6c707094d6cc6073b797b784f3e51"
+        },
+        "date": 1792572541320,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
