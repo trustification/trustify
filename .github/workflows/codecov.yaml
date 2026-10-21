@@ -57,10 +57,8 @@ jobs:
         run: |
           docker compose -f etc/deploy/compose/compose-s3mock.yaml up -d --wait
  
-      - name: Ensure UTC timezone file exists for embedded PostgreSQL
-        run: |
-          sudo apt-get install -y --no-install-recommends tzdata
-          sudo cp -n /usr/share/zoneinfo/UCT /usr/share/zoneinfo/UTC 2>/dev/null || true
+      - name: Install tzdata for embedded PostgreSQL timezone support
+        run: sudo apt-get install -y --no-install-recommends tzdata
 
       - uses: taiki-e/install-action@v2
         with:

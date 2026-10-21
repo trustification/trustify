@@ -112,10 +112,8 @@ jobs:
           sudo mkdir /mnt/trustify
           sudo chmod a+rwx /mnt/trustify
 
-      - name: Ensure UTC timezone file exists for embedded PostgreSQL
-        run: |
-          sudo apt-get install -y --no-install-recommends tzdata
-          sudo cp -n /usr/share/zoneinfo/UCT /usr/share/zoneinfo/UTC 2>/dev/null || true
+      - name: Install tzdata for embedded PostgreSQL timezone support
+        run: sudo apt-get install -y --no-install-recommends tzdata
 
       - uses: taiki-e/install-action@82cd3e7658a6f96c86c0234aeeda1748937cb0a1 # v2
         with:

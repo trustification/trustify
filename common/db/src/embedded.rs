@@ -69,6 +69,22 @@ pub async fn create_for(
             .setup()
             .await
             .context("Setting up the test database")?;
+
+        // The theseus PostgreSQL binary bundles timezone data in share/timezone/ but
+        // ships UCT without the UTC alias. Copy UCT → UTC so that the default timezone
+        // name resolves at server startup and during SQLx connection setup.
+        let tz_dir = postgresql
+            .settings()
+            .installation_dir
+            .join("share/timezone");
+        if tz_dir.exists() {
+            let uct = tz_dir.join("UCT");
+            let utc = tz_dir.join("UTC");
+            if uct.exists() && !utc.exists() {
+                let _ = std::fs::copy(&uct, &utc);
+            }
+        }
+
         postgresql
             .start()
             .await
