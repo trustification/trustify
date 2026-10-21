@@ -20,7 +20,6 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  POSTGRESQL_VERSION: "=17.2.0"
 
 jobs:
 
@@ -59,13 +58,12 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ci
-          key: postgresql-${{ env.POSTGRESQL_VERSION }}
 
       - name: Cache Theseus Postgresql Installation
         uses: actions/cache@v6
         with:
           path: ~/.theseus/postgresql
-          key: ${{ runner.os }}-theseus-postgresql-${{ env.POSTGRESQL_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-theseus-postgresql-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install dependencies
         if: matrix.install != ''
@@ -89,7 +87,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ci
-          key: postgresql-${{ env.POSTGRESQL_VERSION }}
       - uses: dorny/paths-filter@v4
         id: filter
         with:
@@ -101,7 +98,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.theseus/postgresql
-          key: ${{ runner.os }}-theseus-postgresql-${{ env.POSTGRESQL_VERSION }}-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-theseus-postgresql-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Format
         run: cargo fmt --check
