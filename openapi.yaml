@@ -6627,6 +6627,11 @@ components:
         sbom_id:
           type: string
           format: uuid
+        sbom_name:
+          type:
+          - string
+          - 'null'
+          description: The name of the SBOM. Absent if the SBOM doesn't exist.
         unmatched_components:
           type:
           - array
