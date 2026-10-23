@@ -21,6 +21,9 @@ pub struct CryptoAlgorithmSummary {
     pub policy_status: PolicyVerdict,
     pub packages_count: i64,
     pub sboms_count: i64,
+    /// NIST PQC replacement recommendation for this algorithm, if a mapping exists.
+    #[schema(required)]
+    pub recommendation: Option<String>,
 }
 
 /// Aggregate KPI metrics for cryptographic assets across all SBOMs.
@@ -61,4 +64,35 @@ pub struct AlgorithmPolicyResult {
     #[schema(value_type = Object)]
     pub properties: serde_json::Value,
     pub verdict: PolicyVerdict,
+}
+
+/// A single algorithm-to-NIST-replacement remediation mapping.
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+pub struct RemediationMapping {
+    pub id: Uuid,
+    pub algorithm_name: String,
+    #[schema(required)]
+    pub algorithm_primitive: Option<String>,
+    pub replacement_name: String,
+    #[schema(required)]
+    pub replacement_standard: Option<String>,
+    #[schema(required)]
+    pub replacement_primitive: Option<String>,
+}
+
+/// One entry in a remediation import payload (CSV row or JSON array element).
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+pub struct RemediationImportItem {
+    pub algorithm_name: String,
+    pub algorithm_primitive: Option<String>,
+    pub replacement_name: String,
+    pub replacement_standard: Option<String>,
+    pub replacement_primitive: Option<String>,
+}
+
+/// Result returned after a remediation import operation.
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+pub struct RemediationImportResult {
+    /// Number of mappings processed (inserted or updated).
+    pub count: usize,
 }
