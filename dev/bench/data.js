@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792755276614,
+  "lastUpdate": 1792755878972,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23773,6 +23773,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "jfuller@redhat.com",
+            "name": "James Fuller",
+            "username": "rh-jfuller"
+          },
+          "distinct": true,
+          "id": "2229c68ce2fdbd9bfaf2e36f808f6ac22372064a",
+          "message": "fix(perf): sort dashboard runs by full timestamp\n\nImplements TC-7114",
+          "timestamp": "2026-10-23T10:59:10Z",
+          "tree_id": "f5d24c68972df51197fd521c8198547b698701a0",
+          "url": "https://github.com/guacsec/trustify/commit/2229c68ce2fdbd9bfaf2e36f808f6ac22372064a"
+        },
+        "date": 1792755876661,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
