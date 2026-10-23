@@ -11488,6 +11488,7 @@ dependencies = [
  "trustify-auth",
  "trustify-common",
  "trustify-db",
+ "trustify-module-correlation",
  "trustify-module-importer",
  "trustify-module-ingestor",
  "trustify-module-storage",
