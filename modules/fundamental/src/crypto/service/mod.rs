@@ -5,15 +5,16 @@ use crate::{
     crypto::{
         model::{
             AlgorithmPolicyResult, CryptoAlgorithmSummary, CryptoSummary, PolicyEvaluationResponse,
-            PolicySummaryResult,
+            PolicySummaryResult, RemediationImportItem, RemediationMapping,
         },
         service::policy::{PolicyVerdict, evaluate_algorithm},
     },
 };
 use sea_orm::{
-    ColumnTrait, Condition, ConnectionTrait, EntityTrait, JoinType, LoaderTrait, QueryFilter,
-    QueryOrder, QuerySelect, RelationTrait,
+    ActiveValue::Set, ColumnTrait, Condition, ConnectionTrait, EntityTrait, JoinType, LoaderTrait,
+    QueryFilter, QueryOrder, QuerySelect, RelationTrait,
 };
+use sea_query::OnConflict;
 use std::collections::{HashMap, HashSet};
 use tracing::instrument;
 use trustify_common::{
@@ -25,7 +26,7 @@ use trustify_common::{
     model::{PaginatedResults, Pagination},
 };
 use trustify_entity::{
-    package_relates_to_package, relationship::Relationship, sbom_crypto,
+    crypto_remediation, package_relates_to_package, relationship::Relationship, sbom_crypto,
     sbom_crypto::CryptoAssetType, sbom_node,
 };
 use uuid::Uuid;
@@ -83,6 +84,7 @@ impl CryptoService {
             .filter_map(|(_, n)| n.as_ref().map(|n| n.name.clone()))
             .collect();
         let sbom_counts = self.batch_sboms_count(&names, connection).await?;
+        let recommendations = self.batch_recommendations(&names, connection).await?;
 
         let algorithms = items
             .into_iter()
@@ -101,6 +103,7 @@ impl CryptoService {
                     .copied()
                     .unwrap_or(0);
                 let sc = sbom_counts.get(&node.name).copied().unwrap_or(0);
+                let recommendation = recommendations.get(&node.name).cloned();
                 Some(CryptoAlgorithmSummary {
                     sbom_id: crypto.sbom_id,
                     node_id: crypto.node_id,
@@ -112,6 +115,7 @@ impl CryptoService {
                     properties: crypto.properties,
                     packages_count: pc,
                     sboms_count: sc,
+                    recommendation,
                 })
             })
             .collect();
@@ -120,6 +124,88 @@ impl CryptoService {
             items: algorithms,
             total,
         })
+    }
+
+    /// Import remediation mappings, upserting on `(algorithm_name, algorithm_primitive)`.
+    #[instrument(skip_all, err(level = tracing::Level::INFO))]
+    pub async fn import_remediations<C: ConnectionTrait>(
+        &self,
+        mappings: Vec<RemediationImportItem>,
+        connection: &C,
+    ) -> Result<usize, Error> {
+        if mappings.is_empty() {
+            return Ok(0);
+        }
+
+        for m in &mappings {
+            if m.algorithm_name.is_empty() {
+                return Err(Error::BadRequest(
+                    "algorithm_name must not be empty".into(),
+                    None,
+                ));
+            }
+            if m.replacement_name.is_empty() {
+                return Err(Error::BadRequest(
+                    "replacement_name must not be empty".into(),
+                    None,
+                ));
+            }
+        }
+
+        let count = mappings.len();
+        let models: Vec<crypto_remediation::ActiveModel> = mappings
+            .into_iter()
+            .map(|m| crypto_remediation::ActiveModel {
+                id: Set(Uuid::now_v7()),
+                algorithm_name: Set(m.algorithm_name),
+                algorithm_primitive: Set(m.algorithm_primitive),
+                replacement_name: Set(m.replacement_name),
+                replacement_standard: Set(m.replacement_standard),
+                replacement_primitive: Set(m.replacement_primitive),
+            })
+            .collect();
+
+        crypto_remediation::Entity::insert_many(models)
+            .on_conflict(
+                OnConflict::columns([
+                    crypto_remediation::Column::AlgorithmName,
+                    crypto_remediation::Column::AlgorithmPrimitive,
+                ])
+                .update_columns([
+                    crypto_remediation::Column::ReplacementName,
+                    crypto_remediation::Column::ReplacementStandard,
+                    crypto_remediation::Column::ReplacementPrimitive,
+                ])
+                .to_owned(),
+            )
+            .exec(connection)
+            .await?;
+
+        Ok(count)
+    }
+
+    /// List all stored remediation mappings.
+    #[instrument(skip_all, err(level = tracing::Level::INFO))]
+    pub async fn list_remediations<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+    ) -> Result<Vec<RemediationMapping>, Error> {
+        let models = crypto_remediation::Entity::find()
+            .order_by_asc(crypto_remediation::Column::AlgorithmName)
+            .all(connection)
+            .await?;
+
+        Ok(models
+            .into_iter()
+            .map(|m| RemediationMapping {
+                id: m.id,
+                algorithm_name: m.algorithm_name,
+                algorithm_primitive: m.algorithm_primitive,
+                replacement_name: m.replacement_name,
+                replacement_standard: m.replacement_standard,
+                replacement_primitive: m.replacement_primitive,
+            })
+            .collect())
     }
 
     /// Compute aggregate KPI metrics across all SBOMs.
@@ -244,6 +330,40 @@ impl CryptoService {
         Ok(counts
             .into_iter()
             .map(|(name, ids)| (name, ids.len() as i64))
+            .collect())
+    }
+
+    /// Look up NIST replacement recommendations for the given algorithm names.
+    async fn batch_recommendations<C: ConnectionTrait>(
+        &self,
+        names: &[String],
+        connection: &C,
+    ) -> Result<HashMap<String, String>, Error> {
+        if names.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let unique_names: Vec<&str> = names
+            .iter()
+            .map(|s| s.as_str())
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
+
+        let rows = crypto_remediation::Entity::find()
+            .filter(crypto_remediation::Column::AlgorithmName.is_in(unique_names))
+            .all(connection)
+            .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| {
+                let text = match &r.replacement_standard {
+                    Some(std) => format!("{} ({})", r.replacement_name, std),
+                    None => r.replacement_name.clone(),
+                };
+                (r.algorithm_name, text)
+            })
             .collect())
     }
 
