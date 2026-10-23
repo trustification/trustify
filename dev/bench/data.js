@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792759661441,
+  "lastUpdate": 1792774129258,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23826,6 +23826,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/guacsec/trustify/commit/eb4c5dbfe2b0da1091fe241711d79c95d5dfee60"
         },
         "date": 1792759658958,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "rh-jfuller",
+            "username": "rh-jfuller"
+          },
+          "committer": {
+            "email": "jfuller@redhat.com",
+            "name": "James Fuller",
+            "username": "rh-jfuller"
+          },
+          "distinct": true,
+          "id": "9e1444557ecc5de257637437794d940c1d9f7588",
+          "message": "docs(presentation): add openssl 2026 conf presentation",
+          "timestamp": "2026-10-23T18:29:20+02:00",
+          "tree_id": "0eaa500da9a163ad6f1ad9ca42447f3cee1dfeec",
+          "url": "https://github.com/guacsec/trustify/commit/9e1444557ecc5de257637437794d940c1d9f7588"
+        },
+        "date": 1792774126653,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
