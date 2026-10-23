@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792751146746,
+  "lastUpdate": 1792755276614,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23744,6 +23744,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 6,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "df8059d4e80abe7c03079cf4dfcf787115ef56ae",
+          "message": "fix(importer): handle OSV HTTP cancellation and mid-scan updates",
+          "timestamp": "2026-10-23T10:41:31Z",
+          "tree_id": "0db2aed9e4c8c9a42406327224a9b29281ce0ae0",
+          "url": "https://github.com/guacsec/trustify/commit/df8059d4e80abe7c03079cf4dfcf787115ef56ae"
+        },
+        "date": 1792755274793,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
