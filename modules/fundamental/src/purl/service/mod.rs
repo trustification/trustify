@@ -109,6 +109,9 @@ struct Winner<'a> {
     base: &'a base_purl::Model,
 }
 
+/// Versioned PURLs grouped by base ID and the IDs synthesized from advisory data.
+type AdvisoryVersionedPurls = (HashMap<Uuid, Vec<versioned_purl::Model>>, HashSet<Uuid>);
+
 impl<'a> PurlKey<'a> {
     fn from_purl(purl: &'a Purl) -> Self {
         Self {
@@ -593,7 +596,7 @@ impl PurlService {
             return Ok(recommendations);
         }
 
-        let versioned_by_base =
+        let (versioned_by_base, advisory_synthesized_vp_ids) =
             Self::fetch_versioned_purls_by_base(&base_purls, connection).await?;
 
         let base_purl_map: HashMap<_, _> = base_purls
@@ -655,6 +658,16 @@ impl PurlService {
             .await?;
             if let Some(infos) = per_winner.into_values().next() {
                 statuses_by_vp.insert(winner.versioned_purl.id, infos);
+            } else if advisory_synthesized_vp_ids.contains(&winner.versioned_purl.id) {
+                let infos = Self::fetch_vulnerability_statuses_by_version(
+                    winner.base.id,
+                    &winner.versioned_purl.version,
+                    connection,
+                )
+                .await?;
+                if !infos.is_empty() {
+                    statuses_by_vp.insert(winner.versioned_purl.id, infos);
+                }
             }
         }
 
@@ -759,6 +772,79 @@ impl PurlService {
         Ok(statuses_by_base)
     }
 
+    /// Resolves vulnerability statuses for a synthetic winner (no real `versioned_purl` row).
+    ///
+    /// Queries `purl_status` directly by `base_purl_id` and matches the version string as a
+    /// literal against `version_range`, bypassing the `versioned_purl` JOIN that fails for
+    /// advisory-synthesized winners.
+    #[instrument(skip_all, err(level = tracing::Level::INFO))]
+    async fn fetch_vulnerability_statuses_by_version<C: ConnectionTrait>(
+        base_purl_id: Uuid,
+        version: &str,
+        connection: &C,
+    ) -> Result<Vec<StatusInfo>, Error> {
+        let all_statuses = purl_status::Entity::find()
+            .columns([
+                version_range::Column::Id,
+                version_range::Column::LowVersion,
+                version_range::Column::LowInclusive,
+                version_range::Column::HighVersion,
+                version_range::Column::HighInclusive,
+            ])
+            .left_join(version_range::Entity)
+            .filter(purl_status::Column::BasePurlId.eq(base_purl_id))
+            .filter(SimpleExpr::FunctionCall(
+                Func::cust(trustify_common::db::VersionMatches)
+                    .arg(Expr::value(version))
+                    .arg(Expr::col((version_range::Entity, Asterisk))),
+            ))
+            .all(connection)
+            .instrument(info_span!("querying purl statuses for synthetic winner"))
+            .await?;
+
+        let vulns = all_statuses
+            .load_one(vulnerability::Entity, connection)
+            .await?;
+        let advisories_loaded = all_statuses.load_one(advisory::Entity, connection).await?;
+        let status_models = all_statuses.load_one(status::Entity, connection).await?;
+        let status_slug_map: HashMap<_, _> = status_models
+            .into_iter()
+            .flatten()
+            .map(|s| (s.id, s.slug))
+            .collect();
+        let remediations = all_statuses
+            .load_many_to_many(
+                remediation::Entity,
+                remediation_purl_status::Entity,
+                connection,
+            )
+            .await?;
+
+        let mut infos = Vec::new();
+        for (((vuln, advisory), ps), rems) in vulns
+            .into_iter()
+            .zip(advisories_loaded)
+            .zip(all_statuses)
+            .zip(remediations)
+        {
+            if let (Some(v), Some(advisory)) = (vuln, advisory) {
+                let slug = status_slug_map
+                    .get(&ps.status_id)
+                    .cloned()
+                    .unwrap_or_else(|| "unknown".to_string());
+                infos.push(StatusInfo {
+                    vuln_id: v.id,
+                    status_slug: slug,
+                    remediations: rems,
+                    advisory_date: advisory.modified.or(advisory.published),
+                    advisory_id: Some(advisory.identifier.clone()),
+                });
+            }
+        }
+
+        Ok(infos)
+    }
+
     /// Builds a single recommendation entry from a winner and its vulnerability statuses.
     ///
     /// Returns the versioned PURL (without qualifiers) as the recommended package string.
@@ -853,11 +939,13 @@ impl PurlService {
 
     /// Loads all versioned PURLs for the given base PURLs, grouped by base PURL ID.
     /// Chunks the IN clause to stay within Postgres bind parameter limits.
+    /// Also returns the IDs of versions synthesized from advisory data, which cannot be
+    /// distinguished from persisted rows by UUID alone.
     #[instrument(skip_all, err(level = tracing::Level::INFO))]
     async fn fetch_versioned_purls_by_base<C: ConnectionTrait>(
         base_purls: &[base_purl::Model],
         connection: &C,
-    ) -> Result<HashMap<Uuid, Vec<versioned_purl::Model>>, Error> {
+    ) -> Result<AdvisoryVersionedPurls, Error> {
         let base_purl_ids: Vec<_> = base_purls.iter().map(|bp| bp.id).collect();
 
         let mut by_base: HashMap<_, Vec<_>> = HashMap::new();
@@ -875,32 +963,35 @@ impl PurlService {
         // Supplement with exact-version advisory entries (status `not_affected` or `fixed`).
         // In advisory-only deployments without vendor SBOMs, these purl_status rows are the
         // only source of vendor-rebuilt version strings. Using a deterministic UUID (v5 of
-        // base_purl_id + version) lets the rest of the pipeline treat them uniformly;
-        // fetch_vulnerability_statuses simply returns no rows for them, which is acceptable.
-        Self::extend_with_advisory_versions(
+        // base_purl_id + version) lets the rest of the pipeline treat them uniformly. The
+        // returned ID set tracks which entries were added here because persisted rows use the
+        // same UUID scheme and UUID equality alone cannot distinguish their source.
+        let advisory_synthesized_vp_ids = Self::extend_with_advisory_versions(
             base_purls.iter().map(|bp| bp.id),
             &mut by_base,
             connection,
         )
         .await?;
 
-        Ok(by_base)
+        Ok((by_base, advisory_synthesized_vp_ids))
     }
 
     /// Fetches exact-version `not_affected` and `fixed` purl_status entries and adds any
     /// version strings not already present in `by_base` as synthetic versioned_purl models.
+    /// Returns the IDs of the rows it synthesized so callers do not infer provenance from UUIDs.
     #[instrument(skip_all, err(level = tracing::Level::INFO))]
     async fn extend_with_advisory_versions<C: ConnectionTrait>(
         base_purl_ids: impl IntoIterator<Item = Uuid>,
         by_base: &mut HashMap<Uuid, Vec<versioned_purl::Model>>,
         connection: &C,
-    ) -> Result<(), Error> {
+    ) -> Result<HashSet<Uuid>, Error> {
         #[derive(FromQueryResult)]
         struct AdvisoryVersion {
             base_purl_id: Uuid,
             version: String,
         }
 
+        let mut synthesized_ids = HashSet::new();
         let id_chunks = chunked_with(1, base_purl_ids.into_iter());
         for chunk in id_chunks {
             let rows: Vec<AdvisoryVersion> = purl_status::Entity::find()
@@ -926,6 +1017,7 @@ impl PurlService {
                     continue;
                 }
                 let id = Uuid::new_v5(&row.base_purl_id, row.version.as_bytes());
+                synthesized_ids.insert(id);
                 entry.push(versioned_purl::Model {
                     id,
                     base_purl_id: row.base_purl_id,
@@ -934,7 +1026,7 @@ impl PurlService {
             }
         }
 
-        Ok(())
+        Ok(synthesized_ids)
     }
 
     /// Selects the versioned PURL with the highest vendor version matching the input upstream version.
@@ -1052,7 +1144,7 @@ impl PurlService {
             .filter(base_purl::Column::Id.is_in(base_purl_ids_vec))
             .all(connection)
             .await?;
-        let versioned_by_base =
+        let (versioned_by_base, _) =
             Self::fetch_versioned_purls_by_base(&base_purls, connection).await?;
 
         // Pattern-match each (base, version) to find the highest vendor patch.
