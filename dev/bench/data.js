@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792677829365,
+  "lastUpdate": 1792751146746,
   "repoUrl": "https://github.com/guacsec/trustify",
   "entries": {
     "Benchmark": [
@@ -23715,6 +23715,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 10,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gilles@redhat.com",
+            "name": "gildub",
+            "username": "gildub"
+          },
+          "committer": {
+            "email": "gilles@redhat.com",
+            "name": "Gilles Dubreuil",
+            "username": "gildub"
+          },
+          "distinct": true,
+          "id": "e5c6dca39cc7a72ce4f7a715573713df4119355b",
+          "message": "chore(deps): update tokio and ctutils to fix RUSTSEC-2026-0384 and RUSTSEC-2026-0385",
+          "timestamp": "2026-10-23T09:35:24Z",
+          "tree_id": "34d10371cbca3446af5d2ecf27c921cfdf7a2a88",
+          "url": "https://github.com/guacsec/trustify/commit/e5c6dca39cc7a72ce4f7a715573713df4119355b"
+        },
+        "date": 1792751144628,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 6,
             "unit": "s"
           }
         ]
