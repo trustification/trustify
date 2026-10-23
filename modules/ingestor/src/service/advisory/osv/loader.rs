@@ -22,13 +22,35 @@ use crate::{
         },
     },
 };
-use osv::schema::{Ecosystem, Event, Range, RangeType, ReferenceType, Vulnerability};
-use sea_orm::{ConnectionTrait, TransactionTrait};
-use std::{collections::HashSet, fmt::Debug, str::FromStr};
+use osv::schema::{Ecosystem, Event, Package, Range, RangeType, ReferenceType, Vulnerability};
+use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait, TransactionTrait};
+use std::{
+    collections::{BTreeMap, BTreeSet, HashSet},
+    fmt::Debug,
+    str::FromStr,
+};
 use tracing::instrument;
-use trustify_common::{hashing::Digests, purl::Purl, time::ChronoExt};
-use trustify_entity::{labels::Labels, version_scheme::VersionScheme};
+use trustify_common::{
+    db::chunk::EntityChunkedIter, hashing::Digests, purl::Purl, time::ChronoExt,
+};
+use trustify_entity::{
+    advisory_vulnerability_upstream,
+    labels::Labels,
+    remediation::{self, RemediationCategory},
+    version_scheme::VersionScheme,
+};
+use uuid::Uuid;
 
+/// Loads OSV records.
+///
+/// OSV only defines the set of affected versions: a version is affected if it is listed in
+/// `versions`, or lies in an interval of a range (`introduced` up to `fixed`, or up to and including
+/// `last_affected`). Only those are stored, as `affected`. Versions outside of the set are not
+/// affected according to the record, which states nothing else about them. A `fixed` event only
+/// ends an interval, it isn't a status of the fixed version: it is stored as a vendor fix
+/// remediation of the interval's `affected` status.
+///
+/// See: <https://ossf.github.io/osv-schema/#evaluation>
 pub struct OsvLoader<'g> {
     graph: &'g Graph,
 }
@@ -53,18 +75,6 @@ impl<'g> OsvLoader<'g> {
 
         let issuer = issuer.or(detect_organization(&osv));
 
-        let cve_ids: Vec<String> = osv
-            .aliases
-            .iter()
-            .flat_map(|aliases| {
-                aliases
-                    .iter()
-                    .filter(|e| e.starts_with("CVE-"))
-                    .cloned()
-                    .collect::<Vec<_>>()
-            })
-            .collect();
-
         let information = AdvisoryInformation {
             id: osv.id.clone(),
             title: osv.summary.clone(),
@@ -74,6 +84,7 @@ impl<'g> OsvLoader<'g> {
             published: osv.published.map(ChronoExt::into_time),
             modified: Some(osv.modified.into_time()),
             withdrawn: osv.withdrawn.map(ChronoExt::into_time),
+            publisher_namespace: None,
         };
         let advisory = match self
             .graph
@@ -96,26 +107,61 @@ impl<'g> OsvLoader<'g> {
             advisory.set_withdrawn_at(withdrawn.into_time(), tx).await?;
         }
 
+        let vulnerability_ids = extract_vulnerability_ids(&osv);
+
         // Batch create all vulnerabilities
         let mut vuln_creator = VulnerabilityCreator::new();
-        for cve_id in &cve_ids {
-            vuln_creator.add(cve_id, ());
+        for id in &vulnerability_ids {
+            vuln_creator.add(*id, ());
         }
         vuln_creator.create(tx).await?;
 
         let mut purl_creator = PurlCreator::new();
         let mut purl_status_creator = PurlStatusCreator::new();
+        let mut remediations = FixedRemediations::default();
         let mut base_purls = HashSet::new();
         let mut score_creator = ScoreCreator::new(advisory.advisory.id);
 
         extract_scores(&osv, &mut score_creator);
 
-        for cve_id in extract_vulnerability_ids(&osv) {
-            self.graph.ingest_vulnerability(cve_id, (), tx).await?;
+        // the affected entries with a package, and its PURLs
+        let affected = osv
+            .affected
+            .iter()
+            .flatten()
+            .filter_map(|affected| {
+                let Some(package) = &affected.package else {
+                    tracing::debug!(osv = osv.id, "OSV 'affected' entry without a package");
+                    return None;
+                };
+                Some((affected, package, package_purls(package, &warnings)))
+            })
+            .collect::<Vec<_>>();
 
+        // the upstream vulnerabilities the record refers to (e.g. the CVEs of a distribution's
+        // record): different vulnerabilities, not aliases, so its statements stay under its IDs
+        let upstream = osv
+            .upstream
+            .iter()
+            .flatten()
+            .filter(|id| !vulnerability_ids.contains(&id.as_str()))
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        let mut upstream_models = Vec::new();
+        for id in &vulnerability_ids {
+            for upstream_id in &upstream {
+                upstream_models.push(advisory_vulnerability_upstream::ActiveModel {
+                    advisory_id: Set(advisory.advisory.id),
+                    vulnerability_id: Set(id.to_string()),
+                    upstream_id: Set(upstream_id.clone()),
+                });
+            }
+        }
+
+        for id in vulnerability_ids {
             let advisory_vuln = advisory
                 .link_to_vulnerability(
-                    cve_id,
+                    id,
                     Some(AdvisoryVulnerabilityInformation {
                         title: osv.summary.clone(),
                         summary: osv.summary.clone(),
@@ -129,204 +175,46 @@ impl<'g> OsvLoader<'g> {
                 )
                 .await?;
 
-            for affected in osv.affected.iter().flatten() {
-                // we only process it when we have a package
-
-                let Some(package) = &affected.package else {
-                    tracing::debug!(
-                        osv = osv.id,
-                        "OSV document did not contain an 'affected' section",
-                    );
-                    continue;
-                };
-
-                // extract PURLs
-
-                let mut purls = vec![];
-                purls.extend(translate::to_purl(package).map(Purl::from));
-                if let Some(purl) = &package.purl {
-                    purls.extend(Purl::from_str(purl).ok());
-                }
-
+            for (affected, package, purls) in &affected {
                 for purl in purls {
                     // iterate through the known versions, apply the version, and create them
                     for version in affected.versions.iter().flatten() {
                         purl_creator.add(purl.with_version(version));
                         // Process explicit versions for advisory linking
-                        purl_status_creator.add(PurlStatusEntry {
-                            advisory_id: advisory_vuln.advisory.advisory.id,
-                            vulnerability_id: advisory_vuln
-                                .advisory_vulnerability
-                                .vulnerability_id
-                                .clone(),
-                            purl: purl.clone(),
-                            status: "affected".to_string(),
-                            version_info: VersionInfo {
-                                scheme: VersionScheme::Generic,
-                                spec: VersionSpec::Exact(version.to_string()),
-                            },
-                            context_cpe: None,
-                        });
+                        purl_status_creator.add(affected_status(
+                            &advisory_vuln,
+                            purl,
+                            VersionScheme::Generic,
+                            VersionSpec::Exact(version.to_string()),
+                        ));
                     }
 
                     for range in affected.ranges.iter().flatten() {
                         // Collect base PURL for range-based status entries
                         base_purls.insert(purl.clone());
 
-                        match (&range.range_type, &package.ecosystem) {
-                            (RangeType::Semver, _) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Semver,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
+                        let entries = match version_scheme(&range.range_type, &package.ecosystem) {
+                            Some(scheme) => {
+                                build_package_status(&advisory_vuln, purl, range, scheme)
                             }
-                            (RangeType::Git, _) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Git,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::Maven(_)) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Maven,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::PyPI | Ecosystem::Python) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Python,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::Go) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Golang,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::Npm) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Npm,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::Packagist) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Packagist,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::NuGet) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::NuGet,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::RubyGems) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Gem,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::Hex) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Hex,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::SwiftURL) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Swift,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::Pub) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Pub,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (RangeType::Ecosystem, Ecosystem::CratesIO) => {
-                                process_status_entries(
-                                    build_package_status(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        VersionScheme::Cargo,
-                                    ),
-                                    &mut purl_status_creator,
-                                );
-                            }
-                            (_, _) => {
-                                process_status_entries(
-                                    build_package_status_versions(
-                                        &advisory_vuln,
-                                        &purl,
-                                        range,
-                                        affected.versions.iter().flatten(),
-                                    ),
-                                    &mut purl_status_creator,
-                                );
+                            None => build_package_status_versions(
+                                &advisory_vuln,
+                                purl,
+                                range,
+                                affected.versions.iter().flatten(),
+                            ),
+                        };
+                        for (entry, fixed) in entries {
+                            match fixed {
+                                Some(fixed) => {
+                                    let remediation = remediations.add(
+                                        entry.advisory_id,
+                                        &entry.vulnerability_id,
+                                        fixed,
+                                    );
+                                    purl_status_creator.add_remediated(entry, remediation);
+                                }
+                                None => purl_status_creator.add(entry),
                             }
                         }
                     }
@@ -340,7 +228,15 @@ impl<'g> OsvLoader<'g> {
         // Create base PURLs for range-based status entries
         purl::batch_create_base_purls(base_purls, tx).await?;
 
+        remediations.create(tx).await?;
         purl_status_creator.create(tx).await?;
+
+        for batch in upstream_models.into_iter().chunked() {
+            advisory_vulnerability_upstream::Entity::insert_many(batch)
+                .on_conflict_do_nothing()
+                .exec(tx)
+                .await?;
+        }
 
         Ok(IngestResult {
             id: advisory.advisory.id.to_string(),
@@ -352,211 +248,271 @@ impl<'g> OsvLoader<'g> {
     }
 }
 
-/// Process status entries: add each entry to purl_status_creator.
-fn process_status_entries(
-    entries: Vec<PurlStatusEntry>,
-    purl_status_creator: &mut PurlStatusCreator,
-) {
-    for entry in entries {
-        purl_status_creator.add(entry);
+/// The PURLs of a package: the one translated from its ecosystem and name, and the stated one.
+///
+/// The stated PURL identifies the package "without the `@version` component". A version is
+/// ignored, with a warning.
+fn package_purls(package: &Package, warnings: &Warnings) -> Vec<Purl> {
+    let mut purls = vec![];
+    purls.extend(translate::to_purl(package).map(Purl::from));
+    if let Some(stated) = &package.purl
+        && let Ok(mut purl) = Purl::from_str(stated)
+    {
+        if purl.version.take().is_some() {
+            warnings.add(format!(
+                "The PURL of an OSV package must not have a version, ignoring it: {stated}"
+            ));
+        }
+        purls.push(purl);
+    }
+    purls
+}
+
+/// The version scheme to evaluate a range with, `None` if unknown.
+///
+/// A range of an unknown scheme is evaluated on the enumerated `versions` instead.
+fn version_scheme(range_type: &RangeType, ecosystem: &Ecosystem) -> Option<VersionScheme> {
+    Some(match (range_type, ecosystem) {
+        (RangeType::Semver, _) => VersionScheme::Semver,
+        (RangeType::Git, _) => VersionScheme::Git,
+        (RangeType::Ecosystem, Ecosystem::Maven(_)) => VersionScheme::Maven,
+        (RangeType::Ecosystem, Ecosystem::PyPI | Ecosystem::Python) => VersionScheme::Python,
+        (RangeType::Ecosystem, Ecosystem::Go) => VersionScheme::Golang,
+        (RangeType::Ecosystem, Ecosystem::Npm) => VersionScheme::Npm,
+        (RangeType::Ecosystem, Ecosystem::Packagist) => VersionScheme::Packagist,
+        (RangeType::Ecosystem, Ecosystem::NuGet) => VersionScheme::NuGet,
+        (RangeType::Ecosystem, Ecosystem::RubyGems) => VersionScheme::Gem,
+        (RangeType::Ecosystem, Ecosystem::Hex) => VersionScheme::Hex,
+        (RangeType::Ecosystem, Ecosystem::SwiftURL) => VersionScheme::Swift,
+        (RangeType::Ecosystem, Ecosystem::Pub) => VersionScheme::Pub,
+        (RangeType::Ecosystem, Ecosystem::CratesIO) => VersionScheme::Cargo,
+        _ => return None,
+    })
+}
+
+/// An `affected` status of a package.
+fn affected_status(
+    advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
+    purl: &Purl,
+    scheme: VersionScheme,
+    spec: VersionSpec,
+) -> PurlStatusEntry {
+    PurlStatusEntry {
+        source_provider: None,
+        advisory_id: advisory_vuln.advisory.advisory.id,
+        vulnerability_id: advisory_vuln
+            .advisory_vulnerability
+            .vulnerability_id
+            .clone(),
+        purl: purl.clone(),
+        status: "affected".to_string(),
+        version_info: VersionInfo { scheme, spec },
+        context_cpe: None,
+        context_id: None,
+        default: false,
     }
 }
 
-/// Build package status entries from range events
-fn build_package_status(
-    advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
-    purl: &Purl,
-    range: &Range,
-    version_scheme: VersionScheme,
-) -> Vec<PurlStatusEntry> {
-    let mut entries = Vec::new();
-    let parsed_range = events_to_range(&range.events);
-
-    let spec = match &parsed_range {
-        (Some(start), None) => Some(VersionSpec::Range(
-            Version::Inclusive(start.clone()),
-            Version::Unbounded,
-        )),
-        (None, Some((end, false))) => Some(VersionSpec::Range(
-            Version::Unbounded,
-            Version::Exclusive(end.clone()),
-        )),
-        (None, Some((end, true))) => Some(VersionSpec::Range(
-            Version::Unbounded,
-            Version::Inclusive(end.clone()),
-        )),
-        (Some(start), Some((end, false))) => Some(VersionSpec::Range(
-            Version::Inclusive(start.clone()),
-            Version::Exclusive(end.clone()),
-        )),
-        (Some(start), Some((end, true))) => Some(VersionSpec::Range(
-            Version::Inclusive(start.clone()),
-            Version::Inclusive(end.clone()),
-        )),
-        (None, None) => None,
-    };
-
-    if let Some(spec) = spec {
-        entries.push(PurlStatusEntry {
-            advisory_id: advisory_vuln.advisory.advisory.id,
-            vulnerability_id: advisory_vuln
-                .advisory_vulnerability
-                .vulnerability_id
-                .clone(),
-            purl: purl.clone(),
-            status: "affected".to_string(),
-            version_info: VersionInfo {
-                scheme: version_scheme,
-                spec,
-            },
-            context_cpe: None,
-        });
-    }
-
-    if let (_, Some((fixed, false))) = &parsed_range {
-        entries.push(PurlStatusEntry {
-            advisory_id: advisory_vuln.advisory.advisory.id,
-            vulnerability_id: advisory_vuln
-                .advisory_vulnerability
-                .vulnerability_id
-                .clone(),
-            purl: purl.clone(),
-            status: "fixed".to_string(),
-            version_info: VersionInfo {
-                scheme: version_scheme,
-                spec: VersionSpec::Exact(fixed.clone()),
-            },
-            context_cpe: None,
-        });
-    }
-
-    entries
+/// An interval of affected versions of a range.
+#[derive(Debug, PartialEq, Eq)]
+struct Interval<'a> {
+    /// The first affected version, `None` for `0` (all versions before).
+    introduced: Option<&'a str>,
+    /// The end: the `fixed` version (exclusive), or the `last_affected` one (inclusive). `None` if
+    /// open.
+    end: Option<End<'a>>,
 }
 
-/// Build package status entries based on listed versions
-fn build_package_status_versions<'a>(
-    advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
-    purl: &Purl,
-    range: &Range,
-    versions: impl IntoIterator<Item = &'a String>,
-) -> Vec<PurlStatusEntry> {
-    // the list of versions, sorted by the range type
-    let versions = versions.into_iter().cloned().collect::<Vec<_>>();
-    let mut entries = Vec::new();
+#[derive(Debug, PartialEq, Eq)]
+enum End<'a> {
+    Fixed(&'a str),
+    LastAffected(&'a str),
+}
 
+impl<'a> Interval<'a> {
+    /// The version fixing the interval, if it states one.
+    fn fixed(&self) -> Option<&'a str> {
+        match self.end {
+            Some(End::Fixed(fixed)) => Some(fixed),
+            _ => None,
+        }
+    }
+}
+
+/// Namespace of the IDs of the remediations of OSV records.
+const REMEDIATION_NAMESPACE: Uuid = Uuid::from_bytes([
+    0x2f, 0x8e, 0x41, 0x6c, 0x93, 0x0d, 0x4b, 0x52, 0xa7, 0x1e, 0x6d, 0xc4, 0x58, 0x3b, 0x90, 0xe2,
+]);
+
+/// The remediations of an OSV record: the versions fixing its intervals. A `fixed` event isn't a
+/// status, but a vendor fix of the affected versions before it (as OSV.dev and Dependency-Track
+/// show it).
+#[derive(Default)]
+struct FixedRemediations(BTreeMap<Uuid, remediation::ActiveModel>);
+
+impl FixedRemediations {
+    /// Add the remediation of a fixed version, returning its ID.
+    fn add(&mut self, advisory_id: Uuid, vulnerability_id: &str, fixed: &str) -> Uuid {
+        let mut id = Uuid::new_v5(&REMEDIATION_NAMESPACE, advisory_id.as_bytes());
+        id = Uuid::new_v5(&id, vulnerability_id.as_bytes());
+        id = Uuid::new_v5(&id, fixed.as_bytes());
+        self.0
+            .entry(id)
+            .or_insert_with(|| remediation::ActiveModel {
+                id: Set(id),
+                advisory_id: Set(advisory_id),
+                vulnerability_id: Set(vulnerability_id.to_string()),
+                category: Set(RemediationCategory::VendorFix),
+                details: Set(Some(format!("Fixed in {fixed}"))),
+                url: Set(None),
+                data: Set(serde_json::json!({ "fixed": fixed })),
+            });
+        id
+    }
+
+    async fn create(self, connection: &impl ConnectionTrait) -> Result<(), DbErr> {
+        for batch in self.0.into_values().chunked() {
+            remediation::Entity::insert_many(batch)
+                .on_conflict_do_nothing()
+                .exec(connection)
+                .await?;
+        }
+        Ok(())
+    }
+}
+
+/// The affected intervals of the events of a range.
+///
+/// The spec evaluates the events in sorted order. Sorting requires the versioning scheme, so the
+/// events are taken in the order they are listed, which is the sorted one in practice. An
+/// `introduced` within an interval doesn't start a new one, an end without an interval is ignored.
+/// `limit` events are ignored.
+fn intervals(events: &[Event]) -> Vec<Interval<'_>> {
+    let mut result = Vec::new();
     let mut start = None;
-    for event in &range.events {
-        match event {
-            Event::Introduced(version) => {
-                start = Some(version);
-            }
-            Event::Fixed(version) | Event::LastAffected(version) => {
-                if let Some(start) = start.take() {
-                    entries.extend(build_range_from(
-                        advisory_vuln,
-                        purl,
-                        "affected",
-                        start,
-                        Some(version),
-                        &versions,
-                    ));
-                }
 
-                // Add "fixed" status
-                entries.push(PurlStatusEntry {
-                    advisory_id: advisory_vuln.advisory.advisory.id,
-                    vulnerability_id: advisory_vuln
-                        .advisory_vulnerability
-                        .vulnerability_id
-                        .clone(),
-                    purl: purl.clone(),
-                    status: "fixed".to_string(),
-                    version_info: VersionInfo {
-                        scheme: VersionScheme::Generic,
-                        spec: VersionSpec::Exact(version.to_string()),
-                    },
-                    context_cpe: None,
-                });
+    for event in events {
+        let end = match event {
+            Event::Introduced(version) => {
+                if start.is_none() {
+                    start = Some((version != "0").then_some(version.as_str()));
+                }
+                continue;
             }
-            Event::Limit(_) => {}
-            // for non_exhaustive
-            _ => {}
+            Event::Fixed(version) => End::Fixed(version),
+            Event::LastAffected(version) => End::LastAffected(version),
+            // `limit`, and others (non_exhaustive)
+            _ => continue,
+        };
+        if let Some(introduced) = start.take() {
+            result.push(Interval {
+                introduced,
+                end: Some(end),
+            });
         }
     }
 
-    if let Some(start) = start {
-        entries.extend(build_range_from(
-            advisory_vuln,
-            purl,
-            "affected",
-            start,
-            None,
-            &versions,
-        ));
+    if let Some(introduced) = start {
+        result.push(Interval {
+            introduced,
+            end: None,
+        });
     }
 
-    entries
+    result
 }
 
-/// Build status entries for all versions from a start to an end
-fn build_range_from(
+/// Build the status entries of a range: one `affected` range per interval, with the version fixing
+/// it, if any.
+fn build_package_status<'a>(
     advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
     purl: &Purl,
-    status: &str,
-    start: &str,
-    // exclusive end
-    end: Option<&str>,
-    versions: &[impl AsRef<str>],
-) -> Vec<PurlStatusEntry> {
-    let matched_versions = match_versions(versions, start, end);
-
-    matched_versions
+    range: &'a Range,
+    version_scheme: VersionScheme,
+) -> Vec<(PurlStatusEntry, Option<&'a str>)> {
+    intervals(&range.events)
         .into_iter()
-        .map(|version| PurlStatusEntry {
-            advisory_id: advisory_vuln.advisory.advisory.id,
-            vulnerability_id: advisory_vuln
-                .advisory_vulnerability
-                .vulnerability_id
-                .clone(),
-            purl: purl.clone(),
-            status: status.to_string(),
-            version_info: VersionInfo {
-                scheme: VersionScheme::Generic,
-                spec: VersionSpec::Exact(version.to_string()),
-            },
-            context_cpe: None,
+        .map(|interval| {
+            let low = match interval.introduced {
+                Some(introduced) => Version::Inclusive(introduced.to_string()),
+                None => Version::Unbounded,
+            };
+            let high = match interval.end {
+                Some(End::Fixed(fixed)) => Version::Exclusive(fixed.to_string()),
+                Some(End::LastAffected(last)) => Version::Inclusive(last.to_string()),
+                None => Version::Unbounded,
+            };
+            (
+                affected_status(
+                    advisory_vuln,
+                    purl,
+                    version_scheme,
+                    VersionSpec::Range(low, high),
+                ),
+                interval.fixed(),
+            )
         })
         .collect()
 }
 
-/// Extract a list of versions according to OSV
+/// Build the status entries of a range of an unknown scheme, from the listed versions: each
+/// version of an interval is `affected`, with the version fixing the interval, if any.
+fn build_package_status_versions<'a>(
+    advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
+    purl: &Purl,
+    range: &'a Range,
+    versions: impl IntoIterator<Item = &'a String>,
+) -> Vec<(PurlStatusEntry, Option<&'a str>)> {
+    // the list of versions, sorted by the range type
+    let versions = versions.into_iter().collect::<Vec<_>>();
+
+    intervals(&range.events)
+        .iter()
+        .flat_map(|interval| {
+            match_versions(&versions, interval)
+                .into_iter()
+                .map(|version| (version, interval.fixed()))
+        })
+        .map(|(version, fixed)| {
+            (
+                affected_status(
+                    advisory_vuln,
+                    purl,
+                    VersionScheme::Generic,
+                    VersionSpec::Exact(version.to_string()),
+                ),
+                fixed,
+            )
+        })
+        .collect()
+}
+
+/// Extract the versions of an interval from a list of versions according to OSV
 ///
 /// The idea for ECOSYSTEM and GIT is that the user provides an explicit list of versions, in the
 /// right order. So we search through this list, by start and end events. Translating this into
 /// exact version matches.
 ///
 /// See: <https://ossf.github.io/osv-schema/#affectedrangestype-field>
-fn match_versions<'v>(
-    versions: &'v [impl AsRef<str>],
-    start: &str,
-    end: Option<&str>,
-) -> Vec<&'v str> {
+fn match_versions<'v>(versions: &'v [impl AsRef<str>], interval: &Interval) -> Vec<&'v str> {
     let mut matches = None;
 
     for version in versions {
         let version = version.as_ref();
-        match (&mut matches, end) {
-            (None, _) if version == start => {
-                matches = Some(vec![version]);
-            }
-            (None, _) => {}
-            (Some(_), Some(end)) if end == version => {
-                // reached the exclusive env
+        if matches.is_none() && interval.introduced.is_none_or(|start| start == version) {
+            matches = Some(vec![]);
+        }
+        let Some(matches) = &mut matches else {
+            continue;
+        };
+        match interval.end {
+            // reached the exclusive end
+            Some(End::Fixed(end)) if end == version => break,
+            Some(End::LastAffected(end)) if end == version => {
+                matches.push(version);
                 break;
             }
-            (Some(matches), _) => {
-                matches.push(version);
-            }
+            _ => matches.push(version),
         }
     }
 
@@ -577,28 +533,6 @@ fn detect_organization(osv: &Vulnerability) -> Option<String> {
     None
 }
 
-fn events_to_range(events: &[Event]) -> (Option<String>, Option<(String, bool)>) {
-    let start = events.iter().find_map(|e| {
-        if let Event::Introduced(version) = e {
-            Some(version.clone())
-        } else {
-            None
-        }
-    });
-
-    let end = events.iter().find_map(|e| {
-        if let Event::Fixed(version) = e {
-            Some((version.clone(), false))
-        } else if let Event::LastAffected(version) = e {
-            Some((version.clone(), true))
-        } else {
-            None
-        }
-    });
-
-    (start, end)
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -612,14 +546,15 @@ mod test {
     use hex::ToHex;
     use osv::schema::Vulnerability;
     use rstest::rstest;
-    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+    use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
     use test_context::test_context;
     use test_log::test;
     use trustify_entity::{
         advisory_vulnerability_score::{ScoreType, Severity},
-        purl_status, version_range,
+        purl_status, status, version_range,
     };
     use trustify_test_context::{TrustifyContext, document};
+    use uuid::Uuid;
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
@@ -821,45 +756,294 @@ mod test {
             .await?;
         assert!(advisory_vuln.is_some());
 
-        // Query purl_status records for this advisory and verify version ranges
-        let statuses = purl_status::Entity::find()
-            .filter(purl_status::Column::AdvisoryId.eq(loaded_advisory.advisory.id))
+        // only the affected range, the fix only ends it
+        assert_eq!(
+            stated(loaded_advisory.advisory.id, db).await?,
+            [stated_range(
+                "CVE-2026-25541",
+                VersionScheme::Cargo,
+                (Some("1.2.1"), true),
+                (Some("1.11.1"), false),
+            )]
+        );
+
+        Ok(())
+    }
+
+    /// A stated `affected` range: vulnerability, scheme, low and high bound.
+    type StatedRange = (
+        String,
+        String,
+        VersionScheme,
+        (Option<String>, Option<bool>),
+        (Option<String>, Option<bool>),
+    );
+
+    fn stated_range(
+        vulnerability: &str,
+        scheme: VersionScheme,
+        (low, low_inclusive): (Option<&str>, bool),
+        (high, high_inclusive): (Option<&str>, bool),
+    ) -> StatedRange {
+        (
+            vulnerability.to_string(),
+            "affected".to_string(),
+            scheme,
+            (low.map(str::to_string), Some(low_inclusive)),
+            (high.map(str::to_string), Some(high_inclusive)),
+        )
+    }
+
+    /// The statuses an advisory states, with their ranges, sorted.
+    async fn stated(
+        advisory_id: Uuid,
+        db: &impl ConnectionTrait,
+    ) -> anyhow::Result<Vec<StatedRange>> {
+        let mut result = Vec::new();
+        for (purl_status, status) in purl_status::Entity::find()
+            .filter(purl_status::Column::AdvisoryId.eq(advisory_id))
+            .find_also_related(status::Entity)
             .all(db)
-            .await?;
-
-        assert_eq!(2, statuses.len());
-
-        let mut ranges = Vec::new();
-        for status in &statuses {
-            let range = version_range::Entity::find_by_id(status.version_range_id)
+            .await?
+        {
+            let range = version_range::Entity::find_by_id(purl_status.version_range_id)
                 .one(db)
                 .await?
-                .unwrap();
-
-            assert_eq!(VersionScheme::Cargo, range.version_scheme_id);
-
-            ranges.push(range);
+                .expect("version range of a status");
+            result.push((
+                purl_status.vulnerability_id,
+                status.expect("status of a purl status").slug,
+                range.version_scheme_id,
+                (range.low_version, range.low_inclusive),
+                (range.high_version, range.high_inclusive),
+            ));
         }
+        result.sort_by(|a, b| format!("{a:?}").cmp(&format!("{b:?}")));
+        Ok(result)
+    }
 
-        // Verify there is an affected range [1.2.1, 1.11.1)
-        assert!(ranges.iter().any(|r| {
-            r.low_version.as_deref() == Some("1.2.1")
-                && r.low_inclusive == Some(true)
-                && r.high_version.as_deref() == Some("1.11.1")
-                && r.high_inclusive == Some(false)
-        }));
+    /// A distribution's record refers to the upstream CVEs, which aren't aliases: its statements
+    /// stay under its own ID.
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn upstream(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        use sea_orm::QueryOrder;
+        use trustify_entity::advisory_vulnerability_upstream;
+
+        let result = ctx.ingest_document("osv/DSA-5790-1.json").await?;
+        let advisory_id = Uuid::parse_str(&result.id)?;
+
+        let upstream = advisory_vulnerability_upstream::Entity::find()
+            .filter(advisory_vulnerability_upstream::Column::AdvisoryId.eq(advisory_id))
+            .order_by_asc(advisory_vulnerability_upstream::Column::UpstreamId)
+            .all(&ctx.db)
+            .await?
+            .into_iter()
+            .map(|u| (u.vulnerability_id, u.upstream_id))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            upstream,
+            vec![
+                ("DSA-5790-1".to_string(), "CVE-2024-47875".to_string()),
+                (
+                    "DSA-5790-1".to_string(),
+                    "DEBIAN-CVE-2024-47875".to_string()
+                ),
+            ]
+        );
+
+        let vulnerabilities = purl_status::Entity::find()
+            .filter(purl_status::Column::AdvisoryId.eq(advisory_id))
+            .all(&ctx.db)
+            .await?
+            .into_iter()
+            .map(|s| s.vulnerability_id)
+            .collect::<BTreeSet<_>>();
+        assert_eq!(
+            vulnerabilities,
+            ["DSA-5790-1".to_string()].into_iter().collect()
+        );
+
+        Ok(())
+    }
+
+    /// The version fixing an interval is a vendor fix of its `affected` status.
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn fixed_remediation(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        use trustify_entity::{remediation, remediation_purl_status};
+
+        let result = ctx.ingest_document("osv/RUSTSEC-2021-0079.json").await?;
+        let advisory_id = Uuid::parse_str(&result.id)?;
+
+        let remediations = remediation::Entity::find()
+            .filter(remediation::Column::AdvisoryId.eq(advisory_id))
+            .all(&ctx.db)
+            .await?
+            .into_iter()
+            .map(|r| (r.vulnerability_id, r.category, r.details, r.url, r.data))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            remediations,
+            vec![(
+                "CVE-2021-32714".to_string(),
+                RemediationCategory::VendorFix,
+                Some("Fixed in 0.14.10".to_string()),
+                None,
+                serde_json::json!({"fixed": "0.14.10"}),
+            )]
+        );
+
+        // linked to the statuses of the interval ending at it
+        let mut linked = Vec::new();
+        for (_, status) in remediation_purl_status::Entity::find()
+            .find_also_related(purl_status::Entity)
+            .all(&ctx.db)
+            .await?
+        {
+            let status = status.expect("linked status");
+            let range = version_range::Entity::find_by_id(status.version_range_id)
+                .one(&ctx.db)
+                .await?
+                .expect("version range of a status");
+            linked.push((range.high_version, range.high_inclusive));
+        }
+        linked.dedup();
+        assert_eq!(linked, vec![(Some("0.14.10".to_string()), Some(false))]);
+
+        Ok(())
+    }
+
+    /// Several intervals in a range, `last_affected`, no CVE alias, and a PURL with a version.
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn loader_affected_set(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let osv_content = r#"{
+            "schema_version": "1.7.3",
+            "id": "GHSA-test-affected-set",
+            "modified": "2024-01-01T00:00:00Z",
+            "aliases": ["PYSEC-2024-1"],
+            "affected": [{
+                "package": {
+                    "ecosystem": "PyPI",
+                    "name": "test-package",
+                    "purl": "pkg:pypi/test-package@1.0"
+                },
+                "ranges": [
+                    {
+                        "type": "ECOSYSTEM",
+                        "events": [
+                            {"introduced": "0"},
+                            {"fixed": "1.0"},
+                            {"introduced": "2.0"},
+                            {"fixed": "2.5"},
+                            {"introduced": "3.0"}
+                        ]
+                    },
+                    {
+                        "type": "SEMVER",
+                        "events": [{"introduced": "4.0.0"}, {"last_affected": "4.5.0"}]
+                    }
+                ]
+            }]
+        }"#;
+
+        let osv: Vulnerability = serde_json::from_str(osv_content)?;
+        let digests = Digests::digest(osv_content.as_bytes());
+
+        let graph = Graph::new();
+        let loader = OsvLoader::new(&graph);
+        let result = ctx
+            .db
+            .transaction(async |tx| {
+                loader
+                    .load(("test", "affected-set"), osv, &digests, None, tx)
+                    .await
+            })
+            .await?;
+
+        assert_eq!(
+            result.warnings,
+            [
+                "The PURL of an OSV package must not have a version, ignoring it: \
+              pkg:pypi/test-package@1.0"
+            ]
+        );
+
+        let id = Uuid::parse_str(&result.id)?;
+        const ID: &str = "GHSA-test-affected-set";
+        assert_eq!(
+            stated(id, &ctx.db).await?,
+            [
+                stated_range(
+                    ID,
+                    VersionScheme::Python,
+                    (None, false),
+                    (Some("1.0"), false)
+                ),
+                stated_range(
+                    ID,
+                    VersionScheme::Python,
+                    (Some("2.0"), true),
+                    (Some("2.5"), false)
+                ),
+                stated_range(
+                    ID,
+                    VersionScheme::Python,
+                    (Some("3.0"), true),
+                    (None, false)
+                ),
+                stated_range(
+                    ID,
+                    VersionScheme::Semver,
+                    (Some("4.0.0"), true),
+                    (Some("4.5.0"), true)
+                ),
+            ]
+        );
 
         Ok(())
     }
 
     #[rstest]
-    #[case("b", Some("d"), vec!["b", "c"])]
-    #[case("e", None, vec!["e", "f", "g"])]
-    #[case("x", None, vec![])]
-    #[case("e", Some("a"), vec!["e", "f", "g"])]
+    #[case(&[Event::Introduced("1".into()), Event::Fixed("2".into())], vec![
+        Interval { introduced: Some("1"), end: Some(End::Fixed("2")) },
+    ])]
+    #[case(&[Event::Introduced("0".into())], vec![
+        Interval { introduced: None, end: None },
+    ])]
+    #[case(&[
+        Event::Introduced("0".into()),
+        Event::LastAffected("1".into()),
+        Event::Introduced("2".into()),
+        Event::Introduced("3".into()),
+        Event::Limit("4".into()),
+    ], vec![
+        Interval { introduced: None, end: Some(End::LastAffected("1")) },
+        Interval { introduced: Some("2"), end: None },
+    ])]
+    #[case(&[Event::Fixed("1".into()), Event::Introduced("2".into())], vec![
+        Interval { introduced: Some("2"), end: None },
+    ])]
     #[test_log::test]
-    fn test_matches(#[case] start: &str, #[case] end: Option<&str>, #[case] result: Vec<&str>) {
+    fn test_intervals(#[case] events: &[Event], #[case] result: Vec<Interval>) {
+        assert_eq!(intervals(events), result);
+    }
+
+    #[rstest]
+    #[case(Some("b"), Some(End::Fixed("d")), vec!["b", "c"])]
+    #[case(Some("b"), Some(End::LastAffected("d")), vec!["b", "c", "d"])]
+    #[case(None, Some(End::Fixed("c")), vec!["a", "b"])]
+    #[case(Some("e"), None, vec!["e", "f", "g"])]
+    #[case(Some("x"), None, vec![])]
+    #[case(Some("e"), Some(End::Fixed("a")), vec!["e", "f", "g"])]
+    #[test_log::test]
+    fn test_matches(
+        #[case] introduced: Option<&str>,
+        #[case] end: Option<End>,
+        #[case] result: Vec<&str>,
+    ) {
         const INPUT: &[&str] = &["a", "b", "c", "d", "e", "f", "g"];
-        assert_eq!(match_versions(INPUT, start, end), result);
+        assert_eq!(match_versions(INPUT, &Interval { introduced, end }), result);
     }
 }

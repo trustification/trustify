@@ -82,7 +82,26 @@ mod m0002350_drop_purl_status_gist_index;
 mod m0002360_pythonver_cmp_parallel_restricted;
 mod m0002370_importer_quay_auth;
 mod m0002380_version_function_parallelism;
+mod m0002390_create_correlation_evidence;
 mod m0002390_create_crypto_remediation;
+mod m0002395_create_assertion_context;
+mod m0002400_create_advisory_vulnerability_hash;
+mod m0002410_create_advisory_vulnerability_product_identifier;
+mod m0002420_create_sbom_node_product_identifier;
+mod m0002440_create_advisory_vulnerability_cpe;
+mod m0002460_advisory_publisher_namespace;
+mod m0002470_drop_redhat_derived_purl_status;
+mod m0002490_add_vls_version_scheme;
+mod m0002500_create_correlation_option;
+mod m0002520_create_correlation_evidence_context;
+mod m0002540_add_csaf_statuses;
+mod m0002560_purl_status_effective;
+mod m0002570_add_custom_version_scheme;
+mod m0002580_version_matches_wildcard;
+mod m0002670_vulnerability_upstream;
+mod m0002680_correlation_freshness;
+mod m0002690_remediation_assertions;
+mod m0002700_correlation_extraction_queue;
 
 pub trait MigratorExt: Send {
     fn build_migrations() -> Migrations;
@@ -181,6 +200,25 @@ impl MigratorExt for Migrator {
             .normal(m0002370_importer_quay_auth::Migration)
             .normal(m0002380_version_function_parallelism::Migration)
             .normal(m0002390_create_crypto_remediation::Migration)
+            .normal(m0002390_create_correlation_evidence::Migration)
+            .normal(m0002395_create_assertion_context::Migration)
+            .normal(m0002400_create_advisory_vulnerability_hash::Migration)
+            .normal(m0002410_create_advisory_vulnerability_product_identifier::Migration)
+            .normal(m0002420_create_sbom_node_product_identifier::Migration)
+            .normal(m0002440_create_advisory_vulnerability_cpe::Migration)
+            .normal(m0002460_advisory_publisher_namespace::Migration)
+            .data(m0002470_drop_redhat_derived_purl_status::Migration)
+            .normal(m0002490_add_vls_version_scheme::Migration)
+            .normal(m0002500_create_correlation_option::Migration)
+            .normal(m0002520_create_correlation_evidence_context::Migration)
+            .normal(m0002540_add_csaf_statuses::Migration)
+            .normal(m0002560_purl_status_effective::Migration)
+            .normal(m0002570_add_custom_version_scheme::Migration)
+            .normal(m0002580_version_matches_wildcard::Migration)
+            .normal(m0002670_vulnerability_upstream::Migration)
+            .normal(m0002680_correlation_freshness::Migration)
+            .normal(m0002690_remediation_assertions::Migration)
+            .normal(m0002700_correlation_extraction_queue::Migration)
     }
 }
 

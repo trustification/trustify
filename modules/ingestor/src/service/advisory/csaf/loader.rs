@@ -46,6 +46,7 @@ fn advisory_information(
         published: on_invalid.validate(value::date(&tracking.initial_release_date), report)?,
         modified: on_invalid.validate(value::date(&tracking.current_release_date), report)?,
         withdrawn: None,
+        publisher_namespace: Some(csaf.document.publisher.namespace.to_string()),
     })
 }
 
@@ -231,6 +232,24 @@ impl<'g> CsafLoader<'g> {
 
         creator.add_all(&product_status.fixed, "fixed", self.on_invalid, report)?;
         creator.add_all(
+            &product_status.first_fixed,
+            "first_fixed",
+            self.on_invalid,
+            report,
+        )?;
+        creator.add_all(
+            &product_status.first_affected,
+            "first_affected",
+            self.on_invalid,
+            report,
+        )?;
+        creator.add_all(
+            &product_status.last_affected,
+            "last_affected",
+            self.on_invalid,
+            report,
+        )?;
+        creator.add_all(
             &product_status.known_not_affected,
             "not_affected",
             self.on_invalid,
@@ -242,10 +261,23 @@ impl<'g> CsafLoader<'g> {
             self.on_invalid,
             report,
         )?;
+        creator.add_all(
+            &product_status.recommended,
+            "recommended",
+            self.on_invalid,
+            report,
+        )?;
+        creator.add_all(
+            &product_status.under_investigation,
+            "under_investigation",
+            self.on_invalid,
+            report,
+        )?;
 
         let product_id_mapping = creator.create(self.graph, connection).await?;
 
         let mut remediation_creator = RemediationCreator::new(
+            csaf,
             advisory_vulnerability.advisory_vulnerability.advisory_id,
             advisory_vulnerability
                 .advisory_vulnerability
@@ -258,7 +290,7 @@ impl<'g> CsafLoader<'g> {
             remediation_creator.add(remediation);
         }
 
-        remediation_creator.create(connection).await?;
+        remediation_creator.create(report, connection).await?;
 
         Ok(())
     }
@@ -275,8 +307,12 @@ mod test {
     use rstest::rstest;
     use test_context::test_context;
     use test_log::test;
-    use trustify_entity::advisory_vulnerability_score::{ScoreType, Severity};
+    use trustify_entity::{
+        advisory_vulnerability_score::{ScoreType, Severity},
+        version_scheme::VersionScheme,
+    };
     use trustify_test_context::{TrustifyContext, document, document_bytes};
+    use uuid::Uuid;
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
@@ -447,6 +483,129 @@ mod test {
         Ok(())
     }
 
+    /// Product-group and direct references must produce the same legacy association sets,
+    /// for both product-version and PURL-based advisories.
+    #[test_context(TrustifyContext)]
+    #[rstest]
+    #[case::products("csaf/cve-2023-0044.json")]
+    #[case::purls("csaf/rhsa-2024_3666.json")]
+    #[test_log::test(tokio::test)]
+    async fn remediation_group_associations(
+        ctx: &TrustifyContext,
+        #[case] fixture: &str,
+    ) -> anyhow::Result<()> {
+        use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+        use std::collections::{BTreeMap, BTreeSet};
+        use trustify_entity::{
+            product_status, purl_status, remediation, remediation_product_status,
+            remediation_purl_status,
+        };
+
+        async fn associations(
+            ctx: &TrustifyContext,
+            advisory_id: Uuid,
+        ) -> anyhow::Result<BTreeMap<String, BTreeSet<String>>> {
+            let remediations = remediation::Entity::find()
+                .filter(remediation::Column::AdvisoryId.eq(advisory_id))
+                .all(&ctx.db)
+                .await?;
+            let mut result = BTreeMap::new();
+            for remediation in remediations {
+                let mut targets = BTreeSet::new();
+                let purls = remediation_purl_status::Entity::find()
+                    .filter(remediation_purl_status::Column::RemediationId.eq(remediation.id))
+                    .all(&ctx.db)
+                    .await?;
+                for link in purls {
+                    let status = purl_status::Entity::find_by_id(link.purl_status_id)
+                        .one(&ctx.db)
+                        .await?
+                        .unwrap();
+                    targets.insert(format!(
+                        "purl:{:?}",
+                        (
+                            status.vulnerability_id,
+                            status.status_id,
+                            status.base_purl_id,
+                            status.qualified_purl_id,
+                            status.version_range_id,
+                            status.context_cpe_id,
+                            status.assertion_context_id
+                        )
+                    ));
+                }
+                let products = remediation_product_status::Entity::find()
+                    .filter(remediation_product_status::Column::RemediationId.eq(remediation.id))
+                    .all(&ctx.db)
+                    .await?;
+                for link in products {
+                    let status = product_status::Entity::find_by_id(link.product_status_id)
+                        .one(&ctx.db)
+                        .await?
+                        .unwrap();
+                    targets.insert(format!(
+                        "product:{:?}",
+                        (
+                            status.vulnerability_id,
+                            status.status_id,
+                            status.product_version_range_id,
+                            status.package,
+                            status.context_cpe_id
+                        )
+                    ));
+                }
+                result.insert(
+                    format!(
+                        "{:?}",
+                        (
+                            remediation.vulnerability_id,
+                            remediation.category,
+                            remediation.details,
+                            remediation.url
+                        )
+                    ),
+                    targets,
+                );
+            }
+            Ok(result)
+        }
+
+        let direct = ctx.ingest_document(fixture).await?;
+        let expected = associations(ctx, Uuid::parse_str(&direct.id)?).await?;
+        assert!(expected.values().any(|targets| !targets.is_empty()));
+        let mut document: serde_json::Value =
+            serde_json::from_slice(&document_bytes(fixture).await?)?;
+        let tracking = &mut document["document"]["tracking"]["id"];
+        *tracking = format!("{}-groups", tracking.as_str().unwrap()).into();
+        let mut groups = document["product_tree"]["product_groups"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default();
+        for vulnerability in document["vulnerabilities"].as_array_mut().unwrap() {
+            if let Some(remediations) = vulnerability["remediations"].as_array_mut() {
+                for remediation in remediations {
+                    if let Some(products) =
+                        remediation.as_object_mut().unwrap().remove("product_ids")
+                    {
+                        let group = format!("test-remediation-group-{}", groups.len());
+                        groups
+                            .push(serde_json::json!({"group_id": group, "product_ids": products}));
+                        remediation["group_ids"] = serde_json::json!([group]);
+                    }
+                }
+            }
+        }
+        document["product_tree"]["product_groups"] = groups.into();
+        let grouped = ctx
+            .ingest_read(serde_json::to_vec(&document)?.as_slice())
+            .await?;
+        assert_eq!(
+            associations(ctx, Uuid::parse_str(&grouped.id)?).await?,
+            expected
+        );
+        Ok(())
+    }
+
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn remediations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
@@ -575,12 +734,111 @@ mod test {
             .all(&ctx.db)
             .await?;
 
-        // There are 9 purls in rhsa-2024_3666 and 2 vulnerabilities, but 2 purls share a base
-        // resulting in 8 x 2 = 16
+        // All 9 original qualified PURLs retain separate fixed statements and remediation
+        // links, including the two which share a base identity. Implied affected ranges
+        // are still derived by correlation rather than stored.
         assert_eq!(
-            16,
+            9,
             purl_status_links.len(),
-            "Expected vendor_fix remediation to be linked to 16 purl statuses"
+            "Expected vendor_fix remediation to be linked to all 9 qualified PURL statements"
+        );
+
+        Ok(())
+    }
+
+    /// Only what the document states is stored: Red Hat's fixed versions don't imply additional
+    /// "affected" ranges (those are derived by correlation).
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn redhat_stores_stated_statuses_only(
+        ctx: &TrustifyContext,
+    ) -> Result<(), anyhow::Error> {
+        use sea_orm::{
+            ColumnTrait, EntityTrait, JoinType, QueryFilter, QuerySelect, RelationTrait,
+        };
+        use trustify_entity::{purl_status, status};
+
+        let graph = Graph::new();
+        let loader = CsafLoader::new(&graph);
+
+        let (csaf, digests): (Csaf, _) = document("csaf/rhsa-2024_3666.json").await?;
+        loader
+            .load(("source", "test"), csaf, &digests, &ctx.db)
+            .await?;
+
+        let advisory = graph
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), &ctx.db)
+            .await?
+            .expect("advisory must exist")
+            .advisory;
+        assert_eq!(
+            advisory.publisher_namespace.as_deref(),
+            Some("https://www.redhat.com")
+        );
+
+        let mut slugs: Vec<String> = purl_status::Entity::find()
+            .select_only()
+            .column(status::Column::Slug)
+            .join(JoinType::InnerJoin, purl_status::Relation::Status.def())
+            .filter(purl_status::Column::AdvisoryId.eq(advisory.id))
+            .distinct()
+            .into_tuple()
+            .all(&ctx.db)
+            .await?;
+        slugs.sort();
+        assert_eq!(slugs, vec!["fixed".to_string()]);
+
+        Ok(())
+    }
+
+    /// All product statuses of CSAF are stored as stated, including those stating a single
+    /// version (`first_fixed`, `first_affected`, `last_affected`).
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn stores_all_product_statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        use sea_orm::{EntityTrait, JoinType, QueryOrder, QuerySelect, RelationTrait};
+        use trustify_entity::{purl_status, status, version_range};
+
+        let graph = Graph::new();
+        let loader = CsafLoader::new(&graph);
+
+        let (csaf, digests): (Csaf, _) = document("csaf/statuses/first-last.json").await?;
+        loader
+            .load(("source", "test"), csaf, &digests, &ctx.db)
+            .await?;
+
+        let statuses: Vec<(String, String, Option<String>, Option<String>)> =
+            purl_status::Entity::find()
+                .select_only()
+                .column(purl_status::Column::VulnerabilityId)
+                .column(status::Column::Slug)
+                .column(version_range::Column::LowVersion)
+                .column(version_range::Column::HighVersion)
+                .join(JoinType::InnerJoin, purl_status::Relation::Status.def())
+                .join(
+                    JoinType::InnerJoin,
+                    purl_status::Relation::VersionRange.def(),
+                )
+                .order_by_asc(purl_status::Column::VulnerabilityId)
+                .into_tuple()
+                .all(&ctx.db)
+                .await?;
+
+        let version = || Some("1:1.1.1k-9.el8_6".to_string());
+        assert_eq!(
+            statuses,
+            [
+                ("CVE-2099-30001", "first_fixed"),
+                ("CVE-2099-30002", "first_affected"),
+                ("CVE-2099-30003", "last_affected"),
+                ("CVE-2099-30004", "under_investigation"),
+            ]
+            .map(|(vulnerability, slug)| (
+                vulnerability.to_string(),
+                slug.to_string(),
+                version(),
+                version()
+            ))
         );
 
         Ok(())
@@ -595,6 +853,7 @@ mod test {
         fixture: &str,
         pointer: &str,
         replacement: &str,
+        on_invalid: OnInvalidData,
     ) -> Result<IngestResult, Error> {
         let data = document_bytes(fixture).await.expect("fixture loads");
 
@@ -606,9 +865,13 @@ mod test {
         let digests = Digests::digest(&data);
         let csaf: Csaf = serde_json::from_slice(&data)?;
 
-        CsafLoader::new(&Graph::new())
-            .load(("source", "test"), csaf, &digests, &ctx.db)
-            .await
+        let graph = Graph::new();
+        CsafLoader {
+            graph: &graph,
+            on_invalid,
+        }
+        .load(("source", "test"), csaf, &digests, &ctx.db)
+        .await
     }
 
     /// A value trustify cannot parse rejects the document, rather than being skipped.
@@ -618,7 +881,9 @@ mod test {
     ///
     /// * `pkg:cargo/ns/name@1.0` is not a valid purl, because `cargo` prohibits a namespace.
     ///   This is the case that previously got recorded silently as a *package name*.
-    /// * `cpe:/a:vendor:product:1:2:3:4` is not a valid CPE, because `4` is not a language tag.
+    /// * `cpe:/a:vendor:product%zz` is not a valid CPE, because `%zz` is not a percent escape. (An
+    ///   invalid language tag is no longer rejected, but dropped, see `trustify_common::cpe`.)
+    /// * `prior to 4.2` is neither vers nor vls, which is all a `product_version_range` may hold.
     /// * dates and the publisher namespace are plain strings in CSAF, so anything reaches us.
     #[test_context(TrustifyContext)]
     #[rstest]
@@ -631,8 +896,14 @@ mod test {
     #[case::cpe(
         "csaf/cve-2023-0044.json",
         "/product_tree/branches/0/branches/0/product/product_identification_helper/cpe",
-        "cpe:/a:vendor:product:1:2:3:4",
+        "cpe:/a:vendor:product%zz",
         "invalid cpe"
+    )]
+    #[case::range(
+        "csaf/ranges/vers-and-vls.json",
+        LIB_RANGE,
+        "prior to 4.2",
+        "invalid version range"
     )]
     #[case::date(
         "csaf/cve-2023-0044.json",
@@ -654,7 +925,7 @@ mod test {
         #[case] replacement: &str,
         #[case] expected: &str,
     ) -> Result<(), anyhow::Error> {
-        let err = load_patched(ctx, fixture, pointer, replacement)
+        let err = load_patched(ctx, fixture, pointer, replacement, OnInvalidData::Reject)
             .await
             .expect_err("must reject an invalid value");
 
@@ -663,6 +934,324 @@ mod test {
             "expected InvalidContent, got {err:?}"
         );
         assert!(err.to_string().contains(expected), "got {err}");
+
+        Ok(())
+    }
+
+    /// The `product_version_range` of the vls product in `csaf/ranges/vers-and-vls.json`.
+    const LIB_RANGE: &str = "/product_tree/branches/0/branches/1/branches/0/name";
+
+    /// A stored purl status: base purl name, version range (scheme, low, low inclusive, high,
+    /// high inclusive) and status.
+    type StatedPurlStatus = (
+        String,
+        VersionScheme,
+        Option<String>,
+        Option<bool>,
+        Option<String>,
+        Option<bool>,
+        String,
+    );
+
+    /// All purl statuses an advisory states, sorted by name and status.
+    async fn stated_purl_statuses(
+        ctx: &TrustifyContext,
+        advisory_id: &str,
+    ) -> Result<Vec<StatedPurlStatus>, anyhow::Error> {
+        use sea_orm::{
+            ColumnTrait, EntityTrait, JoinType, QueryFilter, QuerySelect, RelationTrait,
+        };
+        use trustify_entity::{base_purl, purl_status, status, version_range};
+
+        let mut result: Vec<StatedPurlStatus> = purl_status::Entity::find()
+            .select_only()
+            .column(base_purl::Column::Name)
+            .column(version_range::Column::VersionSchemeId)
+            .column(version_range::Column::LowVersion)
+            .column(version_range::Column::LowInclusive)
+            .column(version_range::Column::HighVersion)
+            .column(version_range::Column::HighInclusive)
+            .column(status::Column::Slug)
+            .join(JoinType::InnerJoin, purl_status::Relation::BasePurl.def())
+            .join(
+                JoinType::InnerJoin,
+                purl_status::Relation::VersionRange.def(),
+            )
+            .join(JoinType::InnerJoin, purl_status::Relation::Status.def())
+            .filter(purl_status::Column::AdvisoryId.eq(advisory_id.parse::<Uuid>()?))
+            .into_tuple()
+            .all(&ctx.db)
+            .await?;
+        result.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| a.6.cmp(&b.6)));
+        Ok(result)
+    }
+
+    /// A version range is stored as stated: vers with its scheme, vls without one, and only for
+    /// the purl of its own product. For a relationship, the platform is neither a subject of the
+    /// status, nor does its range constrain the component.
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn ranges_as_stated(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let result = ctx.ingest_document("csaf/ranges/vers-and-vls.json").await?;
+        assert!(result.warnings.is_empty(), "{:?}", result.warnings);
+
+        assert_eq!(
+            stated_purl_statuses(ctx, &result.id).await?,
+            vec![
+                (
+                    "example-app".to_string(),
+                    VersionScheme::Npm,
+                    None,
+                    Some(false),
+                    Some("2.0.0".to_string()),
+                    Some(false),
+                    "affected".to_string(),
+                ),
+                (
+                    "example-lib".to_string(),
+                    VersionScheme::Vls,
+                    None,
+                    Some(false),
+                    Some("4.2".to_string()),
+                    Some(false),
+                    "affected".to_string(),
+                ),
+            ]
+        );
+
+        Ok(())
+    }
+
+    /// A range which can't be parsed, and is skipped by the policy, drops the purls of its
+    /// product, rather than claiming all versions.
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn invalid_range_skipped(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let result = load_patched(
+            ctx,
+            "csaf/ranges/vers-and-vls.json",
+            LIB_RANGE,
+            "prior to 4.2",
+            OnInvalidData::Warn,
+        )
+        .await?;
+
+        assert_eq!(result.warnings.len(), 1, "{:?}", result.warnings);
+        assert!(
+            result.warnings[0].starts_with("invalid version range 'prior to 4.2'"),
+            "{:?}",
+            result.warnings
+        );
+        assert_eq!(
+            stated_purl_statuses(ctx, &result.id).await?,
+            vec![(
+                "example-app".to_string(),
+                VersionScheme::Npm,
+                None,
+                Some(false),
+                Some("2.0.0".to_string()),
+                Some(false),
+                "affected".to_string(),
+            )]
+        );
+
+        Ok(())
+    }
+
+    /// A status stated for a relationship is stored with its context: the platform, with its
+    /// identifiers, name and the relationship category. A product which isn't a relationship has
+    /// no context.
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn relationship_context(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+        use trustify_entity::{
+            assertion_context::{self, AssertionContextCategory},
+            assertion_context_identifier::{self, ContextIdentifierKind},
+            base_purl, purl_status,
+        };
+
+        let result = ctx.ingest_document("csaf/ranges/vers-and-vls.json").await?;
+        let advisory_id = result.id.parse::<Uuid>()?;
+
+        let mut statuses = purl_status::Entity::find()
+            .filter(purl_status::Column::AdvisoryId.eq(advisory_id))
+            .find_also_related(base_purl::Entity)
+            .all(&ctx.db)
+            .await?
+            .into_iter()
+            .map(|(status, purl)| {
+                (
+                    purl.map(|purl| purl.name).unwrap_or_default(),
+                    status.assertion_context_id,
+                )
+            })
+            .collect::<Vec<_>>();
+        statuses.sort();
+
+        let [(app, Some(context_id)), (lib, None)] = statuses.as_slice() else {
+            panic!("unexpected statuses: {statuses:?}");
+        };
+        assert_eq!((app.as_str(), lib.as_str()), ("example-app", "example-lib"));
+
+        let context = assertion_context::Entity::find_by_id(*context_id)
+            .one(&ctx.db)
+            .await?
+            .expect("context must exist");
+        assert_eq!(
+            (context.category, context.name.as_str()),
+            (
+                Some(AssertionContextCategory::InstalledOn),
+                "Example Platform < 3.0.0"
+            )
+        );
+
+        let identifiers = assertion_context_identifier::Entity::find()
+            .filter(assertion_context_identifier::Column::ContextId.eq(*context_id))
+            .all(&ctx.db)
+            .await?
+            .into_iter()
+            .map(|identifier| (identifier.kind, identifier.value))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            identifiers,
+            [(
+                ContextIdentifierKind::Purl,
+                "pkg:npm/example-platform".to_string()
+            )]
+        );
+
+        Ok(())
+    }
+
+    /// For a relationship of hardware and firmware, only the firmware's model number is stated,
+    /// with the firmware's versions. The SKUs of the platform and of the combination identify the
+    /// hardware it is installed on, and only go into the context.
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn relationship_hardware_identifiers(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QueryOrder};
+        use trustify_entity::{
+            advisory_vulnerability_product_identifier::{self, ProductIdentifierType},
+            assertion_context::{self, AssertionContextCategory},
+            assertion_context_identifier::{self, ContextIdentifierKind},
+            correlation_evidence::AssertionStatus,
+            version_range,
+        };
+
+        let result = ctx
+            .ingest_document("scenarios/S19_sku_correlation/vex/hbsa-2025-0003.json")
+            .await?;
+        let advisory_id = result.id.parse::<Uuid>()?;
+
+        let rows = advisory_vulnerability_product_identifier::Entity::find()
+            .filter(advisory_vulnerability_product_identifier::Column::AdvisoryId.eq(advisory_id))
+            .find_also_related(version_range::Entity)
+            .order_by_asc(advisory_vulnerability_product_identifier::Column::Status)
+            .all(&ctx.db)
+            .await?;
+        let contexts = rows
+            .iter()
+            .map(|(identifier, _)| identifier.assertion_context_id)
+            .collect::<std::collections::BTreeSet<_>>();
+        let identifiers = rows
+            .into_iter()
+            .map(|(identifier, range)| {
+                (
+                    identifier.identifier_type,
+                    identifier.value,
+                    identifier.status,
+                    range.map(|range| {
+                        (
+                            range.version_scheme_id,
+                            range.low_version,
+                            range.low_inclusive,
+                            range.high_version,
+                            range.high_inclusive,
+                        )
+                    }),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            identifiers,
+            [
+                (
+                    ProductIdentifierType::ModelNumber,
+                    "Flip 4".to_string(),
+                    AssertionStatus::Affected,
+                    Some((
+                        VersionScheme::Semver,
+                        None,
+                        Some(false),
+                        Some("4.1.0".to_string()),
+                        Some(false)
+                    )),
+                ),
+                (
+                    ProductIdentifierType::ModelNumber,
+                    "Flip 4".to_string(),
+                    AssertionStatus::Fixed,
+                    Some((
+                        VersionScheme::Generic,
+                        Some("4.1.0".to_string()),
+                        Some(true),
+                        Some("4.1.0".to_string()),
+                        Some(true)
+                    )),
+                ),
+            ]
+        );
+
+        // both combinations are installed on the same device
+        let [Some(context_id)] = contexts.into_iter().collect::<Vec<_>>()[..] else {
+            panic!("expected one context");
+        };
+        let context = assertion_context::Entity::find_by_id(context_id)
+            .one(&ctx.db)
+            .await?
+            .expect("context must exist");
+        assert_eq!(
+            (context.category, context.name.as_str()),
+            (Some(AssertionContextCategory::InstalledOn), "JBL Flip 4")
+        );
+
+        let identifiers = assertion_context_identifier::Entity::find()
+            .filter(assertion_context_identifier::Column::ContextId.eq(context_id))
+            .order_by_asc(assertion_context_identifier::Column::Value)
+            .all(&ctx.db)
+            .await?
+            .into_iter()
+            .map(|identifier| (identifier.kind, identifier.value))
+            .collect::<Vec<_>>();
+        let skus = [
+            "050036336109",
+            "050036336116",
+            "050036336123",
+            "050036336130",
+            "050036336147",
+            "050036337366",
+            "050036337373",
+            "050036337380",
+            "050036337397",
+            "050036337403",
+            "050036337441",
+            "6925281922404",
+            "6925281922411",
+            "6925281922428",
+            "6925281922435",
+            "6925281922442",
+            "6925281924408",
+            "6925281924415",
+            "6925281924422",
+            "6925281924439",
+            "6925281924446",
+            "6925281924545",
+        ];
+        assert_eq!(
+            identifiers,
+            skus.map(|sku| (ContextIdentifierKind::Sku, sku.to_string()))
+        );
 
         Ok(())
     }

@@ -2,6 +2,7 @@ use super::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::str::FromStr;
 use strum::VariantNames;
+use trustify_auth::Permission;
 
 #[derive(
     Clone,
@@ -67,6 +68,22 @@ impl Format {
         }
     }
 
+    /// Return the permission required to ingest a document of this format.
+    ///
+    /// Returns `None` for abstract categories (`Advisory`, `SBOM`, `Unknown`)
+    /// since those should be resolved to a concrete format first.
+    pub fn required_permission(&self) -> Option<Permission> {
+        match self {
+            Self::OSV | Self::CSAF | Self::CVE | Self::NVD => Some(Permission::CreateAdvisory),
+            Self::SPDX | Self::CycloneDX | Self::ClearlyDefinedCuration | Self::ClearlyDefined => {
+                Some(Permission::CreateSbom)
+            }
+            Self::CweCatalog => Some(Permission::CreateWeakness),
+            Self::CisaKev => Some(Permission::CreateExploit),
+            Self::Advisory | Self::SBOM | Self::Unknown => None,
+        }
+    }
+
     /// Validate that this format is allowed for an endpoint whose default
     /// category is `endpoint_default`.
     pub fn ensure_allowed_for(self, endpoint_default: Format) -> Result<Self, Error> {
@@ -111,6 +128,29 @@ mod test {
         PartialSchema,
         openapi::{RefOr, Schema},
     };
+
+    #[test]
+    fn ingest_permissions() {
+        let cases = [
+            (Format::OSV, Some(Permission::CreateAdvisory)),
+            (Format::CSAF, Some(Permission::CreateAdvisory)),
+            (Format::CVE, Some(Permission::CreateAdvisory)),
+            (Format::NVD, Some(Permission::CreateAdvisory)),
+            (Format::SPDX, Some(Permission::CreateSbom)),
+            (Format::CycloneDX, Some(Permission::CreateSbom)),
+            (Format::ClearlyDefinedCuration, Some(Permission::CreateSbom)),
+            (Format::ClearlyDefined, Some(Permission::CreateSbom)),
+            (Format::CweCatalog, Some(Permission::CreateWeakness)),
+            (Format::CisaKev, Some(Permission::CreateExploit)),
+            (Format::Advisory, None),
+            (Format::SBOM, None),
+            (Format::Unknown, None),
+        ];
+        assert_eq!(cases.len(), Format::VARIANTS.len());
+        for (format, permission) in cases {
+            assert_eq!(format.required_permission(), permission, "{format}");
+        }
+    }
 
     #[test]
     fn from_str() {

@@ -8,8 +8,8 @@
 .env
 
 CLAUDE.md
+AGENTS.md
 
-*.cdx.json
 *.folded
 *-secret.*
 *.tar

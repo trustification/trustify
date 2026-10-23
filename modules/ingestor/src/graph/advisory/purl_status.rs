@@ -15,6 +15,11 @@ pub struct PurlStatus {
     pub purl: Purl,
     pub status: Uuid,
     pub info: VersionInfo,
+    /// The product the status is stated in, see [`super::context`].
+    pub context_id: Option<Uuid>,
+    /// Whether it is the default status: of all versions no other statement lists.
+    pub default: bool,
+    pub source_provider: Option<trustify_api::correlation::ProviderIdentity>,
 }
 
 impl PurlStatus {
@@ -24,6 +29,9 @@ impl PurlStatus {
             purl,
             status,
             info,
+            context_id: None,
+            default: false,
+            source_provider: None,
         }
     }
 
@@ -43,8 +51,12 @@ impl PurlStatus {
             vulnerability_id: Set(vulnerability_id),
             status_id: Set(self.status),
             base_purl_id: Set(package_id),
+            qualified_purl_id: Set(Some(self.purl.qualifier_uuid())),
             context_cpe_id: Set(cpe_id),
+            assertion_context_id: Set(self.context_id),
             version_range_id: version_range.clone().id,
+            is_default: Set(self.default),
+            source_provider: Set(self.source_provider.clone().map(|p| serde_json::json!(p))),
         };
 
         (version_range, package_status)
@@ -53,6 +65,7 @@ impl PurlStatus {
     pub fn uuid(&self, advisory_id: Uuid, vulnerability_id: String) -> Uuid {
         let mut result = Uuid::new_v5(&NAMESPACE, self.status.as_bytes());
         result = Uuid::new_v5(&result, self.purl.package_uuid().as_bytes());
+        result = Uuid::new_v5(&result, self.purl.qualifier_uuid().as_bytes());
         result = Uuid::new_v5(&result, self.info.uuid().as_bytes());
         result = Uuid::new_v5(&result, advisory_id.as_bytes());
         result = Uuid::new_v5(&result, vulnerability_id.as_bytes());
@@ -61,6 +74,17 @@ impl PurlStatus {
             result = Uuid::new_v5(&result, cpe.uuid().as_bytes())
         }
 
+        if let Some(context_id) = &self.context_id {
+            result = Uuid::new_v5(&result, context_id.as_bytes())
+        }
+
+        if self.default {
+            result = Uuid::new_v5(&result, b"default")
+        }
+
+        if let Some(provider) = &self.source_provider {
+            result = Uuid::new_v5(&result, serde_json::json!(provider).to_string().as_bytes());
+        }
         result
     }
 }

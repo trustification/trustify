@@ -5,6 +5,7 @@ use actix_web::{
 };
 use build_info::BuildInfo;
 use std::sync::Arc;
+use trustify_api::FrontendInfo;
 use trustify_auth::authenticator::Authenticator;
 use trustify_common::{
     capability::{ActiveCapabilities, Capability, Variants},
@@ -12,13 +13,19 @@ use trustify_common::{
 };
 use utoipa_actix_web::service_config::ServiceConfig;
 
-pub fn configure(svc: &mut ServiceConfig, auth: Option<Arc<Authenticator>>, read_only: bool) {
+pub fn configure(
+    svc: &mut ServiceConfig,
+    auth: Option<Arc<Authenticator>>,
+    read_only: bool,
+    frontend: FrontendInfo,
+) {
     let mut scope = utoipa_actix_web::scope("/.well-known/trustify");
 
     if let Some(auth) = auth {
         scope = scope.app_data(web::Data::from(auth));
     }
     scope = scope.app_data(web::Data::new(ReadOnlyState(read_only)));
+    scope = scope.app_data(web::Data::new(frontend));
 
     svc.service(scope.service(info));
 }
@@ -36,6 +43,7 @@ struct Info<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(value_type = serde_json::Object)]
     build: Option<&'a BuildInfo>,
+    frontend: FrontendInfo,
 }
 
 build_info::build_info!(fn build_info);
@@ -52,6 +60,7 @@ pub async fn info(
     read_only: ReadOnlyState,
     capabilities: web::Data<ActiveCapabilities>,
     variants: web::Data<Variants>,
+    frontend: web::Data<FrontendInfo>,
 ) -> HttpResponse {
     let details = match auth {
         // authentication is disabled, enable details
@@ -79,5 +88,54 @@ pub async fn info(
         capabilities: capabilities.as_sorted_vec(),
         variants: variants.get_ref().clone(),
         build: details.then(build_info),
+        frontend: frontend.get_ref().clone(),
     })
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use actix_web::{
+        App,
+        test::{TestRequest, call_and_read_body_json, init_service},
+    };
+    use rstest::rstest;
+    use utoipa_actix_web::AppExt;
+
+    #[rstest]
+    #[case::enabled_writable(true, false)]
+    #[case::enabled_read_only(true, true)]
+    #[case::disabled_writable(false, false)]
+    #[case::disabled_read_only(false, true)]
+    #[actix_web::test]
+    async fn correlation_discovery(#[case] enabled: bool, #[case] read_only: bool) {
+        let capabilities = if enabled {
+            ActiveCapabilities::from_iter([Capability::Correlation])
+        } else {
+            ActiveCapabilities::default()
+        };
+        let app = init_service(
+            App::new()
+                .app_data(web::Data::new(capabilities))
+                .app_data(web::Data::new(Variants::default()))
+                .into_utoipa_app()
+                .configure(|svc| configure(svc, None, read_only, FrontendInfo { oidc: None }))
+                .into_app(),
+        )
+        .await;
+        let response: serde_json::Value = call_and_read_body_json(
+            &app,
+            TestRequest::get().uri("/.well-known/trustify").to_request(),
+        )
+        .await;
+        assert_eq!(response["readOnly"], read_only);
+        assert_eq!(
+            response["capabilities"],
+            if enabled {
+                serde_json::json!(["correlation"])
+            } else {
+                serde_json::json!([])
+            }
+        );
+    }
 }

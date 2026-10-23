@@ -8,6 +8,7 @@ use bytesize::ByteSize;
 use futures::FutureExt;
 use regex::Regex;
 use std::{env, path::PathBuf, process::ExitCode, sync::Arc};
+use trustify_api::{FrontendInfo, FrontendOidcInfo};
 
 /// Clap value parser for `TRUSTD_RECOMMEND_PATTERNS`: compiles the regex and validates it has exactly one capture group.
 fn parse_recommend_pattern(s: &str) -> Result<Regex, String> {
@@ -82,6 +83,7 @@ use trustify_infrastructure::{
     otel::{Metrics as OtelMetrics, Tracing},
 };
 use trustify_module_analysis::{config::AnalysisConfig, service::AnalysisService};
+use trustify_module_correlation::extractor::worker::run_extraction_worker;
 use trustify_module_exploit_intelligence::{
     auth::build_provider,
     runner::worker::start_worker,
@@ -105,6 +107,10 @@ pub struct Run {
     /// Enable read-only mode, rejecting all mutating API requests
     #[arg(long, env = "TRUSTD_READ_ONLY")]
     pub read_only: bool,
+
+    /// Disable the correlation API and background extraction and refresh worker
+    #[arg(long, env = "TRUSTD_DISABLE_CORRELATION")]
+    pub disable_correlation: bool,
 
     /// Inject example importer configurations during startup
     #[arg(long, env)]
@@ -470,6 +476,7 @@ struct InitData {
     #[cfg(feature = "garage-door")]
     embedded_oidc: Option<embedded_oidc::EmbeddedOidc>,
     ui: UI,
+    frontend: FrontendInfo,
     config: ModuleConfig,
     analysis: AnalysisService,
     broadcaster: ChangeBroadcaster,
@@ -562,6 +569,13 @@ impl InitData {
             .register("database", spawn_db_check(db.clone())?)
             .await;
 
+        let frontend = FrontendInfo {
+            oidc: authenticator.is_some().then(|| FrontendOidcInfo {
+                issuer_url: run.ui.issuer_url.clone(),
+                client_id: run.ui.client_id.clone(),
+                scope: run.ui.scope.clone(),
+            }),
+        };
         let ui = UI {
             version: env!("CARGO_PKG_VERSION").to_string(),
             auth_required: authenticator.is_some().to_string(),
@@ -571,16 +585,22 @@ impl InitData {
             oidc_load_user: run.ui.load_user.to_string(),
         };
 
+        let http_client = reqwest::Client::builder()
+            .user_agent(format!("trustify/{}", env!("CARGO_PKG_VERSION")))
+            .build()?;
+
         let config = ModuleConfig {
             fundamental: trustify_module_fundamental::endpoints::Config {
                 sbom_upload_limit: run.sbom_upload_limit.into(),
                 advisory_upload_limit: run.advisory_upload_limit.into(),
                 max_group_name_length: run.max_group_name_length,
                 recommend_patterns: run.recommend_patterns,
+                http_client,
                 ..Default::default()
             },
             ingestor: trustify_module_ingestor::endpoints::Config {
                 dataset_entry_limit: run.dataset_entry_limit.into(),
+                upload_limit: run.sbom_upload_limit.into(),
             },
             ui: trustify_module_ui::endpoints::Config {
                 scan_limit: run.scan_limit.into(),
@@ -613,6 +633,9 @@ impl InitData {
         }
 
         let mut capabilities = ActiveCapabilities::default();
+        if !run.disable_correlation {
+            capabilities.insert(Capability::Correlation);
+        }
         if ei_config.is_some() {
             capabilities.insert(Capability::ExploitIntelligence);
         }
@@ -674,6 +697,7 @@ impl InitData {
             #[cfg(feature = "garage-door")]
             embedded_oidc,
             ui,
+            frontend,
             read_only: run.read_only,
             ei_config,
             capabilities,
@@ -695,6 +719,8 @@ impl InitData {
                 Some((task, shutdown)) => (Some(task), Some(shutdown)),
                 None => (None, None),
             };
+
+        let correlation_worker_task = build_correlation_worker_task(&self);
 
         let http = {
             HttpServerBuilder::try_from(self.http)?
@@ -723,6 +749,7 @@ impl InitData {
                             validators: self.validators.clone(),
                             format_filter: self.format_filter.clone(),
                             importer_filter: self.importer_filter.clone(),
+                            frontend: self.frontend.clone(),
                         },
                     );
                 })
@@ -734,6 +761,8 @@ impl InitData {
         let mut tasks = vec![http];
 
         tasks.extend(ei_worker_task);
+
+        tasks.extend(correlation_worker_task);
 
         // track the embedded OIDC server task
         #[cfg(feature = "garage-door")]
@@ -787,6 +816,15 @@ fn build_ei_worker_task(
     Some((future.boxed_local(), shutdown))
 }
 
+fn build_correlation_worker_task(init: &InitData) -> Option<Task> {
+    if init.read_only || !init.capabilities.contains(&Capability::Correlation) {
+        return None;
+    }
+    let broadcaster = init.broadcaster.clone();
+    let db_rw = init.db_rw.clone();
+    Some(async move { run_extraction_worker(broadcaster, db_rw).await }.boxed_local())
+}
+
 pub fn default_openapi_info() -> Info {
     let mut info = Info::new("Trustify", env!("CARGO_PKG_VERSION"));
     info.description = Some("Software Supply-Chain Security API".into());
@@ -815,6 +853,7 @@ pub(crate) struct Config {
     pub(crate) validators: Vec<Arc<dyn Validator>>,
     pub(crate) format_filter: VariantFilter,
     pub(crate) importer_filter: VariantFilter,
+    pub(crate) frontend: FrontendInfo,
 }
 
 pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, config: Config) {
@@ -840,6 +879,7 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
         validators,
         format_filter,
         importer_filter,
+        frontend,
     } = config;
 
     let limit = ByteSize::gb(1).as_u64() as usize;
@@ -854,7 +894,7 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
     // QueryTokenInjector middleware — browsers' WebSocket API does not support
     // custom headers, so the auth token is passed via query string instead.
     svc.configure(|svc| {
-        endpoints::configure(svc, auth.clone(), read_only);
+        endpoints::configure(svc, auth.clone(), read_only, frontend);
         trustify_module_notification::endpoints::configure(svc, broadcaster, auth.clone());
     });
 
@@ -884,7 +924,7 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
                     db_ro.clone(),
                     storage,
                     analysis.clone(),
-                    cache,
+                    cache.clone(),
                     graph,
                     validators,
                     format_filter,
@@ -896,6 +936,12 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
                     ei_service.clone(),
                 );
                 trustify_module_analysis::endpoints::configure(svc, db_ro.clone(), analysis);
+                trustify_module_correlation::endpoints::configure(
+                    svc,
+                    db_ro.clone(),
+                    db_rw.clone(),
+                    cache,
+                );
                 trustify_module_user::endpoints::configure(svc);
                 trustify_module_ui::endpoints::configure(svc, ui)
             }),
@@ -938,19 +984,38 @@ mod test {
     use utoipa_actix_web::AppExt;
 
     #[test_context(TrustifyContext)]
-    #[test(tokio::test)]
-    async fn initialization(ctx: &TrustifyContext) -> anyhow::Result<()> {
+    #[rstest]
+    #[case::enabled_writable(false, false)]
+    #[case::enabled_read_only(false, true)]
+    #[case::disabled_writable(true, false)]
+    #[case::disabled_read_only(true, true)]
+    #[test_log::test(tokio::test)]
+    async fn correlation_initialization(
+        ctx: &TrustifyContext,
+        #[case] disable_correlation: bool,
+        #[case] read_only: bool,
+    ) -> anyhow::Result<()> {
         let context = InitContext::default();
-        let run = Run::from_arg_matches(&Run::augment_args(Command::new("cmd")).get_matches_from(
-            vec![
-                "cmd",
-                "--db-name",
-                "test",
-                "--db-port",
-                &ctx.port.to_string(),
-            ],
-        ))?;
-        InitData::new(context, run).await.map(|_| ())
+        let port = ctx.port.to_string();
+        let mut args = vec!["cmd", "--db-name", "test", "--db-port", &port];
+        if disable_correlation {
+            args.push("--disable-correlation");
+        }
+        if read_only {
+            args.push("--read-only");
+        }
+        let run =
+            Run::from_arg_matches(&Run::augment_args(Command::new("cmd")).get_matches_from(args))?;
+        let init = InitData::new(context, run).await?;
+        assert_eq!(
+            init.capabilities.contains(&Capability::Correlation),
+            !disable_correlation
+        );
+        assert_eq!(
+            build_correlation_worker_task(&init).is_some(),
+            !disable_correlation && !read_only
+        );
+        Ok(())
     }
 
     #[test_context(TrustifyContext, skip_teardown)]
@@ -991,6 +1056,7 @@ mod test {
                             validators: Vec::new(),
                             format_filter: VariantFilter::default(),
                             importer_filter: VariantFilter::default(),
+                            frontend: FrontendInfo { oidc: None },
                         },
                     );
                 })
@@ -1082,6 +1148,7 @@ mod test {
                     validators: Vec::new(),
                     format_filter: VariantFilter::default(),
                     importer_filter: VariantFilter::default(),
+                    frontend: FrontendInfo { oidc: None },
                 },
             );
         })
@@ -1300,6 +1367,7 @@ mod test {
             #[cfg(feature = "garage-door")]
             embedded_oidc: None,
             ui: Default::default(),
+            frontend: FrontendInfo { oidc: None },
             validators: Vec::new(),
             format_filter: VariantFilter::default(),
             importer_filter: VariantFilter::default(),
@@ -1367,6 +1435,7 @@ mod test {
                     validators: Vec::new(),
                     format_filter: VariantFilter::default(),
                     importer_filter: VariantFilter::default(),
+                    frontend: FrontendInfo { oidc: None },
                 },
             );
         })

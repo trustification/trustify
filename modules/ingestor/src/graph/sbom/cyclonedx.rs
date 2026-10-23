@@ -4,10 +4,11 @@ use crate::{
         product::ProductInformation,
         purl::creator::PurlCreator,
         sbom::{
-            CryptographicAssetCreator, CycloneDx as CycloneDxProcessor, LicenseCreator,
-            LicenseInfo, LicensingInfo, LicensingInfoCreator, MachineLearningModelCreator,
-            NodeInfoParam, PackageCreator, PackageLicensenInfo, PackageReference, References,
-            RelationshipCreator, SbomContext, SbomInformation, populate_expanded_license,
+            CryptographicAssetCreator, CycloneDx as CycloneDxProcessor, DeviceIdentifierCreator,
+            LicenseCreator, LicenseInfo, LicensingInfo, LicensingInfoCreator,
+            MachineLearningModelCreator, NodeInfoParam, PackageCreator, PackageLicensenInfo,
+            PackageReference, References, RelationshipCreator, SbomContext, SbomInformation,
+            populate_expanded_license,
             processor::{
                 InitContext, PostContext, Processor, RedHatProductComponentRelationships,
                 RunProcessors,
@@ -31,7 +32,9 @@ use std::{borrow::Cow, collections::HashMap, str::FromStr};
 use time::{OffsetDateTime, format_description::well_known::Iso8601};
 use tracing::instrument;
 use trustify_common::{advisory::cyclonedx::extract_properties_json, cpe::Cpe, purl::Purl};
-use trustify_entity::relationship::Relationship;
+use trustify_entity::{
+    advisory_vulnerability_product_identifier::ProductIdentifierType, relationship::Relationship,
+};
 use uuid::Uuid;
 
 use super::FileCreator;
@@ -61,10 +64,10 @@ fn license_text(text: &Attachment) -> Option<String> {
     match text.encoding.as_deref() {
         Some("base64") => match BASE64_STANDARD.decode(&text.content) {
             Ok(decoded) => String::from_utf8(decoded)
-                .inspect_err(|err| log::info!("Skipping non-UTF-8 license text: {err}"))
+                .inspect_err(|err| tracing::info!("Skipping non-UTF-8 license text: {err}"))
                 .ok(),
             Err(err) => {
-                log::info!("Skipping license text which failed to base64-decode: {err}");
+                tracing::info!("Skipping license text which failed to base64-decode: {err}");
                 None
             }
         },
@@ -240,7 +243,7 @@ impl SbomContext {
 
         for left in sbom.dependencies.iter().flatten() {
             for target in left.depends_on.iter().flatten() {
-                log::debug!("Adding dependency - left: {}, right: {}", left.ref_, target);
+                tracing::debug!("Adding dependency - left: {}, right: {}", left.ref_, target);
                 creator.relate(left.ref_.clone(), Relationship::Dependency, target.clone());
             }
 
@@ -248,7 +251,7 @@ impl SbomContext {
             // Do we need to qualify this so that only "arch=src" refs
             // get the GeneratedFrom relationship?
             for target in left.provides.iter().flatten() {
-                log::debug!("Adding generates - left: {}, right: {}", left.ref_, target);
+                tracing::debug!("Adding generates - left: {}, right: {}", left.ref_, target);
                 creator.relate(left.ref_.clone(), Relationship::Generates, target.clone());
             }
         }
@@ -287,9 +290,17 @@ impl<'a> Creator<'a> {
         self.extend(components.iter().flatten())
     }
 
+    /// Add a component, and the components nested in it. Nesting is an assembly ("system →
+    /// subsystem → parts"), so the component contains them. Without a `bom-ref` on both sides,
+    /// there is nothing to relate.
     pub fn add(&mut self, component: &'a Component) {
         self.components.push(component);
-        self.extend(component.components.iter().flatten());
+        for nested in component.components.iter().flatten() {
+            if let (Some(parent), Some(child)) = (&component.bom_ref, &nested.bom_ref) {
+                self.relate(parent.clone(), Relationship::Contains, child.clone());
+            }
+            self.add(nested);
+        }
     }
 
     pub fn extend<I>(&mut self, i: I)
@@ -346,6 +357,7 @@ struct ComponentCreator {
     files: FileCreator,
     models: MachineLearningModelCreator,
     crypto: CryptographicAssetCreator,
+    devices: DeviceIdentifierCreator,
     relationships: RelationshipCreator<CycloneDxProcessor>,
     // Map each node to a collection of references
     refs: HashMap<String, Vec<PackageReference>>,
@@ -363,6 +375,7 @@ impl ComponentCreator {
             files: FileCreator::new(sbom_id),
             models: MachineLearningModelCreator::new(sbom_id),
             crypto: CryptographicAssetCreator::new(sbom_id),
+            devices: DeviceIdentifierCreator::new(sbom_id),
             relationships: RelationshipCreator::new(sbom_id, CycloneDxProcessor),
             refs: Default::default(),
         }
@@ -382,7 +395,7 @@ impl ComponentCreator {
                     self.add_cpe(node_id.clone(), cpe);
                 }
                 Err(err) => {
-                    log::info!("Skipping CPE due to parsing error: {err}");
+                    tracing::info!("Skipping CPE due to parsing error: {err}");
                 }
             }
         }
@@ -393,7 +406,7 @@ impl ComponentCreator {
                     self.add_purl(node_id.clone(), purl);
                 }
                 Err(err) => {
-                    log::info!("Skipping PURL due to parsing error: {err}");
+                    tracing::info!("Skipping PURL due to parsing error: {err}");
                 }
             }
         }
@@ -437,10 +450,24 @@ impl ComponentCreator {
                 use ComponentType::*;
                 const EMPTY: Vec<PackageReference> = vec![];
                 match ty {
-                    // We treat all these types as "packages"
-                    Application | Framework | Library | Container | OperatingSystem => {
+                    // We treat all these types as "packages", hardware and firmware included:
+                    // they have versions and identifiers (PURL, CPE) like software
+                    Application | Framework | Library | Container | OperatingSystem | Device
+                    | DeviceDriver | Firmware => {
                         self.packages.add(
                             NodeInfoParam {
+                                supplier: comp.supplier.as_ref().map(|supplier| {
+                                    let mut ids = Vec::new();
+                                    if let Some(name) = &supplier.name {
+                                        ids.push(format!("name:{name}"));
+                                    }
+                                    if let Some(urls) = &supplier.url {
+                                        ids.extend(
+                                            urls.iter().map(|url| format!("namespace:{url}")),
+                                        );
+                                    }
+                                    serde_json::json!({"identifiers":ids,"name":supplier.name})
+                                }),
                                 node_id: node_id.clone(),
                                 name: comp.name.to_string(),
                                 group: comp.group.as_ref().map(|v| v.to_string()),
@@ -449,7 +476,11 @@ impl ComponentCreator {
                             },
                             self.refs.get(&node_id).unwrap_or(&EMPTY).iter(),
                             comp.hashes.clone().into_iter().flatten(),
-                        )
+                        );
+                        if matches!(ty, Device | DeviceDriver | Firmware) {
+                            self.devices
+                                .add(node_id.clone(), extract_device_identifiers(comp));
+                        }
                     }
                     File => {
                         self.files.add(
@@ -475,7 +506,7 @@ impl ComponentCreator {
                             comp.try_into()?,
                         );
                     }
-                    _ => log::error!("Unsupported component type: '{ty}'"),
+                    _ => tracing::error!("Unsupported component type: '{ty}'"),
                 }
             }
             Err(e) => {
@@ -625,6 +656,7 @@ impl ComponentCreator {
         self.files.create(db).await?;
         self.models.create(db).await?;
         self.crypto.create(db).await?;
+        self.devices.create(db).await?;
         self.relationships.create(db).await?;
 
         // Populate expanded license tables
@@ -632,6 +664,29 @@ impl ComponentCreator {
 
         Ok(())
     }
+}
+
+/// Extract device identifiers from CycloneDX component properties.
+///
+/// Maps `cdx:device:*` property taxonomy names to `ProductIdentifierType` values.
+fn extract_device_identifiers(comp: &Component) -> Vec<(ProductIdentifierType, String)> {
+    comp.properties
+        .iter()
+        .flatten()
+        .filter_map(|p| {
+            let id_type = match p.name.as_str() {
+                "cdx:device:serialNumber" => Some(ProductIdentifierType::SerialNumber),
+                "cdx:device:sku" => Some(ProductIdentifierType::Sku),
+                "cdx:device:gs1:gmn" => Some(ProductIdentifierType::ModelNumber),
+                "cdx:device:gs1:gtin-8"
+                | "cdx:device:gs1:gtin-12"
+                | "cdx:device:gs1:gtin-13"
+                | "cdx:device:gs1:gtin-14" => Some(ProductIdentifierType::Sku),
+                _ => None,
+            };
+            id_type.zip(p.value.clone())
+        })
+        .collect()
 }
 
 /// Type of the components within an SBOM, mostly based on
@@ -681,9 +736,151 @@ pub enum ComponentType {
 #[cfg(test)]
 mod test {
     use super::*;
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QueryOrder};
     use serde_json::json;
     use std::str::FromStr;
+    use test_context::test_context;
     use test_log::test;
+    use trustify_entity::package_relates_to_package;
+    use trustify_test_context::TrustifyContext;
+
+    /// Nested components are contained in the component they are nested in.
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn nested_components_are_contained(ctx: &TrustifyContext) -> anyhow::Result<()> {
+        let result = ctx
+            .ingest_document("scenarios/S19_sku_correlation/sbom/jbl_flip4_assembly.cdx.json")
+            .await?;
+        let sbom_id = result.id.parse::<Uuid>()?;
+
+        let relationships = package_relates_to_package::Entity::find()
+            .filter(package_relates_to_package::Column::SbomId.eq(sbom_id))
+            .order_by_asc(package_relates_to_package::Column::Relationship)
+            .order_by_asc(package_relates_to_package::Column::LeftNodeId)
+            .all(&ctx.db)
+            .await?
+            .into_iter()
+            .map(|rel| (rel.left_node_id, rel.relationship, rel.right_node_id))
+            .collect::<Vec<_>>();
+
+        let rel = |left: &str, relationship, right: &str| {
+            (left.to_string(), relationship, right.to_string())
+        };
+        assert_eq!(
+            relationships,
+            vec![
+                rel("comp-flip4-device", Relationship::Contains, "comp-flip4-fw"),
+                rel("comp-flip4-fw", Relationship::Contains, "comp-bt-lib"),
+                rel(
+                    "jbl-flip4-root",
+                    Relationship::Dependency,
+                    "comp-flip4-device"
+                ),
+                rel(CYCLONEDX_DOC_REF, Relationship::Describes, "jbl-flip4-root"),
+            ]
+        );
+
+        Ok(())
+    }
+
+    /// Devices and firmware are packages: they keep their version, CPE, and product identifiers.
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn firmware_is_package(ctx: &TrustifyContext) -> anyhow::Result<()> {
+        use trustify_entity::{
+            advisory_vulnerability_product_identifier::ProductIdentifierType, cpe,
+            sbom_node_cpe_ref, sbom_node_product_identifier, sbom_package,
+        };
+
+        let result = ctx
+            .ingest_document("scenarios/S19_sku_correlation/sbom/jbl_flip4_assembly.cdx.json")
+            .await?;
+        let sbom_id = result.id.parse::<Uuid>()?;
+
+        let packages = sbom_package::Entity::find()
+            .filter(sbom_package::Column::SbomId.eq(sbom_id))
+            .order_by_asc(sbom_package::Column::NodeId)
+            .all(&ctx.db)
+            .await?
+            .into_iter()
+            .map(|package| (package.node_id, package.version))
+            .collect::<Vec<_>>();
+        let package = |node: &str, version: &str| (node.to_string(), Some(version.to_string()));
+        assert_eq!(
+            packages,
+            vec![
+                package("comp-bt-lib", "3.0.0"),
+                package("comp-flip4-device", "1.0.0"),
+                package("comp-flip4-fw", "2.3.1"),
+                package("jbl-flip4-root", "1.0.0"),
+            ]
+        );
+
+        let identifiers = sbom_node_product_identifier::Entity::find()
+            .filter(sbom_node_product_identifier::Column::SbomId.eq(sbom_id))
+            .order_by_asc(sbom_node_product_identifier::Column::NodeId)
+            .order_by_asc(sbom_node_product_identifier::Column::Value)
+            .all(&ctx.db)
+            .await?
+            .into_iter()
+            .map(|id| (id.node_id, id.identifier_type, id.value))
+            .collect::<Vec<_>>();
+        let id = |node: &str, ty, value: &str| (node.to_string(), ty, value.to_string());
+        assert_eq!(
+            identifiers,
+            vec![
+                id(
+                    "comp-flip4-device",
+                    ProductIdentifierType::Sku,
+                    "050036337366"
+                ),
+                id(
+                    "comp-flip4-device",
+                    ProductIdentifierType::Sku,
+                    "6925281924439"
+                ),
+                id(
+                    "comp-flip4-device",
+                    ProductIdentifierType::SerialNumber,
+                    "SN-JBL-FLIP4-001"
+                ),
+                id(
+                    "comp-flip4-fw",
+                    ProductIdentifierType::ModelNumber,
+                    "Flip 4"
+                ),
+            ]
+        );
+
+        // a firmware's CPE
+        let result = ctx
+            .ingest_document(
+                "scenarios/S22_cpe_third_party_openssl_phoenix/sbom/mguard_4302_fw_10.5.0.cdx.json",
+            )
+            .await?;
+        let sbom_id = result.id.parse::<Uuid>()?;
+        let mut cpes = sbom_node_cpe_ref::Entity::find()
+            .filter(sbom_node_cpe_ref::Column::SbomId.eq(sbom_id))
+            .find_also_related(cpe::Entity)
+            .all(&ctx.db)
+            .await?
+            .into_iter()
+            .map(|(r, cpe)| (r.node_id, cpe.and_then(|cpe| cpe.product)))
+            .collect::<Vec<_>>();
+        cpes.sort();
+        assert_eq!(
+            cpes,
+            vec![
+                (
+                    "firmware".to_string(),
+                    Some("fl_mguard_firmware".to_string())
+                ),
+                ("openssl".to_string(), Some("openssl".to_string())),
+            ]
+        );
+
+        Ok(())
+    }
 
     #[test]
     fn component_types() {

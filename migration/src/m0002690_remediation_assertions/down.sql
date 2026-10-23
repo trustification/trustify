@@ -1,0 +1,3 @@
+DROP TABLE remediation_product_identifier_assertion;
+DROP TABLE remediation_hash_assertion;
+DROP TABLE remediation_cpe_assertion;
