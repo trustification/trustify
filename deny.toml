@@ -16,6 +16,9 @@ ignore = [
     { id = "RUSTSEC-2026-0367", reason = "zip 8.x; upgrade workspace dependency and utoipa-swagger-ui to use zip >=9" },
     { id = "RUSTSEC-2026-0368", reason = "zip 8.x; upgrade workspace dependency and utoipa-swagger-ui to use zip >=9" },
     { id = "RUSTSEC-2026-0369", reason = "zip 8.x; upgrade workspace dependency and utoipa-swagger-ui to use zip >=9" },
+    # crypto-bigint 0.5.x: timing side-channel (RUSTSEC-2026-0387); fix requires >=0.7.6 but
+    # aws-sigv4/aws-runtime pin the 0.5.x semver range — upgrade blocked until AWS SDK moves.
+    { id = "RUSTSEC-2026-0387", reason = "crypto-bigint 0.5.5 pinned by aws-sigv4; upgrade blocked until AWS SDK supports crypto-bigint >=0.7.6" },
 ]
 
 [licenses]
